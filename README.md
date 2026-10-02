@@ -15,8 +15,8 @@ Children aged 9 to 11 get extra "think deeper" explanations and a few harder sce
 The app works offline. It never asks for a child's name, photo or location.
 
 - **GitHub repo:** https://github.com/audreym101/SafeTouch
-- **Video demo:** https://www.figma.com/proto/LGF1ZxkHqCZH1Lswr6zrMm/Untitled?node-id=1-1568&p=f&viewport=165%2C-166%2C0.17&t=z8OjXHODLxORaZaL-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=1%3A1524&show-proto-sidebar=1&page-id=1%3A1521
-- **Figma prototype:** PASTE YOUR FIGMA LINK HERE
+- **Video demo:** 
+- **Figma prototype:** https://www.figma.com/proto/LGF1ZxkHqCZH1Lswr6zrMm/Untitled?node-id=1-1568&p=f&viewport=165%2C-166%2C0.17&t=z8OjXHODLxORaZaL-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=1%3A1524&show-proto-sidebar=1&page-id=1%3A1521
 
 ---
 
