@@ -1,0 +1,17 @@
+{
+  "name": "safetouch-api",
+  "version": "0.1.0",
+  "description": "Optional anonymous progress sync for the SafeTouch AR app",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongodb": "^6.12.0"
+  }
+}

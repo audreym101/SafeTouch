@@ -1,0 +1,761 @@
+<title>SafeTouch Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Epilogue:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a working desk. Left, the phone you can tap; right, the screen index that explains each screen.
+   Below: navigation map, AR placement plan, style guide, files. */
+:root{
+  --bg:#F3F6F9; --fg:#1B2437; --muted:#5A6A80; --line:#D6DFE8; --panel:#FFFFFF; --accent:#2474C6; --accent-ink:#FFFFFF; --chip:#E6EEF6;
+  --display:"Epilogue", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* App tokens (the phone always shows the app's own light UI) */
+  --app-font:"Andika", "Trebuchet MS", system-ui, sans-serif;
+  --ink:#1F2A44; --app-muted:#5F6F86; --sky:#EAF4FB; --card:#FFFFFF; --primary:#2474C6; --sun:#F6B73C;
+  --safe:#3BA776; --caution:#EE9B2F; --unsafe:#E4574C; --scrim:rgba(31,42,68,.55); --skin:#8D5524; --keza:#F28C38; --device:#10151F;
+  --wall-a:#C9B79C; --wall-b:#B9A387; --floor-a:#9C7B5B; --floor-b:#7E6149;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E131D; --fg:#E4EAF2; --muted:#9AA8BB; --line:#26324A; --panel:#151C2A; --accent:#5EA2E8; --accent-ink:#0E131D; --chip:#1D2738; color-scheme:dark }}
+:root[data-theme="dark"]{--bg:#0E131D; --fg:#E4EAF2; --muted:#9AA8BB; --line:#26324A; --panel:#151C2A; --accent:#5EA2E8; --accent-ink:#0E131D; --chip:#1D2738; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--body);padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:56px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(30px,5vw,48px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:26px;font-weight:800;letter-spacing:-.01em}
+h3{font-size:17px;font-weight:600}
+p{margin:0;max-width:68ch}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+header.top{display:grid;gap:14px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font:13px var(--mono);color:var(--muted)}
+.dl{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.btn{font:600 14px var(--body);border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:10px 14px;border-radius:8px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:hover{border-color:var(--accent)}
+.btn small{font:12px var(--mono);opacity:.75}
+.status{font:13px var(--mono);color:var(--muted);min-height:1.4em}
+
+section{display:grid;gap:18px}
+.sec-head{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:20px}
+
+/* Prototype desk */
+.desk{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:860px){.desk{grid-template-columns:minmax(0,1fr)}}
+.phone-col{display:grid;gap:12px;justify-items:center;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:860px){.phone-col{position:static}}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.toggle{font:500 12px var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:999px;padding:6px 12px;cursor:pointer}
+.toggle[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+
+.device{width:min(372px,100%);aspect-ratio:372/780;background:var(--device);border-radius:44px;padding:12px;box-shadow:0 30px 60px -30px rgba(15,21,34,.55)}
+.screen{position:relative;width:100%;height:100%;border-radius:33px;overflow:hidden;background:var(--sky);font-family:var(--app-font);color:var(--ink);container-type:inline-size}
+.ar{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ui{position:absolute;inset:0;display:flex;flex-direction:column;padding:34px 16px 16px;gap:10px}
+.ui.opaque{background:var(--sky)}
+.notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:96px;height:22px;background:var(--device);border-radius:12px;z-index:5}
+
+/* App components (mirror Theme.cs / UIFactory.cs) */
+.a-bar{display:flex;align-items:center;gap:10px;min-height:48px}
+.a-back{width:48px;height:48px;border-radius:14px;border:0;background:var(--card);color:var(--ink);font:700 22px var(--app-font);cursor:pointer;flex:none;box-shadow:0 1px 0 rgba(31,42,68,.08)}
+.a-title{font:700 21px/1.15 var(--app-font)}
+.a-display{font:700 28px/1.15 var(--app-font)}
+.a-body{font:400 15px/1.35 var(--app-font)}
+.a-small{font:400 12.5px/1.35 var(--app-font);color:var(--app-muted)}
+.a-btn{min-height:52px;border:0;border-radius:14px;font:700 16px/1.2 var(--app-font);padding:10px 14px;cursor:pointer;background:var(--primary);color:#fff;width:100%}
+.a-btn.card{background:var(--card);color:var(--ink)}
+.a-btn.sun{background:var(--sun);color:var(--ink)}
+.a-btn.safe{background:var(--safe)} .a-btn.caution{background:var(--caution)} .a-btn.unsafe{background:var(--unsafe)}
+.a-btn[disabled]{opacity:.4;cursor:not-allowed}
+.a-row{display:flex;gap:10px}
+.a-row>*{flex:1}
+.spacer{flex:1}
+.lesson-card{position:relative;display:grid;gap:2px;text-align:left;background:var(--card);border:0;border-radius:14px;padding:12px 14px 12px 22px;cursor:pointer;color:var(--ink);font-family:var(--app-font);min-height:78px}
+.lesson-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;border-radius:14px 0 0 14px;background:var(--c)}
+.lesson-card b{font-size:17px}
+.lesson-card .st{font:700 11.5px var(--app-font);color:var(--c)}
+.lesson-card[disabled]{opacity:.45;cursor:not-allowed}
+.shade{position:absolute;inset:0 0 auto 0;height:150px;background:linear-gradient(var(--scrim),transparent);pointer-events:none}
+.hud-title{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.tools{display:flex;gap:8px;align-items:center}
+.tools .step{flex:1;color:#fff;font:700 13px var(--app-font);text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.chip-btn{border:0;border-radius:12px;background:rgba(255,255,255,.92);color:var(--ink);font:700 12px var(--app-font);padding:8px 10px;cursor:pointer;min-height:36px}
+.prompt{background:rgba(255,255,255,.96);border-radius:18px;padding:14px;display:grid;gap:8px}
+.prompt .a-btn{min-height:46px;font-size:14.5px}
+.movepad{display:grid;gap:6px}
+.ui.pass{pointer-events:none} .ui.pass .a-bar,.ui.pass .tools,.ui.pass .movepad,.ui.pass .prompt,.ui.pass .overlay{pointer-events:auto}
+.place{display:flex;gap:12px;align-items:center;text-align:left;background:var(--card);border:0;border-left:7px solid var(--c);border-radius:14px;padding:10px 14px;min-height:76px;cursor:pointer;font-family:var(--app-font);color:var(--ink)}
+.place svg{width:46px;height:46px;flex:none} .place b{display:block;font-size:17px}
+.zone-read{justify-self:center;background:rgba(31,42,68,.72);color:#fff;font:700 12px var(--app-font);border-radius:10px;padding:5px 10px;text-align:center}
+.zone-read.red{background:var(--unsafe)} .zone-read.yellow{background:var(--caution);color:var(--ink)} .zone-read.green{background:var(--safe)}
+.pad-row{display:flex;gap:6px}
+.pad-row .who{flex:2;border:0;border-radius:12px;background:var(--sun);color:var(--ink);font:700 12.5px var(--app-font);min-height:44px;cursor:pointer;padding:0 8px}
+.pad-row .arr{flex:1;border:0;border-radius:12px;background:rgba(255,255,255,.94);color:var(--ink);min-height:44px;cursor:pointer;display:grid;place-items:center}
+.pad-row .arr svg{width:20px;height:20px}
+.mem{display:grid;gap:8px;flex:1;align-content:start}
+.mem.c2{grid-template-columns:1fr 1fr} .mem.c3{grid-template-columns:1fr 1fr 1fr}
+.mcard{border:0;border-radius:14px;min-height:92px;font:700 13px/1.2 var(--app-font);cursor:pointer;padding:6px;color:var(--ink);background:var(--card)}
+.mcard.down{background:var(--primary);color:#fff;font-size:30px}
+.mcard.mean{background:color-mix(in srgb,var(--sun) 35%,var(--card))}
+.mcard.done{background:color-mix(in srgb,var(--safe) 35%,var(--card))}
+.mem-hint{background:var(--card);border-radius:14px;padding:10px 12px;min-height:58px}
+.cert{background:var(--card);border-radius:18px;padding:16px 14px;display:grid;gap:8px;position:relative;overflow:hidden;border:3px solid var(--sun)}
+.cert .idea{display:flex;gap:10px;align-items:flex-start;font:400 13px/1.3 var(--app-font);color:var(--ink)}
+.cert .idea i{width:14px;height:14px;border-radius:50%;background:var(--c);flex:none;margin-top:2px}
+.confetti{position:absolute;inset:0;pointer-events:none;z-index:3}
+.confetti i{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;animation:fall 2.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(800px) rotate(540deg)}}
+@media (prefers-reduced-motion: reduce){.confetti{display:none}}
+.hint{background:rgba(255,255,255,.92);border-radius:16px;padding:12px 14px;text-align:center;display:grid;gap:4px}
+.overlay{position:absolute;inset:0;background:var(--scrim);display:flex;align-items:flex-end;padding:12px;z-index:4}
+.overlay .sheet{background:var(--card);border-radius:18px;padding:18px;display:grid;gap:10px;width:100%}
+.toast{position:absolute;left:16px;right:16px;top:40px;background:var(--ink);color:var(--sun);border-radius:14px;padding:12px;text-align:center;font:700 14px var(--app-font);z-index:6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.adult{min-height:58px;border-radius:14px;border:2px solid transparent;background:var(--card);font:700 13.5px var(--app-font);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 10px;text-align:left}
+.adult i{width:14px;height:14px;border-radius:50%;background:var(--c);flex:none}
+.adult[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 22%,var(--card))}
+.tabs{display:flex;gap:6px}
+.tabs button{flex:1;min-height:40px;border:0;border-radius:12px;background:var(--card);color:var(--ink);font:700 12.5px var(--app-font);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--primary);color:#fff}
+.scroll{overflow:auto;display:grid;gap:8px;align-content:start;flex:1;min-height:0;padding-bottom:4px}
+.rcard{background:var(--card);border-radius:14px;padding:12px;display:grid;gap:4px}
+.rcard b{font-size:14.5px}
+.badge{background:var(--card);border-radius:14px;padding:10px 12px;display:grid;gap:2px}
+.badge.on{background:color-mix(in srgb,var(--sun) 35%,var(--card))}
+.logo{display:grid;justify-items:center;gap:8px}
+.hot .a-btn,.hot .a-back,.hot .lesson-card,.hot .chip-btn,.hot .adult,.hot .tabs button,.hot .pad-row button,.hot .mcard,.hot .place{outline:2px dashed #E4574C;outline-offset:2px}
+
+/* Screen index */
+.index{display:grid;gap:22px;min-width:0}
+.flow-group{display:grid;gap:8px}
+.flow-group ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.scr{display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px 12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);cursor:pointer;text-align:left;color:var(--fg);font:inherit;width:100%}
+.scr[aria-current="true"]{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.scr .n{font:500 12px var(--mono);color:var(--muted);padding-top:2px}
+.scr b{font-weight:600}
+.scr span.d{grid-column:2;color:var(--muted);font-size:13.5px}
+.fr{font:500 11px var(--mono);background:var(--chip);border-radius:4px;padding:1px 6px;margin-left:6px;color:var(--fg);white-space:nowrap}
+.note{font-size:13.5px;color:var(--muted)}
+
+/* Diagrams */
+.figure{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto}
+.figure svg{display:block;min-width:720px;width:100%;height:auto}
+.figure svg text{font-family:var(--body);fill:var(--fg)}
+.figure svg .m{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:18px}
+
+/* Style guide */
+.swatches{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sw{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.sw i{display:block;height:58px;background:var(--c)}
+.sw div{padding:8px 10px;display:grid;gap:1px}
+.sw code{font:12px var(--mono);color:var(--muted)}
+.type-spec{display:grid;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.type-spec div{display:grid;grid-template-columns:130px minmax(0,1fr);gap:12px;align-items:baseline}
+.type-spec code{font:12px var(--mono);color:var(--muted)}
+.rules{display:grid;gap:8px;margin:0;padding-left:18px;max-width:72ch}
+table.files{border-collapse:collapse;width:100%;font-size:14px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table.files th,table.files td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.files th{font:500 12px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+table.files tr:last-child td{border-bottom:0}
+table.files td code{font:12.5px var(--mono)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:.9}}
+.dots circle{animation:pulse 1.6s ease-in-out infinite}
+body.export{padding:0;background:transparent}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">AR/VR track · Initial software demonstration</span>
+    <h1>SafeTouch prototype</h1>
+    <p>A tappable model of the SafeTouch Android AR app for children aged 6 to 11. It follows the same screens, lesson steps and AR object placement as the Unity code in the repo, and stands in for the Figma prototype.</p>
+    <div class="meta"><span>Unity 6 LTS · AR Foundation 6 · ARCore</span><span>Android 8.0+ (API 26)</span><span>Portrait 1080 × 1920 reference</span></div>
+    <div class="status" id="dlstatus" hidden></div><div id="downloads" hidden></div>
+  </header>
+
+  <section id="prototype" aria-labelledby="h-proto">
+    <div class="sec-head">
+      <span class="eyebrow">1 · Interaction flow</span>
+      <h2 id="h-proto">Tap through the app</h2>
+      <p>Tap the buttons on the phone, or jump to any screen from the list. The camera view is drawn; on a real phone it is the room, with Keza standing on the detected floor. In every lesson the arrow buttons walk Keza or a visitor around, and switch the age group to 9 - 11 to see the extra "think deeper" steps.</p>
+    </div>
+    <div class="desk">
+      <div class="phone-col">
+        <div class="device" id="device"><div class="screen" id="screen">
+          <div class="notch"></div>
+          <svg class="ar" id="ar" viewBox="0 0 348 756" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+          <div class="ui" id="ui"></div>
+        </div></div>
+        <div class="toolbar">
+          <button class="toggle" id="hotspots" aria-pressed="false">Show tap targets</button>
+          <button class="toggle" id="restart">Restart</button>
+          <button class="toggle" id="unlock" aria-pressed="false">Unlock all lessons</button>
+          <button class="toggle" id="age">Age group: 6 - 8</button>
+        </div>
+      </div>
+      <nav class="index" id="index" aria-label="Screens"></nav>
+    </div>
+  </section>
+
+  <section id="navigation" aria-labelledby="h-nav">
+    <div class="sec-head">
+      <span class="eyebrow">2 · Navigation map</span>
+      <h2 id="h-nav">Every screen is two taps from home</h2>
+      <p>The lesson map is the hub. Every screen has a back or exit button in the same top-left spot, and the Android back button does the same (NFR6). The grown-ups area sits behind a written sum that young children cannot read yet.</p>
+    </div>
+    <div class="figure" id="navmap"></div>
+  </section>
+
+  <section id="placement" aria-labelledby="h-ar">
+    <div class="sec-head">
+      <span class="eyebrow">3 · Virtual object placement</span>
+      <h2 id="h-ar">Where things appear in the room</h2>
+      <p>ARCore finds a horizontal plane (FR1). A reticle follows the centre of the screen and the child taps <b>Place Keza here</b> (FR2). Everything else is placed relative to Keza. Angle 0° points at the phone, and visitors and adults come in from the sides and the far side so none of them blocks the view.</p>
+    </div>
+    <div class="two">
+      <div class="figure" id="topdown"></div>
+      <div class="figure" id="sideview"></div>
+    </div>
+    <div class="tbl"><table class="files">
+      <thead><tr><th>Object</th><th>Placed</th><th>Size in the room</th><th>Code</th></tr></thead>
+      <tbody>
+        <tr><td>Placement reticle</td><td>Screen-centre raycast on a detected plane</td><td>25 cm disc</td><td><code>ARManager.DetectPlane()</code></td></tr>
+        <tr><td>Keza, guide character</td><td>On the reticle, turned to face the phone, anchored with an <code>ARAnchor</code></td><td>about 66 cm tall</td><td><code>ARManager.PlaceCharacter()</code></td></tr>
+        <tr><td>Bubble zones</td><td>Floor discs centred on Keza</td><td>red 0.3 m, yellow 0.6 m, green 0.9 m radius</td><td><code>PersonalSpaceBubbleLesson</code></td></tr>
+        <tr><td>Visitors</td><td>Start 1.4 m from Keza at −110°, 110° and 150°, walk in at 0.35 m/s</td><td>about 90 cm tall</td><td><code>ARFigure.WalkTo()</code></td></tr>
+        <tr><td>Safe place</td><td>1.2 m to Keza's side (−90°)</td><td>25 cm radius green disc</td><td><code>StopFrameworkLesson</code></td></tr>
+        <tr><td>Trusted adults</td><td>Arc of 200° behind Keza at 0.8 m, one per chosen role</td><td>about 90 cm tall</td><td><code>TrustedAdultsLesson</code></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="style" aria-labelledby="h-style">
+    <div class="sec-head">
+      <span class="eyebrow">4 · Style guide</span>
+      <h2 id="h-style">Calm, bright and never frightening</h2>
+      <p>These tokens live in <code>Theme.cs</code>. The zone colours double as the answer colours, so green, yellow and red always mean the same thing. Red is a warm coral rather than an alarm red (NFR5).</p>
+    </div>
+    <div class="swatches" id="swatches"></div>
+    <div class="type-spec">
+      <div><code>Display 84 / 28px</code><span style="font:700 28px var(--app-font)">How old are you?</span></div>
+      <div><code>Title 60 / 21px</code><span style="font:700 21px var(--app-font)">My Space Bubble</span></div>
+      <div><code>Body 44 / 15px</code><span style="font:400 15px var(--app-font)">Everyone has a bubble of space around their body.</span></div>
+      <div><code>Label 36 / 12.5px</code><span style="font:400 12.5px var(--app-font)">SafeTouch only asks your age group. It never asks your name.</span></div>
+      <div><code>Typeface</code><span>Andika (SIL), designed for early readers, with the letter shapes children learn in school and full Kinyarwanda support. Sizes are in Unity canvas units at 1080 × 1920, then this page's pixels.</span></div>
+    </div>
+    <ul class="rules">
+      <li>Touch targets are at least 150 canvas units (about 56 dp) high, larger than the 48 dp Android minimum, for small fingers.</li>
+      <li>Choices sit in the bottom half of the screen, within thumb reach. Titles and exit sit at the top.</li>
+      <li>One question per card. Short sentences, read aloud by narration (English and Kinyarwanda).</li>
+      <li>Wrong answers say "Let's think again" and explain; no buzzers, no red crosses, no timers.</li>
+      <li>Every scenario ends with the same message: it is never the child's fault, and a trusted adult can help.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+// ---------- Content (same as Assets/SafeTouch/Resources/Content/*.json) ----------
+const SCEN = [["S01", 1, "A hug from Grandma", "Grandma gives you a big hug when you visit, and you like her hugs. How is this?", "A", "Hugs you enjoy from family are safe. You can always say if you don't want one.", "Consent means you get to choose. Even with people you love, a hug is a choice, and a wave or a handshake is fine too."], ["S02", 1, "Too much tickling", "Your cousin keeps tickling you after you said \"stop\". How is this?", "B", "Your \"stop\" matters. Say it again in a strong voice, and tell a trusted adult if they don't listen.", "Play turns uncomfortable when one person wants it to stop and the other keeps going. Your \"stop\" counts in games too."], ["S03", 1, "A touching secret", "A neighbour says, \"Let's keep a secret about touching. Don't tell your parents.\" How is this?", "C", "Touching should never be a secret. Say NO, move away and tell a trusted adult. It is never your fault.", "Someone who asks for a touching secret knows it is wrong. That is why they want it hidden. Telling is never breaking a promise."], ["S04", 1, "At the health centre", "A nurse checks your tummy while your mum stays with you in the room. How is this?", "A", "Nurses and doctors may check your body to keep you healthy, with a parent or carer there.", "Three things make a body check safe: a reason (your health), a parent or carer with you, and the doctor or nurse explaining what they are doing."], ["S05", 1, "Sweets from someone new", "Someone you don't know offers you sweets if you come with them alone. How is this?", "C", "Never go anywhere alone with someone you don't know. Say NO, go to a safe place and tell a trusted adult.", "People who want to harm children often use treats, money or rides to get them alone. A safe adult never asks you to go somewhere without telling your family."], ["S06", 1, "Standing too close", "A classmate stands very close to you and won't move when you ask for space. How is this?", "B", "You can ask for space again, move away, and tell your teacher if it keeps happening.", "Uncomfortable is a real feeling and worth listening to. Use your words first, then ask a teacher for help if they don't stop."], ["S07", 1, "High-five from your teacher", "Your teacher gives you a high-five for a good answer in class. How is this?", "A", "A high-five for good work is a safe, friendly touch.", "A safe touch is open, short, and happens where other people can see. You'd be happy to tell your family about it."], ["S08", 2, "A message online", "An older person you met online asks you to send photos of yourself and keep it secret. How is this?", "C", "Never send photos to people who ask you to keep secrets. Stop replying and show a trusted adult straight away.", "Three warning signs together: someone you only know online, asking for photos, and asking for secrecy. Block, keep the messages, and show an adult. You won't be in trouble."], ["S09", 2, "Gifts with a catch", "A family friend gives you gifts and says you owe them a \"special secret\" in return. How is this?", "C", "Gifts should never come with secrets. This is a warning sign. Tell a trusted adult, even if the person is nice to you.", "This is called grooming: someone builds trust with gifts and kindness, then asks for secrets. The gift does not mean you owe them anything."], ["S10", 2, "Sitting on a lap", "An adult you know asks you to sit on their lap, and you don't want to. How is this?", "B", "You can say \"No, thank you\" and sit somewhere else. Your body belongs to you.", "Your body belongs to you, even with adults you know. Saying \"no, thank you\" politely is not rude."], ["S11", 2, "Pictures on a phone", "An older cousin shows you pictures on their phone of people without clothes, and says it's a grown-up secret. How is this?", "C", "Showing children pictures like this is not okay, even from family. Move away and tell a trusted adult.", "Showing private pictures to a child is a kind of abuse, even with no touching. It is never your fault that you saw them."], ["S12", 2, "A friend's worry", "Your friend tells you an adult has been touching her in a way she doesn't like, and asks you not to tell anyone. How is this?", "C", "Your friend is not safe. Tell a trusted adult, even though she asked you not to. That is how a good friend helps.", "Some secrets are too big for children to carry. Telling an adult is not betraying your friend; it is getting her help."], ["S13", 2, "A kiss hello", "Your uncle says you must kiss him hello or you are being rude, and you don't want to. How is this?", "B", "You can offer a wave or a handshake instead. Greeting someone kindly doesn't need a kiss.", "Respect works both ways. Adults who care about you will accept a different greeting. If someone gets angry, tell a parent."]];
+const LESSONS = [
+  {level:1, title:"My Space Bubble", summary:"Learn the three zones around your body", c:"var(--primary)"},
+  {level:2, title:"Safe or Unsafe?", summary:"Sort the scenario cards", c:"var(--caution)"},
+  {level:3, title:"STOP!", summary:"Say no, Tell, Open up, Protect", c:"var(--unsafe)"},
+  {level:4, title:"My Trusted Adults", summary:"Build your helping hand", c:"var(--safe)"},
+  {level:5, title:"Memory Quest", summary:"Match, build STOP, then a timed chase", c:"var(--sun)"}];
+const REVIEW = [["Red zone","My body: only with my OK","Nobody touches Keza's body without her OK, and nobody touches private parts.",1],
+  ["Yellow zone","People I know and trust","Family and friends can come close, and Keza can still say no.",1],
+  ["Green zone","Everyone else","People Keza doesn't know stay out in the green zone.",1],
+  ["Touching secret","Always tell","Secrets about touching are never okay. Keza always tells.",1],
+  ["A surprise","Fun, and told soon","A surprise, like a birthday present, is happy and is told soon. A worrying secret is not a surprise.",2],
+  ["Online stranger","Never send photos","Someone known only online is in the green zone. No photos, no school name, and show an adult.",2]];
+const STOPS = [["S","Say no"],["T","Tell a trusted adult"],["O","Open up and explain"],["P","Protect yourself"]];
+const ADULTS = [["parent","Mum or Dad","#F28C38"],["grandparent","Grandparent","#F6B73C"],["aunt_uncle","Aunt or Uncle","#E4574C"],["teacher","Teacher","#2474C6"],["head_teacher","Head teacher","#5A8FD6"],["izu","IZU volunteer","#3BA776"],["nurse","Nurse or doctor","#2BA3A0"],["police","Police officer","#1F2A44"]];
+const BADGES = [["bubble","Bubble Keeper","Finished My Space Bubble",s=>s.done.has(1)],["spotter","Safe Spotter","Sorted all the scenario cards",s=>s.done.has(2)],["stop","STOP Star","Practised Say no, Tell, Open up, Protect",s=>s.done.has(3)],["hand","Helping Hand","Named at least 2 trusted adults",s=>s.adults.size>=2&&s.done.has(4)],["quick","Quick and Safe","Said NO in 3 seconds or less in the chase game",s=>(s.best||99)<=3],["champion","SafeTouch Champion","Finished every lesson and the Memory Quest",s=>s.done.size>=5]];
+const RES = {
+  talk:[["Use the right names for body parts","Children who know the correct words can explain what happened. Name private parts calmly, the same way you name an elbow or a knee."],["Surprises, not secrets","A surprise is fun and is told soon. A secret that makes you feel worried should always be told."],["Ask after each lesson","Ask your child to teach you STOP, and let them name their trusted adults."],["If your child tells you something","Stay calm, believe them, thank them, and tell them it is not their fault. Contact the services under Get help."]],
+  signs:[["Changes in behaviour","Sudden fear of a person or place, withdrawal, anger, bed-wetting or new nightmares."],["Secrets and gifts","New gifts, money or phone credit from an adult with no clear reason, or talk of a special secret."],["Knowledge beyond their age","Words or play about adult behaviour a child of their age would not usually know."],["Physical signs","Pain or bruising around private areas. Seek care at an Isange One Stop Centre."]],
+  help:[["Child Helpline (free)","National toll-free line for children and anyone worried about a child.","116"],["Isange One Stop Centre","Free medical, psychosocial and legal help, in hospitals across Rwanda.","3029"],["Rwanda Investigation Bureau","Report child abuse to RIB.","166"],["Emergency, Rwanda National Police","If a child is in danger right now.","112"]]};
+const RW = {"Start":"Tangira","Continue":"Komeza","Grown-ups":"Ababyeyi"};
+const WORDS = ["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+
+// ---------- State ----------
+let S;
+function fresh(){ return {screen:"splash", lang:"en", age:null, done:new Set(), scores:{}, adults:new Set(), sync:false, unlockAll:false,
+  overlay:null, toast:null, lesson:null, level:0, tab:"talk", gate:null, confirmReset:false}; }
+const AR = {mode:"none", found:false, placed:false, zones:false, hl:null, figs:[], safe:null, keza:{x:0,z:2.4}, sel:0, signs:[]};
+const K0 = {x:0, z:2.4};
+const t = s => (S.lang==="rw" && RW[s]) || s;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const unlocked = lv => S.unlockAll || lv===1 || S.done.has(lv-1);
+const older = () => S.age==="9-11";
+const steps = h => older() ? h.replace(" of 4"," of 5") : h;
+const deeper = txt => older() ? "\n\nThink deeper: " + txt : "";
+
+// ---------- Rendering helpers ----------
+let handlers = [];
+function on(fn){ handlers.push(fn); return `data-h="${handlers.length-1}"`; }
+function btn(label, cls, fn, extra){ return `<button class="a-btn ${cls||""}" ${fn?on(fn):"disabled"} ${extra||""}>${esc(label)}</button>`; }
+function bar(title, back, light){ return `<div class="a-bar">${back?`<button class="a-back" aria-label="Back" ${on(back)}>&lsaquo;</button>`:""}<div class="a-title ${light?"hud-title":""}">${esc(title||"")}</div></div>`; }
+
+const ui = document.getElementById("ui"), arSvg = document.getElementById("ar");
+function render(){
+  handlers = [];
+  const scr = SCREENS[S.screen];
+  const html = scr.view();
+  ui.className = "ui" + (scr.camera ? "" : " opaque") + (S.chase ? " pass" : "");
+  let over = "";
+  if (S.overlay){ const o = S.overlay;
+    over = `<div class="overlay"><div class="sheet">${o.title?`<div class="a-title" style="color:${o.color}">${esc(o.title)}</div>`:""}<div class="a-body" style="white-space:pre-line">${esc(o.body)}</div>${btn(t("Continue"),"",()=>{const n=o.next;S.overlay=null;n?n():render();})}</div></div>`; }
+  const toast = S.toast ? `<div class="toast">${esc(S.toast)}</div>` : "";
+  ui.innerHTML = (scr.camera ? `<div class="shade"></div>` : "") + html + over + toast;
+  ui.querySelectorAll("[data-h]").forEach(el => el.addEventListener("click", handlers[+el.dataset.h]));
+  drawAR(); markIndex();
+}
+function feedback(ok, body, next){ S.overlay = {title: ok?"That's right!":"Let's think again", color: ok?"var(--safe)":"var(--caution)", body, next}; if(ok) hop("keza"); render(); }
+function info(body, next){ S.overlay = {title:"", body, next}; render(); }
+function toast(msg){ S.toast = msg; render(); setTimeout(()=>{ S.toast=null; render(); }, 2600); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+// ---------- AR scene (drawn stand-in for the camera feed) ----------
+const H0 = 250, F = 290, CAMH = 1.25, CX = 174;
+const proj = (x,z) => [CX + F*x/z, H0 + F*CAMH/z];
+const around = (r,a) => ({x:AR.keza.x + r*Math.sin(a*Math.PI/180), z:AR.keza.z - r*Math.cos(a*Math.PI/180)});
+function ringPath(cx,cz,r){ let d=""; for(let i=0;i<=48;i++){const a=i/48*Math.PI*2; const [x,y]=proj(cx+r*Math.sin(a), cz+r*Math.cos(a)); d+=(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1);} return d+"Z"; }
+function person(p, h, shirt, label, isKeza, lift){
+  const [sx, sy] = proj(p.x, p.z); const s = F/p.z; const H = h*s; const y = sy - (lift||0);
+  const bw = .36*H, bh = .6*H, hr = .15*H;
+  let g = `<g><ellipse cx="${sx}" cy="${sy}" rx="${bw*.75}" ry="${bw*.22}" fill="rgba(0,0,0,.22)"/>`+
+    `<rect x="${sx-bw/2}" y="${y-bh}" width="${bw}" height="${bh}" rx="${bw/2}" fill="${shirt}"/>`+
+    (isKeza?`<circle cx="${sx-hr*.8}" cy="${y-bh-hr*1.7}" r="${hr*.55}" fill="#2B1A10"/><circle cx="${sx+hr*.8}" cy="${y-bh-hr*1.7}" r="${hr*.55}" fill="#2B1A10"/>`:"")+
+    `<circle cx="${sx}" cy="${y-bh-hr*.9}" r="${hr}" fill="var(--skin)"/>`+
+    `<circle cx="${sx-hr*.35}" cy="${y-bh-hr*.95}" r="${hr*.12}" fill="#1F2A44"/><circle cx="${sx+hr*.35}" cy="${y-bh-hr*.95}" r="${hr*.12}" fill="#1F2A44"/>`+
+    `<path d="M${sx-hr*.35} ${y-bh-hr*.55} q${hr*.35} ${hr*.3} ${hr*.7} 0" stroke="#1F2A44" stroke-width="${Math.max(1,hr*.08)}" fill="none" stroke-linecap="round"/>`;
+  if (label){ const w = label.length*6.4+16; g += `<rect x="${sx-w/2}" y="${y-bh-hr*2-26}" width="${w}" height="20" rx="10" fill="rgba(255,255,255,.92)"/><text x="${sx}" y="${y-bh-hr*2-12}" text-anchor="middle" font-family="Andika, sans-serif" font-size="11.5" font-weight="700" fill="#1F2A44">${esc(label)}</text>`; }
+  return g + "</g>";
+}
+function drawAR(){
+  const scr = SCREENS[S.screen];
+  if (!scr.camera){ arSvg.innerHTML = ""; return; }
+  const wall = proj(0,5.2)[1];
+  if (AR.place==="playground") return drawPlayground(wall);
+  let g = `<defs><linearGradient id="gw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--wall-a)"/><stop offset="1" stop-color="var(--wall-b)"/></linearGradient><linearGradient id="gf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--floor-a)"/><stop offset="1" stop-color="var(--floor-b)"/></linearGradient></defs>`+
+    `<rect width="348" height="${wall}" fill="url(#gw)"/><rect y="${wall}" width="348" height="${756-wall}" fill="url(#gf)"/>`+
+    `<rect x="36" y="${wall-190}" width="92" height="120" rx="4" fill="#DDEBF5" opacity=".8"/><line x1="82" y1="${wall-190}" x2="82" y2="${wall-70}" stroke="var(--wall-b)" stroke-width="4"/>`+
+    `<rect x="236" y="${wall-96}" width="70" height="96" rx="6" fill="#8A6A4E" opacity=".7"/>`;
+  if (AR.place==="school") g += `<rect x="70" y="${wall-200}" width="208" height="110" rx="6" fill="#2F5D4A" stroke="#8A6A4E" stroke-width="6"/><text x="174" y="${wall-138}" text-anchor="middle" font-family="Andika, sans-serif" font-size="26" fill="#fff" opacity=".85">A B C  1 2 3</text>`+
+    [-1,1].map(sx=>{ const [x,y]=proj(sx*1.1,4.2); return `<rect x="${x-34}" y="${y-30}" width="68" height="16" rx="3" fill="#B98A5E"/><rect x="${x-28}" y="${y-14}" width="6" height="16" fill="#8A6A4E"/><rect x="${x+22}" y="${y-14}" width="6" height="16" fill="#8A6A4E"/>`; }).join("");
+  if (AR.place==="home") g += `<rect x="40" y="${wall-46}" width="120" height="46" rx="12" fill="#C9725A"/><rect x="48" y="${wall-66}" width="104" height="26" rx="10" fill="#D98A70"/>`;
+  for (let i=-6;i<=6;i++){ const [x1,y1]=proj(i*.5,5.2); g+=`<line x1="${x1}" y1="${y1}" x2="${CX+(x1-CX)*(5.2/0.8)}" y2="${H0+F*CAMH/0.8}" stroke="rgba(0,0,0,.08)" stroke-width="1"/>`; }
+  arSvg.innerHTML = g + scene(); }
+function drawPlayground(horizon){
+  let g = `<defs><linearGradient id="gs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FD3F0"/><stop offset="1" stop-color="#E3F4FB"/></linearGradient><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BCF7E"/><stop offset="1" stop-color="#5FA34E"/></linearGradient></defs>`+
+    `<rect width="348" height="${horizon}" fill="url(#gs)"/><rect y="${horizon}" width="348" height="${756-horizon}" fill="url(#gg)"/><circle cx="290" cy="${horizon-170}" r="26" fill="#F6D365"/>`+
+    `<rect x="44" y="${horizon-110}" width="12" height="110" fill="#8A6A4E"/><circle cx="50" cy="${horizon-128}" r="44" fill="#4E9A48"/><circle cx="82" cy="${horizon-104}" r="30" fill="#5FAE55"/>`+
+    `<path d="M226 ${horizon} L246 ${horizon-96} L306 ${horizon-96} L326 ${horizon}" stroke="#E4574C" stroke-width="5" fill="none"/><line x1="262" y1="${horizon-96}" x2="262" y2="${horizon-34}" stroke="#555" stroke-width="2"/><line x1="290" y1="${horizon-96}" x2="290" y2="${horizon-34}" stroke="#555" stroke-width="2"/><rect x="256" y="${horizon-36}" width="40" height="7" rx="2" fill="#2474C6"/>`;
+  arSvg.innerHTML = g + scene(); }
+function scene(){ let g = "";
+  if (AR.mode==="scan"){
+    g += `<g class="dots">`; for (let ix=-4; ix<=4; ix++) for (let iz=0; iz<8; iz++){ const [x,y]=proj(ix*.22, 1.6+iz*.25); g+=`<circle cx="${x}" cy="${y}" r="${1.8*F/(1.6+iz*.25)/140}" fill="#fff" style="animation-delay:${(ix+iz)%5*.2}s"/>`; } g += `</g>`;
+    if (AR.found){ g += `<path d="${ringPath(K0.x,K0.z,.125)}" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2.5"/>`; }
+  }
+  if (AR.placed){
+    if (AR.zones){ [["green",.9,"var(--safe)"],["yellow",.6,"var(--caution)"],["red",.3,"var(--unsafe)"]].forEach(([k,r,c])=>{
+      const op = AR.hl ? (AR.hl===k?.62:.18) : .34; g += `<path d="${ringPath(AR.keza.x,AR.keza.z,r)}" fill="${c}" fill-opacity="${op}" stroke="${c}" stroke-width="2"/>`; }); }
+    if (AR.safe){ const p=AR.safe; g += `<path d="${ringPath(p.x,p.z,.25)}" fill="var(--safe)" fill-opacity=".6" stroke="#fff" stroke-width="2"/>`; const [sx,sy]=proj(p.x,p.z); g+=`<text x="${sx}" y="${sy+4}" text-anchor="middle" font-family="Andika, sans-serif" font-size="11" font-weight="700" fill="#fff">Safe place</text>`; }
+    const items = AR.figs.map(f=>({z:f.p.z, svg:()=>{ const g = person(f.p, .9, f.color, f.label, false, f.lift); return f.chaser ? g.replace("<g>",'<g data-chaser="1" style="cursor:pointer">') : g; }}));
+    items.push({z:AR.keza.z, svg:()=>person(AR.keza, .66, "var(--keza)", "Keza", true, AR.kezaLift)});
+    AR.signs.forEach(b=>items.push({z:b.p.z-.01, svg:()=>sign(b)}));
+    items.sort((a,b)=>b.z-a.z).forEach(i=> g += i.svg());
+  }
+  return g;
+}
+function sign(b){ const [sx,sy]=proj(b.p.x,b.p.z); const s=F/b.p.z, w=.2*s, y=sy-b.h*s;
+  return `<g><ellipse cx="${sx}" cy="${sy}" rx="${w*.45}" ry="${w*.12}" fill="rgba(0,0,0,.18)"/><rect x="${sx-w/2}" y="${y-w/2}" width="${w}" height="${w}" rx="${w*.18}" fill="var(--unsafe)" stroke="#fff" stroke-width="2"/><text x="${sx}" y="${y+w*.2}" text-anchor="middle" font-family="Andika, sans-serif" font-weight="700" font-size="${w*.62}" fill="#fff">${b.t}</text></g>`; }
+function anim(dur, step, done){ const t0 = performance.now(); const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function f(now){ const k = reduce ? 1 : Math.min(1,(now-t0)/dur); step(k); drawAR(); if(k<1) requestAnimationFrame(f); else if(done) done(); } requestAnimationFrame(f); }
+function walk(obj, to, done){ const from = {...obj.p || obj}; const tgt = obj.p ? obj.p : obj;
+  anim(1300, k => { const e = k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2; tgt.x = from.x+(to.x-from.x)*e; tgt.z = from.z+(to.z-from.z)*e; }, done); }
+function hop(which, fig){ anim(420, k => { const v = Math.sin(k*Math.PI)*14; if (which==="keza") AR.kezaLift = v; else fig.lift = v; }); }
+function spawn(label, color, r, a){ const f = {label, color, p:around(r,a)}; AR.figs.push(f); drawAR(); return f; }
+function clearLesson(){ AR.zones=false; AR.hl=null; AR.figs=[]; AR.safe=null; AR.keza={...K0}; AR.sel=0; AR.signs=[]; AR.place=null; S.chase=null; }
+// Move buttons (LessonScreen.BuildMovePad / ARManager.Nudge): walk Keza or a visitor 15 cm per tap.
+function selected(){ return AR.sel>0 && AR.figs[AR.sel-1] ? AR.figs[AR.sel-1] : null; }
+function nudge(dx, dz){ const f = selected(); const p = f ? f.p : AR.keza;
+  const to = {x:Math.max(-1.4,Math.min(1.4,p.x+dx*.15)), z:Math.max(1.3,Math.min(4.2,p.z+dz*.15))};
+  anim(380, k => { p.x += (to.x-p.x)*k; p.z += (to.z-p.z)*k; }, render); }
+function zoneOf(f){ const d = Math.hypot(f.p.x-AR.keza.x, f.p.z-AR.keza.z); return d<=.3?"red":d<=.6?"yellow":d<=.9?"green":"outside"; }
+const ARROW = {l:"M15 5 8 12l7 7", u:"M5 15l7-7 7 7", d:"M5 9l7 7 7-7", r:"M9 5l7 7-7 7"};
+function movePad(){ const f = selected(); const z = f ? zoneOf(f) : null;
+  const read = !f ? "Use the arrows to walk Keza. Her bubble moves with her." :
+    z==="red" ? `${f.label} is in Keza's red zone. Only with Keza's OK!` : z==="yellow" ? `${f.label} is in Keza's yellow zone, for people she trusts.` : z==="green" ? `${f.label} is in Keza's green zone.` : `${f.label} is outside Keza's bubble.`;
+  const arr = (k,dx,dz,lab) => `<button class="arr" aria-label="${lab}" ${on(()=>nudge(dx,dz))}><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="${ARROW[k]}"/></svg></button>`;
+  return `<div class="movepad">${f||AR.zones?`<div class="zone-read ${z||""}">${esc(read)}</div>`:""}<div class="pad-row"><button class="who" ${on(()=>{ AR.sel=(AR.sel+1)%(AR.figs.length+1); const g=selected(); g?hop("fig",g):hop("keza"); render(); })}>Move: ${esc(f?f.label:"Keza")}</button>${arr("l",-1,0,"Left")}${arr("u",0,1,"Away from me")}${arr("d",0,-1,"Towards me")}${arr("r",1,0,"Right")}</div></div>`; }
+
+// ---------- Flow (mirrors GameManager.cs) ----------
+function startLesson(level){ if(!unlocked(level)) return; S.level = level; clearLesson();
+  if (!AR.placed){ S.screen="scan"; AR.mode="scan"; AR.found=false; render(); setTimeout(()=>{ if(S.screen==="scan"){AR.found=true; render();} }, 1400); return; }
+  beginLesson(); }
+function beginLesson(){ AR.mode="lesson"; ({1:bubble,2:scenarios,3:stop,4:adultsPick,5:review})[S.level](); }
+function home(){ S.lesson=null; S.level=0; clearLesson(); AR.mode="none"; S.screen="home"; S.overlay=null; render(); }
+function complete(score, max){ const lv=S.level; S.done.add(lv); S.scores[lv]=Math.max(S.scores[lv]||0,score);
+  const before = new Set(S.badgesOn||[]); S.badgesOn = BADGES.filter(b=>b[3](S)).map(b=>b[0]);
+  const fresh = BADGES.filter(b=>S.badgesOn.includes(b[0]) && !before.has(b[0]));
+  S.overlay = {title:"Lesson complete!", color:"var(--sun)", body:`You earned ${score} of ${max} stars. ${lv<5?"The next lesson is open.":"You finished every lesson and the Memory Quest!"}`, next:()=>{ home(); if(fresh.length) toast("New badge: "+fresh.map(b=>b[1]).join(", ")); }};
+  render(); }
+function L(step, heading, body, options){ S.screen="lesson"; S.lesson={title:LESSONS[S.level-1].title, step, heading, body, options}; render(); }
+const O = (label, cls, fn) => ({label, cls, fn});
+
+// Lesson 1: Personal Space Bubble
+function bubble(){ AR.zones=true; const seen=new Set(); let score=0;
+  const explore = () => L(steps("Step 1 of 4: explore the zones"), "Meet Keza's space bubble", "Everyone has a bubble of space around their body. Tap each colour to learn about it.",
+    [O("Red zone","unsafe",()=>zone("red","The red zone is Keza's body. Nobody touches it without Keza's OK, and nobody touches private parts.")),
+     O("Yellow zone","caution",()=>zone("yellow","The yellow zone is for people Keza knows and trusts, like family. Keza can still say no.")),
+     O("Green zone","safe",()=>zone("green","The green zone is for everyone else. People Keza doesn't know stay out here."))].concat(seen.size===3?[O("I'm ready!","",grandma)]:[]));
+  const DEEP = {red:"Private parts are the parts a swimsuit covers. Nobody should touch them, ask to see them or show you theirs. A doctor or nurse may check them only with a parent there, and they explain why.",
+    yellow:"Trusting someone doesn't mean they can do anything. If a person you know makes you feel confused or uneasy, that feeling is a signal to tell another adult.",
+    green:"People can be friendly and still be strangers. Someone you have only met online is in the green zone too, even if you chat every day."};
+  const zone = (k, text) => { seen.add(k); AR.hl=k; info(text + deeper(DEEP[k]), explore); };
+  const grandma = () => { AR.hl=null; const g=spawn("Grandma","var(--sun)",1.4,-110); L(steps("Step 2 of 4: Grandma visits"),"","Grandma is coming over...",[]);
+    walk(g, around(.6,-110), ()=> L(steps("Step 2 of 4: Grandma visits"),"Grandma asks for a hug","\"Can I have a hug, Keza?\" What does Keza say?",
+      [O("Yes, I'd like a hug","safe",()=>{score++; feedback(true,"Hugs are okay when Keza wants them. It's Keza's choice.",classmate);}),
+       O("No thanks, let's wave","",()=>{score++; hop("fig",g); feedback(true,"Grandma waves instead. Keza can say no, even to family, and that's okay.",classmate);})])); };
+  const classmate = () => { const c=spawn("Classmate","var(--primary)",1.4,110); let first=true; L(steps("Step 3 of 4: a classmate"),"","A classmate is coming over...",[]);
+    walk(c, around(.7,110), ()=> L(steps("Step 3 of 4: a classmate"),"A classmate wants a high-five","Keza's classmate is smiling and holds up a hand. Is a high-five safe?",
+      shuffle([O("Yes, high-five!","safe",()=>{ if(first)score++; hop("fig",c); feedback(true,"A high-five from a friend is a safe touch. Keza can still say no if she doesn't want one.",stranger);}),
+       O("No, run away","unsafe",()=>{ first=false; feedback(false,"A high-five is a friendly, safe touch. Keza doesn't need to run. Try again.");})]))); };
+  const stranger = () => { const s=spawn("Someone new","#8C99AD",1.4,150); let first=true; L(steps("Step 4 of 4: someone new"),"","Someone is walking towards Keza...",[]);
+    walk(s, around(.55,150), ()=> L(steps("Step 4 of 4: someone new"),"Someone is coming very close","Keza doesn't know this person, and they walked into the yellow zone. What should Keza do?",
+      shuffle([O("Say \"Stop! Please step back\"","unsafe",()=>{ if(first)score++; hop("keza"); walk(s, around(1.4,150)); feedback(true,"Keza used a loud, clear voice and the person stepped back. Then Keza tells a trusted adult.",()=>older()?online():complete(score,3));}),
+       O("Let them come closer","card",()=>{ first=false; feedback(false,"People Keza doesn't know should stay in the green zone. Keza can say \"Stop!\" Try again.");})]))); };
+  const online = () => { const g=spawn("Game player","#8B7AC7",1.6,-150); let first=true; L("Step 5 of 5: my bubble online","A message in a game","A player Keza only knows from an online game says: \"You're my best friend. Send me a photo of you and tell me your school. Don't tell your parents.\" What should Keza do?",
+    shuffle([O("Stop chatting and show a trusted adult","safe",()=>{ if(first)score++; walk(g, around(2.2,-150)); feedback(true,"Yes. Asking for photos, personal details and secrecy are three warning signs. Keza blocks them, keeps the messages and shows a trusted adult. She is not in trouble.",()=>complete(score,4));}),
+      O("Send it, they seem nice","card",()=>{ first=false; feedback(false,"Someone known only online is in the green zone, however friendly they seem. Keza never sends photos or her school to them.");}),
+      O("Keep chatting, but keep it secret","card",()=>{ first=false; feedback(false,"\"Don't tell your parents\" is a warning sign. Safe friends never ask Keza to hide them from her family.");})])); };
+  explore(); }
+
+// Lesson 2: Safe or Unsafe?
+function scenarios(){ const list = SCEN.filter(s => s[1] <= (S.age==="9-11"?2:1)); let i=0, right=0;
+  const names = {A:"Safe",B:"Uncomfortable",C:"Unsafe"};
+  const card = () => { const s=list[i]; L(`Card ${i+1} of ${list.length}`, s[2], s[3],
+    [O("Safe","safe",()=>ans("A")),O("Uncomfortable","caution",()=>ans("B")),O("Unsafe","unsafe",()=>ans("C"))]); };
+  const ans = a => { const s=list[i], ok = a===s[4]; if(ok) right++;
+    feedback(ok, (ok?"":`The answer is: ${names[s[4]]}. `)+s[5]+deeper(s[6]), ()=>{ if(i>=list.length-1) complete(right,list.length); else { i++; card(); } }); };
+  card(); }
+
+// Lesson 3: STOP
+function stop(){ let score=0; const v=spawn("Someone","#8C99AD",.8,160); AR.safe=around(1.2,-90); let teacher=null;
+  const S1 = () => L("S - Say no","S: Say NO","Say it loud and clear, with a strong voice. Tap the button and say \"NO!\" out loud too.",
+    [O("NO!","unsafe",()=>{ score++; hop("keza"); walk(v, around(1.5,160)); feedback(true,"Great voice! Saying no is always allowed, even to an adult."+deeper("Keza can say no even to someone older, someone she loves, or someone who gave her a gift. Saying no is not rude when her body is involved."),T1);})]);
+  const T1 = () => { let first=true; L("T - Tell a trusted adult","T: Tell a trusted adult","Who should Keza tell?", shuffle([
+    O("My teacher, or another adult I trust","safe",()=>{ if(first)score++; teacher=spawn("Teacher","var(--primary)",1.0,-130); feedback(true,"Yes. If the first adult doesn't help, keep telling until someone does.",O1);}),
+    O("Nobody, keep the secret","card",()=>{first=false; feedback(false,"Secrets about touching should always be told. Keza will not get in trouble.");}),
+    O("The person who asked","card",()=>{first=false; feedback(false,"That person made Keza feel unsafe. Keza tells a different adult she trusts.");})])); };
+  const O1 = () => { let first=true; L("O - Openly explain","O: Openly explain what happened","Which words help the teacher understand?", shuffle([
+    O("\"Someone asked me to keep a touching secret. I felt scared.\"","safe",()=>{ if(first)score++; feedback(true,"Clear words help adults help you. It is never the child's fault."+deeper("Good telling has three parts: what happened, who did it, and how Keza felt. She doesn't need every detail; the adult will ask."),P1);}),
+    O("\"Nothing happened.\"","card",()=>{first=false; feedback(false,"Keza can tell the truth. Trusted adults want to know, and Keza is safe telling them.");}),
+    O("\"I did something bad.\"","card",()=>{first=false; feedback(false,"Keza did nothing wrong. It is never the child's fault.");})])); };
+  const P1 = () => { let first=true; L("P - Protect yourself","P: Protect yourself","Where should Keza go now?", shuffle([
+    O("To a safe place with people I trust","safe",()=>{ if(first)score++; S.lesson.options=[]; render(); walk(AR.keza, {...AR.safe}, ()=>feedback(true,"Keza is in a safe place. S-T-O-P: Say no, Tell, Open up, Protect!",()=>older()?more():complete(score,4)));}),
+    O("Somewhere alone to hide","card",()=>{first=false; feedback(false,"Being alone is not the safest choice. Keza goes where trusted people are.");}),
+    O("Stay with the person","card",()=>{first=false; feedback(false,"Keza moves away from anyone who makes her feel unsafe.");})])); };
+  const more = () => { let first=true; L("Bonus: keep telling","What if they don't listen?","Keza told her teacher, but the teacher was busy and said \"Not now.\" What should Keza do?", shuffle([
+    O("Tell another trusted adult","safe",()=>{ if(first)score++; const m=spawn("Mum","#F28C38",1.0,-20); walk(m, around(.5,-20)); feedback(true,"Yes! Keza keeps telling until someone helps: a parent, a nurse, the Child Helpline on 116. Being ignored once doesn't mean she was wrong.",()=>complete(score,5));}),
+    O("Give up, nobody listens","card",()=>{first=false; feedback(false,"Many adults want to help. If one doesn't, Keza tells the next person on her helping hand.");}),
+    O("Wait and see if it happens again","card",()=>{first=false; feedback(false,"Keza doesn't have to wait. Telling early keeps her safe.");})])); };
+  L("S  T  O  P","Something doesn't feel right","Someone says to Keza: \"Let's play a secret touching game. Don't tell anyone.\" Secrets about touching are never okay. Let's learn STOP.",[O("Let's STOP it","",S1)]); }
+
+// Lesson 4: Trusted Adults
+function adultsPick(){ S.screen="adults"; render(); }
+function adultsPlace(){ const chosen = ADULTS.filter(a=>S.adults.has(a[0])); S.screen="lesson";
+  chosen.forEach((a,i)=>{ const ang = chosen.length===1?180:80+200*i/(chosen.length-1); const f=spawn(a[1],a[2],.8,ang); setTimeout(()=>hop("fig",f), 150*i); });
+  L(`${chosen.length} helpers around Keza`,"Keza's helping hand","If something ever felt wrong, who would Keza tell first?",
+    chosen.slice(0,4).map(a=>O(a[1],"card",()=>feedback(true,`Great choice! Keza would tell ${a[1]}. If they don't listen, Keza tells the next adult on her hand.`,()=>complete(Math.min(chosen.length,5),5))))); }
+
+// Lesson 5: Memory Quest (ReviewLesson.cs, MemoryGameScreen.cs, CertificateScreen.cs)
+const PLACES = {
+  home:{name:"Home", line:"Keza is playing at home.", helpers:[["Mum or Dad","#F28C38"],["Grandparent","#F6B73C"]], chaser:"A visitor",
+    tip:"Even someone Keza knows must stop when she says no."},
+  school:{name:"School", line:"Keza is at school at break time.", helpers:[["Teacher","#2474C6"],["Head teacher","#5A8FD6"]], chaser:"Someone",
+    tip:"At school, Keza can always go to a teacher."},
+  playground:{name:"Playground", line:"Keza is at the playground.", helpers:[["IZU volunteer","#3BA776"],["Friend's mum","#2BA3A0"]], chaser:"Someone new",
+    tip:"Outside, Keza stays near people she trusts."}};
+const SPEEDS = [.25, .33, .42];   // metres per second; each chase is a little faster
+const starsFor = sec => sec <= 3 ? 3 : sec <= 6 ? 2 : 1;
+function review(start){ const pairs = REVIEW.filter(p => p[3] <= (older()?2:1)); let score=0; const max = pairs.length + 4 + 1 + 9; let chosen = [];
+  const deck = shuffle(pairs.flatMap((p,i)=>[{i,word:true},{i,word:false}]));
+  S.mem = {pairs, deck, up:[], done:new Set(), turns:0, busy:false, hint:"Turn over two cards. Find each word and what it means.", finish:()=>{ score+=pairs.length; buildStop(); }};
+  const buildStop = () => { const ang = shuffle([140,170,200,230]); AR.signs = STOPS.map((x,i)=>({t:x[0], p:around(.9,ang[i]), h:.3})); let next=0, first=true;
+    const ask = (head, body) => { first=true; L("Round 2 of 4: build STOP", head, body, shuffle(STOPS.slice(next).map((x,j)=>O(x[1],"card",()=>pick(next+j))))); };
+    const pick = i => { if (i!==next){ first=false; feedback(false,`Not yet. The next letter is ${STOPS[next][0]}. What does ${STOPS[next][0]} stand for?`); return; }
+      if (first) score++; const b = AR.signs[i], from={...b.p}, h0=b.h, to={x:AR.keza.x+(i-1.5)*.23, z:AR.keza.z};
+      anim(700, k=>{ const e=k*k*(3-2*k); b.p.x=from.x+(to.x-from.x)*e; b.p.z=from.z+(to.z-from.z)*e; b.h=h0+(.85-h0)*e+Math.sin(k*Math.PI)*.15; }); hop("keza"); next++;
+      if (next<4) ask(`${STOPS[i][0]} is for ${STOPS[i][1]}!`, "What comes next?");
+      else { S.lesson.options=[]; render(); setTimeout(()=>feedback(true,"S-T-O-P is complete above Keza: Say no, Tell, Open up, Protect. Say it out loud together!",hand),750); } };
+    ask("Build the word STOP","The letters are scattered around Keza. Which step comes first?"); };
+  const hand = () => { chosen = ADULTS.filter(a=>S.adults.has(a[0])); if (!chosen.length) chosen = ADULTS.slice(0,2);
+    const figs = chosen.map((a,i)=>spawn(a[1],a[2],.8,chosen.length===1?180:80+200*i/(chosen.length-1)));
+    L("Round 3 of 4: my helping hand","Your helpers are back!","Something is worrying Keza. Who can she go to?",
+      chosen.slice(0,4).map((a,i)=>O(a[1],"card",()=>{ score++; S.lesson.options=[]; render(); const f=figs[i].p; walk(AR.keza,{x:AR.keza.x+(f.x-AR.keza.x)*.6, z:AR.keza.z+(f.z-AR.keza.z)*.6},
+        ()=>feedback(true,`Keza goes to ${a[1]}. And if they don't listen, she tells the next helper on her hand.`,places)); }))); };
+  // Round 4: pick a place (PlacesScreen.cs), then three timed chases (ReviewLesson.Chase)
+  const places = () => { AR.signs=[]; AR.figs=[]; AR.sel=0; AR.keza={...K0}; S.pick = chase; S.screen="places"; render(); };
+  const chase = pid => { const P = PLACES[pid]; AR.place = pid; AR.figs=[]; AR.sel=0; AR.keza={...K0}; S.screen="lesson";
+    const helpers = P.helpers.map((h,i)=>spawn(h[0],h[1],.8,i?-50:-115)); const times = []; let n = 0;
+    const run = () => { AR.figs = AR.figs.filter(f=>!f.chaser); const c = spawn(P.chaser,"#8C99AD",1.5,[150,175,135][n]); c.chaser = true;
+      const t0 = performance.now(); let last = t0, done = false;
+      const win = how => { if (done) return; done = true; S.chase = null; const sec = (performance.now()-t0)/1000, st = starsFor(sec); score += st; times.push(sec);
+        S.best = Math.min(S.best||99, sec); hop("keza"); hop("fig", c); walk(c, around(1.7,[150,175,135][n]));
+        feedback(true, `${how} You stopped them in ${sec.toFixed(1)} seconds: ${"★".repeat(st)}${"☆".repeat(3-st)}. ${P.tip}`, ()=>{ n++; n<3 ? run() : cert(pid, times); }); };
+      const caught = () => { done = true; S.chase = null; AR.figs = AR.figs.filter(f=>f!==c);
+        feedback(false, "The person got into Keza's red zone. When someone comes too close: shout NO in a strong voice, move towards a trusted adult, and tell them. Let's try that chase again.", run); };
+      S.chase = {win};
+      L(`Round 4 of 4: chase ${n+1} of 3`, "Someone is coming too close!", `${P.line} Say NO, tap the person, or walk Keza to a helper with the arrows.`, [O("NO!","unsafe",()=>win("Keza said NO!"))]);
+      const tick = now => { if (done) return; const dt = Math.min(.05,(now-last)/1000); last = now;
+        const dx = AR.keza.x-c.p.x, dz = AR.keza.z-c.p.z, d = Math.hypot(dx,dz);
+        if (d <= .3) return caught();
+        const safe = helpers.find(h => Math.hypot(h.p.x-AR.keza.x, h.p.z-AR.keza.z) <= .5);
+        if (safe) return win(`Keza reached ${safe.label}!`);
+        c.p.x += dx/d*SPEEDS[n]*dt; c.p.z += dz/d*SPEEDS[n]*dt;
+        const st = document.querySelector("#ui .step"); if (st) st.textContent = `Chase ${n+1} of 3  ·  ${((now-t0)/1000).toFixed(1)} s`;
+        drawAR(); requestAnimationFrame(tick); };
+      requestAnimationFrame(tick); };
+    run(); };
+  const cert = (pid, times) => { S.cert = {score, max, helpers:(chosen.length?chosen:ADULTS.slice(0,2)).map(a=>a[1]).join(", "), place:PLACES[pid].name, best:Math.min(...times)}; AR.place=null; S.screen="cert"; render(); };
+  if (start === "stop") { score += pairs.length; buildStop(); }
+  else if (start === "places") { score = pairs.length + 5; chosen = ADULTS.filter(a=>S.adults.has(a[0])); places(); }
+  else if (start === "chase") { score = pairs.length + 5; chosen = ADULTS.filter(a=>S.adults.has(a[0])); chase("playground"); }
+  else if (start === "cert") { chosen = ADULTS.filter(a=>S.adults.has(a[0])); score = max - 2; cert("school", [2.4, 3.6, 2.9]); }
+  else { S.screen="memory"; render(); }
+}
+function flip(n){ const m=S.mem; if(m.busy||m.done.has(m.deck[n].i)||m.up.includes(n)) return; m.up.push(n);
+  if (m.up.length===2){ m.turns++; const [a,b]=m.up.map(k=>m.deck[k]);
+    if (a.i===b.i){ m.done.add(a.i); m.up=[]; m.hint="A match! "+m.pairs[a.i][2]; hop("keza"); if(m.done.size===m.pairs.length){ render(); setTimeout(m.finish,1400); return; } }
+    else { m.busy=true; setTimeout(()=>{ m.up=[]; m.busy=false; render(); },1100); } }
+  render(); }
+
+// ---------- Screens (mirror UI/Screens/*.cs) ----------
+const SCREENS = {
+  splash:{ view:()=>`<div class="spacer"></div><div class="logo">${logo()}<div class="a-display" style="font-size:40px;color:var(--primary)">SafeTouch</div><div class="a-body" style="text-align:center">Learn how to keep your body safe, with Keza.</div></div><div class="spacer"></div>
+    ${btn(t("Start"),"",()=>{S.screen=S.age?"home":"age";render();})}
+    <div class="a-row">${btn("English",S.lang==="en"?"sun":"card",()=>{S.lang="en";render();})}${btn("Kinyarwanda",S.lang==="rw"?"sun":"card",()=>{S.lang="rw";render();})}</div>` },
+  age:{ view:()=>`${bar("",()=>{S.screen="splash";render();})}<div class="a-display" style="text-align:center">How old are you?</div><div class="spacer" style="flex:.4"></div>
+    ${btn("6 - 8","",()=>{S.age="6-8";S.screen="home";render();},'style="min-height:104px;font-size:26px"')}
+    ${btn("9 - 11","safe",()=>{S.age="9-11";S.screen="home";render();},'style="min-height:104px;font-size:26px"')}<div class="spacer"></div>
+    <div class="a-small" style="text-align:center">SafeTouch only asks your age group. It never asks your name.</div>` },
+  home:{ view:()=>{ const stars = Object.values(S.scores).reduce((a,b)=>a+b,0);
+    return `${bar("",()=>{S.screen="splash";render();})}<div class="a-display">Pick a lesson</div><div class="a-small">★ ${stars} stars &nbsp;|&nbsp; ${(S.badgesOn||[]).length} badges</div>
+    ${LESSONS.map(l=>{ const u=unlocked(l.level), d=S.done.has(l.level); return `<button class="lesson-card" style="--c:${l.c}" ${u?on(()=>startLesson(l.level)):"disabled"}><b>${l.level}. ${esc(l.title)}</b><span class="a-small">${esc(l.summary)}</span><span class="st">${d?"Done - play again":u?"Ready to play":`Finish lesson ${l.level-1} first`}</span></button>`; }).join("")}
+    <div class="spacer"></div><div class="a-row">${btn("My badges","sun",()=>{S.screen="badges";render();})}${btn(t("Grown-ups"),"card",()=>{S.gate=null;S.screen="gate";render();})}</div>`; } },
+  scan:{ camera:true, view:()=>`${bar("",home)}<div class="hint"><b class="a-body" style="font-weight:700">Move your phone slowly to find the floor or a table.</b><span class="a-small">${AR.found?"Found it! Tap the button to place Keza.":"Looking for a flat surface..."}</span></div><div class="spacer"></div>
+    ${btn("Place Keza here","",AR.found?()=>{AR.placed=true;AR.mode="lesson";AR.keza={...K0};beginLesson();}:null)}` },
+  lesson:{ camera:true, view:()=>{ const l=S.lesson; return `${bar(l.title,home,true)}<div class="tools"><span class="step">${esc(l.step)}</span><button class="chip-btn" ${on(()=>{})}>Listen again</button><button class="chip-btn" ${on(()=>{AR.placed=false;clearLesson();startLesson(S.level);})}>Place again</button></div><div class="spacer"></div>
+    ${movePad()}<div class="prompt">${l.heading?`<div class="a-title">${esc(l.heading)}</div>`:""}<div class="a-body">${esc(l.body)}</div>${l.options.map(o=>btn(o.label,o.cls,o.fn)).join("")}</div>`; } },
+  memory:{ view:()=>{ const m=S.mem; return `${bar("Round 1 of 3: match the pairs",home)}<div class="mem-hint a-body" style="font-size:13.5px">${esc(m.hint)}</div>
+    <div class="a-small" style="font-weight:700">${m.done.size} of ${m.pairs.length} pairs found &nbsp;|&nbsp; ${m.turns} turns</div>
+    <div class="mem ${m.deck.length>8?"c3":"c2"}">${m.deck.map((c,n)=>{ const p=m.pairs[c.i], done=m.done.has(c.i), up=done||m.up.includes(n);
+      return `<button class="mcard ${!up?"down":done?"done":c.word?"":"mean"}" aria-label="${up?esc(c.word?p[0]:p[1]):"Hidden card"}" ${on(()=>flip(n))}>${up?esc(c.word?p[0]:p[1]):"?"}</button>`; }).join("")}</div>`; } },
+  places:{ view:()=>`${bar("Round 4 of 4: safe places chase",home)}<div class="a-display" style="font-size:24px">Where is Keza playing?</div>
+    <div class="a-small">Pick a place. Someone will come too close three times. Say NO, tap them, or walk Keza to a helper as fast as you can.</div>
+    ${[["home","Home","Mum or Dad, Grandparent","#F28C38",PLACE_ICON.home],["school","School","Teacher, Head teacher","#2474C6",PLACE_ICON.school],["playground","Playground","IZU volunteer, Friend's mum","#3BA776",PLACE_ICON.playground]].map(([id,n,who,c,icon])=>
+      `<button class="place" style="--c:${c}" ${on(()=>S.pick(id))}>${icon}<span><b>${n}</b><span class="a-small">Helpers here: ${who}</span></span></button>`).join("")}
+    <div class="spacer"></div><div class="a-small" style="text-align:center">Faster is better: 3 seconds or less earns 3 stars.</div>` },
+  cert:{ view:()=>{ const c=S.cert; const conf = Array.from({length:36},(_, i)=>`<i style="left:${(i*29)%100}%;background:${["var(--unsafe)","var(--caution)","var(--safe)","var(--primary)","var(--sun)"][i%5]};animation-delay:${(i%9)*.12}s"></i>`).join("");
+    return `<div class="confetti">${conf}</div><div class="spacer" style="flex:.3"></div><div class="cert"><div class="logo" style="justify-self:center;transform:scale(.6);margin:-30px 0 -34px">${logo()}</div>
+    <div class="a-display" style="text-align:center;color:var(--primary)">I remember!</div><div class="a-small" style="text-align:center">Keza and I finished the SafeTouch Memory Quest. Show a grown-up what you learned.</div>
+    ${[["var(--unsafe)","My bubble: red is my body, yellow is people I trust, green is everyone else."],["var(--caution)","Touch can be safe, uncomfortable or unsafe. Touching secrets are always told."],["var(--primary)","S-T-O-P: Say no, Tell, Open up, Protect."],["var(--safe)",`My helpers: ${c.helpers}.`],["var(--sun)",`Safe places chase at ${c.place}: my fastest NO took ${c.best.toFixed(1)} seconds.`]].map(([col,txt])=>`<div class="idea" style="--c:${col}"><i></i><span>${esc(txt)}</span></div>`).join("")}
+    <div class="a-title" style="text-align:center">★ ${c.score} of ${c.max} stars</div></div><div class="spacer"></div>${btn("Collect my badge","sun",()=>{ S.screen="lesson"; S.level=5; complete(c.score,c.max); })}`; } },
+  adults:{ view:()=>`${bar("My Trusted Adults",home)}<div class="a-body">Tap the grown-ups you trust. Choose at least 2. Can you fill a whole hand with 5?</div>
+    <div class="grid2">${ADULTS.map(a=>`<button class="adult" style="--c:${a[2]}" aria-pressed="${S.adults.has(a[0])}" ${on(()=>{S.adults.has(a[0])?S.adults.delete(a[0]):S.adults.add(a[0]);render();})}><i></i>${esc(a[1])}</button>`).join("")}</div>
+    <div class="spacer"></div><div class="a-small" style="text-align:center;font-weight:700">${S.adults.size} of 5 helpers chosen</div>${btn("Put them around Keza","safe",S.adults.size>=2?adultsPlace:null)}` },
+  badges:{ view:()=>`${bar("My badges",()=>{S.screen="home";render();})}<div class="scroll"><div class="a-title">My lessons</div>
+    ${LESSONS.map(l=>`<div class="a-body">${esc(l.title)} &nbsp;-&nbsp; ${S.done.has(l.level)?`${S.scores[l.level]} stars`:"not yet"}</div>`).join("")}${S.best?`<div class="a-body">Fastest NO in the chase: <b>${S.best.toFixed(1)} seconds</b></div>`:""}<div class="a-title" style="margin-top:6px">My badges</div>
+    ${BADGES.map(b=>{const u=(S.badgesOn||[]).includes(b[0]); return `<div class="badge ${u?"on":""}"><b class="a-body" style="font-weight:700;${u?"":"color:var(--app-muted)"}">${esc(b[1])}${u?"":" (locked)"}</b><span class="a-small">${esc(b[2])}</span></div>`;}).join("")}</div>` },
+  gate:{ view:()=>{ if(!S.gate){ const a=11+Math.floor(Math.random()*8), b=3+Math.floor(Math.random()*6), c=Math.floor(Math.random()*3); S.gate={a,b,c}; } const g=S.gate, off=[-2,3,1];
+    return `${bar(t("Grown-ups"),()=>{S.screen="home";render();})}<div class="a-title">Please ask a grown-up. What is ${WORDS[g.a]} plus ${WORDS[g.b]}?</div>
+    ${[0,1,2].map(i=>btn(String(i===g.c?g.a+g.b:g.a+g.b+off[i]),"card",()=>{S.screen=i===g.c?"parent":"home";S.gate=null;render();})).join("")}<div class="spacer"></div>
+    <div class="a-small">A sum written in words keeps young children out without a PIN or an account.</div>`; } },
+  parent:{ view:()=>`${bar("Parents and teachers",()=>{S.screen="home";render();})}<div class="tabs" role="tablist">${[["talk","Talk"],["signs","Signs"],["help","Get help"],["settings","Settings"]].map(([k,n])=>`<button role="tab" aria-selected="${S.tab===k}" ${on(()=>{S.tab=k;S.confirmReset=false;render();})}>${n}</button>`).join("")}</div>
+    <div class="scroll">${S.tab==="settings"?settings():RES[S.tab].map(r=>`<div class="rcard"><b>${esc(r[0])}</b><span class="a-small">${esc(r[1])}</span>${r[2]?`<button class="a-btn safe" style="min-height:44px" ${on(()=>{})}>Call ${r[2]}</button>`:""}</div>`).join("")}</div>` }
+};
+function settings(){ return `<b class="a-body" style="font-weight:700">Language</b><div class="a-row">${btn("English",S.lang==="en"?"sun":"card",()=>{S.lang="en";render();})}${btn("Kinyarwanda",S.lang==="rw"?"sun":"card",()=>{S.lang="rw";render();})}</div>
+  <b class="a-body" style="font-weight:700">Anonymous progress sync</b><span class="a-small">Off by default. When on, lesson results are sent with a random device id only: no name, photo, location or voice. Switching it off deletes the copy on the server.</span>
+  ${btn(S.sync?"Sync is ON - tap to switch off":"Sync is OFF - tap to switch on",S.sync?"safe":"card",()=>{S.sync=!S.sync;render();})}
+  <b class="a-body" style="font-weight:700">Reset</b>${btn(S.confirmReset?"Tap again to delete everything":"Delete progress on this phone",S.confirmReset?"unsafe":"card",()=>{ if(!S.confirmReset){S.confirmReset=true;render();} else { const l=S.lang; S=fresh(); S.lang=l; AR.placed=false; clearLesson(); render(); } })}`; }
+const PLACE_ICON = {
+  home:`<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 22 24 7l18 15" fill="none" stroke="#F28C38" stroke-width="4" stroke-linejoin="round"/><rect x="11" y="21" width="26" height="20" rx="2" fill="#F28C38"/><rect x="20" y="28" width="8" height="13" fill="#fff"/></svg>`,
+  school:`<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="18" width="32" height="23" rx="2" fill="#2474C6"/><path d="M4 19 24 8l20 11" fill="none" stroke="#2474C6" stroke-width="4" stroke-linejoin="round"/><rect x="14" y="24" width="7" height="7" fill="#fff"/><rect x="27" y="24" width="7" height="7" fill="#fff"/><rect x="21" y="33" width="6" height="8" fill="#fff"/></svg>`,
+  playground:`<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 42 14 12h20l6 30" fill="none" stroke="#3BA776" stroke-width="4" stroke-linejoin="round"/><line x1="19" y1="12" x2="19" y2="31" stroke="#1F2A44" stroke-width="2"/><line x1="29" y1="12" x2="29" y2="31" stroke="#1F2A44" stroke-width="2"/><rect x="16" y="31" width="16" height="4" rx="1" fill="#F6B73C"/></svg>`};
+function logo(){ return `<svg width="150" height="150" viewBox="0 0 150 150" aria-hidden="true"><circle cx="75" cy="80" r="66" fill="var(--safe)" opacity=".22"/><circle cx="75" cy="80" r="46" fill="var(--caution)" opacity=".3"/><circle cx="75" cy="80" r="26" fill="var(--unsafe)" opacity=".4"/>
+  <rect x="62" y="70" width="26" height="40" rx="13" fill="var(--keza)"/><circle cx="66" cy="44" r="7" fill="#2B1A10"/><circle cx="84" cy="44" r="7" fill="#2B1A10"/><circle cx="75" cy="56" r="13" fill="var(--skin)"/><circle cx="70" cy="55" r="1.8" fill="#1F2A44"/><circle cx="80" cy="55" r="1.8" fill="#1F2A44"/><path d="M70 61 q5 4 10 0" stroke="#1F2A44" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>`; }
+
+// ---------- Screen index (right column) ----------
+const INDEX = [
+  ["Start", [["splash","Splash and language","English or Kinyarwanda, then Start.","FR10"],["age","Age group","Two big buttons. No name is asked.","NFR1"],["home","Lesson map","Four lessons unlock in order; badges and grown-ups below.",""]]],
+  ["AR lessons", [["scan","Find the floor","Plane detection, reticle, Place Keza here.","FR1 FR2"],["l1","1. My Space Bubble","Three floor zones, three visitors walk in.","FR3"],["l2","2. Safe or Unsafe?","Scenario cards with instant feedback.","FR4 FR5"],["l3","3. STOP!","Say no, Tell, Open up, Protect.","FR6"],["adults","4. My Trusted Adults","Pick roles, then place them around Keza.","FR7"],["memory","5. Memory Quest: match","Card memory game of the big ideas.","FR8"],["l5","5. Memory Quest: build STOP","Letter blocks fly above Keza in AR.","FR6"],["places","5. Memory Quest: pick a place","Home, school or playground.","FR8"],["chase","5. Memory Quest: safe places chase","Timed: say NO, tap the person, or reach a helper.","FR6"],["cert","5. I remember! certificate","The big ideas, helpers, fastest time.","FR8"]]],
+  ["Progress and grown-ups", [["badges","My badges","Stars per lesson and five badges, saved on the phone.","FR8"],["gate","Grown-up check","A sum written in words.",""],["parent","Parents and teachers","Talk guides, warning signs, Rwanda helplines, settings.","FR9"]]]];
+const nav = document.getElementById("index");
+nav.innerHTML = INDEX.map(([g,items],gi)=>`<div class="flow-group"><span class="eyebrow">${g}</span><ol>${items.map((it,i)=>`<li><button class="scr" data-jump="${it[0]}"><span class="n">${String(INDEX.slice(0,gi).reduce((n,x)=>n+x[1].length,0)+i+1).padStart(2,"0")}</span><b>${it[1]}${it[3]?it[3].split(" ").map(f=>`<span class="fr">${f}</span>`).join(""):""}</b><span class="d">${it[2]}</span></button></li>`).join("")}</ol></div>`).join("")
+  + `<p class="note">Content shown is the draft for expert review in week 7. Scenario wording is deliberately non-graphic, and every answer ends by pointing the child to a trusted adult.</p>`;
+arSvg.addEventListener("pointerdown", e => { if (S.chase && e.target.closest("[data-chaser]")) S.chase.win("Keza tapped them and said STOP!"); });
+nav.addEventListener("click", e => { const b = e.target.closest("[data-jump]"); if (b) jump(b.dataset.jump); });
+function jump(id){ S.overlay=null; S.toast=null; if(!S.age) S.age="6-8";
+  if (["memory","l5","places","chase","cert"].includes(id)){ S.unlockAll=true; document.getElementById("unlock").setAttribute("aria-pressed","true"); AR.placed=true; clearLesson(); S.level=5; AR.mode="lesson"; if(!S.adults.size){ S.adults.add("parent"); S.adults.add("teacher"); S.adults.add("izu"); }
+    review({l5:"stop", memory:"memory", places:"places", chase:"chase", cert:"cert"}[id]); return; }
+  if (["l1","l2","l3","adults"].includes(id)){ S.unlockAll=true; document.getElementById("unlock").setAttribute("aria-pressed","true"); AR.placed=true; clearLesson(); S.level={l1:1,l2:2,l3:3,adults:4}[id]; AR.mode="lesson"; beginLesson(); return; }
+  if (id==="scan"){ AR.placed=false; startLesson(1); return; }
+  clearLesson(); AR.mode="none"; S.screen=id; render(); }
+function markIndex(){ const cur = S.screen==="lesson" ? (S.level===5 && AR.place ? "chase" : "l"+S.level) : S.screen;
+  document.getElementById("age").textContent = "Age group: " + (S.age==="9-11" ? "9 - 11" : "6 - 8"); nav.querySelectorAll(".scr").forEach(b=>b.setAttribute("aria-current", String(b.dataset.jump===cur || (cur==="l4"&&b.dataset.jump==="adults")))); }
+
+document.getElementById("hotspots").addEventListener("click", e => { const on = e.currentTarget.getAttribute("aria-pressed")!=="true"; e.currentTarget.setAttribute("aria-pressed", on); document.getElementById("screen").classList.toggle("hot", on); });
+document.getElementById("restart").addEventListener("click", () => { S=fresh(); AR.placed=false; clearLesson(); AR.mode="none"; document.getElementById("unlock").setAttribute("aria-pressed","false"); render(); });
+document.getElementById("age").addEventListener("click", () => { S.age = S.age==="9-11" ? "6-8" : "9-11"; render(); });
+document.getElementById("unlock").addEventListener("click", e => { S.unlockAll = !S.unlockAll; e.currentTarget.setAttribute("aria-pressed", S.unlockAll); render(); });
+
+S = fresh();
+const hash = location.hash.replace("#","");
+if (hash.startsWith("s-")) { document.body.classList.add("export"); jump(hash.slice(2)); } else render();
+window.__proto = {jump, S:()=>S, AR, render, startLesson, nudge, flip, review};
+})();
+</script>
+
+<script>
+(function(){
+"use strict";
+const NS = 'xmlns="http://www.w3.org/2000/svg"';
+// ---------- Navigation map ----------
+(function(){
+  const W = 980, H = 410;
+  const node = (x,y,w,label,sub,kind) => {
+    const fill = kind==="ar" ? "var(--chip)" : kind==="hub" ? "var(--accent)" : "var(--panel)";
+    const ink = kind==="hub" ? "var(--accent-ink)" : "var(--fg)";
+    return `<g><rect x="${x}" y="${y}" width="${w}" height="54" rx="10" fill="${fill}" stroke="var(--line)" stroke-width="1.5"/>`+
+      `<text x="${x+w/2}" y="${y+24}" text-anchor="middle" font-size="14" font-weight="600" style="fill:${ink}">${label}</text>`+
+      `<text x="${x+w/2}" y="${y+42}" text-anchor="middle" class="m" style="fill:${kind==="hub"?"var(--accent-ink)":"var(--muted)"}">${sub}</text></g>`;
+  };
+  const arrow = (x1,y1,x2,y2,dash) => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#ah)" ${dash?'stroke-dasharray="4 4"':""}/>`;
+  const curve = (d,dash) => `<path d="${d}" stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#ah)" ${dash?'stroke-dasharray="4 4"':""}/>`;
+  let g = `<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker></defs>`;
+  g += node(20,163,120,"Splash","language, Start");
+  g += node(180,163,120,"Age group","6-8 or 9-11");
+  g += node(340,163,140,"Lesson map","hub","hub");
+  g += node(540,40,150,"Find the floor","ARCore planes","ar");
+  g += node(760,10,200,"1. My Space Bubble","AR lesson","ar");
+  g += node(760,74,200,"2. Safe or Unsafe?","AR lesson","ar");
+  g += node(760,138,200,"3. STOP!","AR lesson","ar");
+  g += node(540,138,150,"Pick adults","roles, not names");
+  g += node(760,202,200,"4. Trusted Adults","AR lesson","ar");
+  g += node(540,242,150,"My badges","stars, badges");
+  g += node(760,272,200,"5. Memory Quest","match, STOP, place, chase","ar");
+  g += node(540,346,150,"Grown-up check","sum in words");
+  g += node(760,346,200,"Parents and teachers","guides, helplines, settings");
+  g += arrow(140,190,178,190) + arrow(300,190,338,190);
+  g += curve("M480 180 C510 150 510 90 538 70");
+  g += curve("M690 60 C720 50 730 40 758 37") + curve("M690 67 L758 101") + curve("M690 74 C720 110 730 150 758 165");
+  g += curve("M480 196 C505 196 515 165 538 165");
+  g += curve("M690 165 C720 175 730 215 758 229");
+  g += curve("M480 204 C505 230 515 269 538 269");
+  g += curve("M480 212 C500 290 510 373 538 373");
+  g += arrow(690,373,758,373);
+  g += arrow(860,256,860,270,true);
+  g += `<rect x="20" y="300" width="14" height="14" rx="3" fill="var(--chip)" stroke="var(--line)"/><text x="42" y="312" class="m">camera (AR) screen</text>`;
+  g += `<rect x="20" y="324" width="14" height="14" rx="3" fill="var(--panel)" stroke="var(--line)"/><text x="42" y="336" class="m">opaque screen</text>`;
+  g += `<line x1="20" y1="355" x2="34" y2="355" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 3"/><text x="42" y="359" class="m" style="fill:var(--accent)">lesson complete or ‹ exit returns to the lesson map</text>`;
+  document.getElementById("navmap").innerHTML = `<svg ${NS} viewBox="0 0 ${W} ${H}" role="img" aria-label="Navigation map: Splash, Age group, then the Lesson map hub, which leads to the four AR lessons and the Memory Quest end game through Find the floor, to My badges, and through a grown-up check to the parent section.">${g}</svg>`;
+})();
+
+// ---------- Top-down placement plan ----------
+(function(){
+  const W = 620, H = 560, PX = 130, cx = 330, cz = 230; // 130 px per metre, Keza at (cx, cz); phone below
+  const P = (r,a) => [cx + PX*r*Math.sin(a*Math.PI/180), cz + PX*r*Math.cos(a*Math.PI/180)]; // angle 0 points down, towards the phone
+  let g = "";
+  for (let i=-2;i<=2;i++){ g += `<line x1="${cx+i*PX}" y1="20" x2="${cx+i*PX}" y2="${H-40}" stroke="var(--line)" stroke-width="1"/>`; }
+  for (let i=-1;i<=2;i++){ g += `<line x1="40" y1="${cz+i*PX}" x2="${W-20}" y2="${cz+i*PX}" stroke="var(--line)" stroke-width="1"/>`; }
+  [[.9,"#3BA776"],[.6,"#EE9B2F"],[.3,"#E4574C"]].forEach(([r,c]) => g += `<circle cx="${cx}" cy="${cz}" r="${r*PX}" fill="${c}" fill-opacity=".22" stroke="${c}" stroke-width="2"/>`);
+  g += `<circle cx="${cx}" cy="${cz}" r="${1.4*PX}" fill="none" stroke="var(--muted)" stroke-dasharray="3 5"/>`;
+  const dot = (x,y,c,label,dx,dy) => `<circle cx="${x}" cy="${y}" r="9" fill="${c}" stroke="var(--panel)" stroke-width="2"/><text x="${x+(dx||12)}" y="${y+(dy||4)}" font-size="12.5">${label}</text>`;
+  const path = (a,r1,r2,c) => { const [x1,y1]=P(r1,a),[x2,y2]=P(r2,a); return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="2" marker-end="url(#ah2)"/>`; };
+  g += `<defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker></defs>`;
+  g += path(-110,1.4,.66,"var(--muted)") + path(110,1.4,.76,"var(--muted)") + path(150,1.4,.61,"var(--muted)");
+  let [x,y] = P(1.4,-110); g += dot(x,y,"#F6B73C","Grandma, −110°",-104,-14);
+  [x,y] = P(1.4,110); g += dot(x,y,"#2474C6","Classmate, 110°",14,-10);
+  [x,y] = P(1.4,150); g += dot(x,y,"#8C99AD","Someone new, 150°",14,4);
+  [x,y] = P(1.2,-90); g += `<circle cx="${x}" cy="${y}" r="${.25*PX}" fill="#3BA776" fill-opacity=".35" stroke="#3BA776" stroke-width="2"/><text x="${x}" y="${y+50}" text-anchor="middle" font-size="12.5">Safe place, 1.2 m, −90°</text>`;
+  for (let i=0;i<5;i++){ const a = 80 + 200*i/4; [x,y] = P(.8,a); g += `<rect x="${x-6}" y="${y-6}" width="12" height="12" rx="2" fill="var(--accent)" stroke="var(--panel)" stroke-width="1.5"/>`; }
+  g += `<rect x="40" y="${H-58}" width="12" height="12" rx="2" fill="var(--accent)"/><text x="60" y="${H-48}" font-size="12.5">Trusted adults, 200° arc at 0.8 m</text>`;
+  g += `<circle cx="${cx}" cy="${cz}" r="11" fill="#F28C38" stroke="var(--panel)" stroke-width="2"/><text x="${cx}" y="${cz-16}" text-anchor="middle" font-size="12.5" font-weight="600">Keza</text>`;
+  const py = cz + 2.1*PX;
+  g += `<path d="M${cx} ${py} L${cx-150} ${py-260} M${cx} ${py} L${cx+150} ${py-260}" stroke="var(--accent)" stroke-dasharray="5 5" fill="none"/>`;
+  g += `<rect x="${cx-12}" y="${py-6}" width="24" height="40" rx="5" fill="var(--fg)"/><text x="${cx+22}" y="${py+22}" font-size="12.5">Phone, about 2 m away</text>`;
+  [.3,.6,.9].forEach(r => g += `<text x="${cx+5}" y="${cz+r*PX-5}" class="m">${r} m</text>`);
+  g += `<text x="40" y="36" class="m">TOP VIEW · grid = 1 m · 0° points at the phone</text>`;
+  document.getElementById("topdown").innerHTML = `<svg ${NS} viewBox="0 0 ${W} ${H}" style="min-width:520px" role="img" aria-label="Top view of the room: Keza in the centre with red, yellow and green zones at 0.3, 0.6 and 0.9 metres. Visitors start at 1.4 metres and walk in from the sides and the far side. The safe place is 1.2 metres to the side, and trusted adults stand on an arc at 0.8 metres.">${g}</svg>`;
+})();
+
+// ---------- Side view ----------
+(function(){
+  const W = 620, H = 560, PX = 170, fy = 440, px = 130, kx = px + 2*PX;
+  let g = "";
+  for (let i=0;i<=3;i++){ g += `<line x1="30" y1="${fy-i*.5*PX}" x2="${W-20}" y2="${fy-i*.5*PX}" stroke="var(--line)"/><text x="34" y="${fy-i*.5*PX-5}" class="m">${(i*.5).toFixed(1)} m</text>`; }
+  g += `<line x1="30" y1="${fy}" x2="${W-20}" y2="${fy}" stroke="var(--fg)" stroke-width="2"/>`;
+  const ph = fy - 1.1*PX, kh = .66*PX, ah = .9*PX;
+  g += `<rect x="${px-54}" y="${fy-1.25*PX}" width="44" height="${1.25*PX}" rx="22" fill="var(--chip)" stroke="var(--line)"/><text x="${px-32}" y="${fy+22}" text-anchor="middle" class="m">child</text>`;
+  g += `<path d="M${px} ${ph} L${kx} ${fy} M${px} ${ph} L${kx} ${fy-kh}" stroke="var(--accent)" stroke-dasharray="5 5" fill="none"/>`;
+  g += `<rect x="${px-6}" y="${ph-22}" width="12" height="44" rx="3" fill="var(--fg)"/>`;
+  g += `<text x="${px+14}" y="${ph-30}" font-size="12.5">Phone at chest height, about 1.1 m</text>`;
+  g += `<rect x="${kx+60}" y="${fy-ah*.62}" width="40" height="${ah*.62}" rx="20" fill="#8C99AD"/><circle cx="${kx+80}" cy="${fy-ah*.8}" r="${ah*.15}" fill="#8D5524"/><text x="${kx+80}" y="${fy-ah-8}" text-anchor="middle" font-size="12.5">Adult figure, 0.9 m</text>`;
+  g += `<rect x="${kx-17}" y="${fy-kh*.62}" width="34" height="${kh*.62}" rx="17" fill="#F28C38"/><circle cx="${kx}" cy="${fy-kh*.8}" r="${kh*.15}" fill="#8D5524"/><text x="${kx}" y="${fy-kh-8}" text-anchor="middle" font-size="12.5">Keza, 0.66 m</text>`;
+  g += `<defs><marker id="ah3" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker></defs>`;
+  g += `<line x1="${px}" y1="${fy+36}" x2="${kx}" y2="${fy+36}" stroke="var(--muted)" marker-start="url(#ah3)" marker-end="url(#ah3)"/><text x="${(px+kx)/2}" y="${fy+56}" text-anchor="middle" class="m">about 2 m</text>`;
+  g += `<text x="40" y="36" class="m">SIDE VIEW · figures are sized for a child's eye line</text>`;
+  document.getElementById("sideview").innerHTML = `<svg ${NS} viewBox="0 0 ${W} ${H}" style="min-width:520px" role="img" aria-label="Side view: a child holds the phone at about 1.1 metres, 2 metres from Keza, who is 0.66 metres tall. Adult figures are 0.9 metres tall.">${g}</svg>`;
+})();
+
+// ---------- Swatches ----------
+document.getElementById("swatches").innerHTML = [
+  ["Ink","#1F2A44","Text"],["Muted","#5F6F86","Secondary text"],["Sky","#EAF4FB","Screen background"],["Card","#FFFFFF","Cards, choices"],
+  ["Primary","#2474C6","Main buttons"],["Sun","#F6B73C","Stars, badges"],["Safe","#3BA776","Green zone, Safe"],["Caution","#EE9B2F","Yellow zone, Uncomfortable"],["Unsafe","#E4574C","Red zone, Unsafe"],["Keza","#F28C38","Guide character"]]
+  .map(([n,h,u]) => `<div class="sw"><i style="--c:${h}"></i><div><b>${n}</b><code>${h}</code><span class="note">${u}</span></div></div>`).join("");
+
+// ---------- Downloads (downloads capability) ----------
+const status = document.getElementById("dlstatus");
+const bar = document.getElementById("downloads");
+let dl = null;
+if (window.claude && window.claude.use) {
+  window.claude.use("downloads").then(ns => { dl = ns; if (!ns) status.textContent = "Downloads are not available in this view. The zip is also in the project files."; }).catch(() => {});
+}
+bar.addEventListener("click", async e => {
+  const b = e.target.closest("[data-file]"); if (!b) return;
+  const file = b.dataset.file;
+  if (!dl) { status.textContent = "Downloads are not available in this view. The zip is also in the project files."; return; }
+  status.textContent = "Preparing " + file + "...";
+  try {
+    // Archives are published as base64 text and rebuilt here before saving.
+    const packed = file.endsWith(".zip");
+    const res = await fetch("files/" + file + (packed ? ".b64.txt" : ""));
+    if (!res.ok) throw new Error("missing");
+    let data;
+    if (packed) {
+      const bin = atob((await res.text()).trim());
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      data = new Blob([bytes], { type: "application/zip" });
+    } else data = await res.blob();
+    await dl.save({ filename: file, data });
+    status.textContent = "Saved " + file + ".";
+  } catch (err) {
+    status.textContent = err && err.code === "declined" ? "Download cancelled." : "Could not save " + file + ". Try again.";
+  }
+});
+})();
+</script>

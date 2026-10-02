@@ -1,0 +1,31 @@
+{
+  "_note": "Phone numbers must be re-confirmed with NCDA / RIB before the evaluation sessions.",
+  "items": [
+    { "resourceId": "talk1", "section": "talk", "title": "Use the right names for body parts",
+      "body": "Children who know the correct words can explain what happened. Name private parts calmly, the same way you name an elbow or a knee." },
+    { "resourceId": "talk2", "section": "talk", "title": "Surprises, not secrets",
+      "body": "Explain the difference: a surprise is fun and is told soon (a birthday gift). A secret that makes you feel worried should always be told." },
+    { "resourceId": "talk3", "section": "talk", "title": "Ask after each lesson",
+      "body": "Ask your child to teach you STOP. Let them name their trusted adults, and add yourself to the list if you are not there yet." },
+    { "resourceId": "talk4", "section": "talk", "title": "If your child tells you something",
+      "body": "Stay calm, believe them, thank them for telling you, and tell them it is not their fault. Do not question them in detail; contact the services below." },
+    { "resourceId": "signs1", "section": "signs", "title": "Changes in behaviour",
+      "body": "Sudden fear of a person or place, withdrawal, anger, bed-wetting or nightmares that were not there before." },
+    { "resourceId": "signs2", "section": "signs", "title": "Secrets and gifts",
+      "body": "New gifts, money or phone credit from an adult, with no clear reason, or talk of a special secret." },
+    { "resourceId": "signs3", "section": "signs", "title": "Knowledge beyond their age",
+      "body": "Words or play about adult sexual behaviour that a child of their age would not usually know." },
+    { "resourceId": "signs4", "section": "signs", "title": "Physical signs",
+      "body": "Pain, bruising or bleeding around private areas, or difficulty walking or sitting. Seek medical help at an Isange One Stop Centre." },
+    { "resourceId": "help1", "section": "help", "title": "Child Helpline (free)",
+      "body": "National toll-free line for children and anyone worried about a child.", "phone": "116" },
+    { "resourceId": "help2", "section": "help", "title": "Isange One Stop Centre",
+      "body": "Free medical, psychosocial and legal help for child abuse and GBV, in hospitals across Rwanda.", "phone": "3029" },
+    { "resourceId": "help3", "section": "help", "title": "Rwanda Investigation Bureau (RIB)",
+      "body": "Report child abuse to RIB.", "phone": "166" },
+    { "resourceId": "help4", "section": "help", "title": "Emergency (Rwanda National Police)",
+      "body": "If a child is in danger right now.", "phone": "112" },
+    { "resourceId": "help5", "section": "help", "title": "Your village IZU volunteer",
+      "body": "Inshuti z'Umuryango volunteers in every village can help families find support." }
+  ]
+}
