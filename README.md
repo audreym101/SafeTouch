@@ -56,7 +56,7 @@ I chose a phone instead of a VR headset because most families and schools here h
 
 ## Designs
 
-- **Figma prototype:** (link above). The Figma files and an import plugin are in `docs/designs/figma`.
+- **Figma prototype:** (link above). The Figma files  `docs/designs/figma`.
 - **Screenshots** of every screen are in `docs/designs/screens`.
 - **Navigation map:** `docs/designs/navigation-map.png`
 - **Where objects are placed in AR:** `docs/designs/ar-placement-top.png` and `docs/designs/ar-placement-side.png`
