@@ -63,6 +63,9 @@ I chose a phone instead of a VR headset because most families and schools here h
 - **Style guide:** `docs/designs/style-guide.png`
 
 
+<img width="2360" height="1734" alt="Screenshot 2026-10-02 111835" src="https://github.com/user-attachments/assets/16ef078d-fc1a-4cbf-9c2e-cb0114b1a981" />
+
+
 
 The assets I plan to use, and why I need each one, are listed in `docs/assets.md`. How the user interacts with the app on the phone is explained in `docs/hardware.md`.
 
