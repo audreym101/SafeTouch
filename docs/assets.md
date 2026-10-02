@@ -49,4 +49,4 @@ Every asset below exists to serve one of the four learning goals: recognising pe
 
 ## Tools used to make assets
 
-Mixamo (animation), Figma (UI, badges, card art), Audacity (narration editing), Unity 6 (import, materials, prefabs).
+Blender 4 (models), Mixamo (animation), Figma (UI, badges, card art), Audacity (narration editing), Unity 6 (import, materials, prefabs).

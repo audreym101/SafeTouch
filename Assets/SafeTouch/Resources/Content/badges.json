@@ -1,0 +1,10 @@
+{
+  "items": [
+    { "badgeId": "bubble",   "title": "Bubble Keeper",     "description": "Finished My Space Bubble",           "requirement": "complete:1" },
+    { "badgeId": "spotter",  "title": "Safe Spotter",      "description": "Sorted all the scenario cards",      "requirement": "complete:2" },
+    { "badgeId": "stop",     "title": "STOP Star",         "description": "Practised Say no, Tell, Open up, Protect", "requirement": "complete:3" },
+    { "badgeId": "hand",     "title": "Helping Hand",      "description": "Named at least 2 trusted adults",    "requirement": "adults:2" },
+    { "badgeId": "quick",    "title": "Quick and Safe",    "description": "Said NO in 3 seconds or less in the chase game", "requirement": "fast:3" },
+    { "badgeId": "champion", "title": "SafeTouch Champion","description": "Finished every lesson and the Memory Quest", "requirement": "all" }
+  ]
+}
