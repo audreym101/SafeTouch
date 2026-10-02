@@ -1,0 +1,17 @@
+{
+  "_note": "Kinyarwanda translation in progress (week 6). Needs review by a native speaker and the content experts. Missing keys fall back to English.",
+  "items": [
+    {
+      "key": "start",
+      "value": "Tangira"
+    },
+    {
+      "key": "continue",
+      "value": "Komeza"
+    },
+    {
+      "key": "home.grownups",
+      "value": "Ababyeyi"
+    }
+  ]
+}
