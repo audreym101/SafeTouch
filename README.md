@@ -9,7 +9,6 @@ The child places Keza, a friendly guide character, on the real floor through the
 | **GitHub repository** | <https://github.com/audreym101/SafeTouch> |
 | **Video demo** | *Add your YouTube (unlisted) or Google Drive link here* |
 | **Figma prototype** | *Add your Figma share link here* (built from [`docs/designs/figma`](docs/designs/figma/README.md)) |
-| **Clickable prototype (browser)** | [`docs/prototype/index.html`](docs/prototype/index.html) |
 | **Platform** | Android 8.0+ (API 26) phones on the ARCore supported list |
 | **Built with** | Unity 6 LTS, AR Foundation 6, Google ARCore XR Plugin, C#; optional Node.js + Express + MongoDB Atlas API |
 
@@ -66,7 +65,6 @@ The child places Keza, a friendly guide character, on the real floor through the
 | **Visual Studio Code** + C# Dev Kit | | Editing and debugging C# |
 | **Git and GitHub** | | Version control; GitHub Actions runs the API tests |
 | **Figma** (plus the HTML prototype in `docs/prototype`) | | Screens, flows, style guide |
-| **Blender, Mixamo, Audacity** | | Models, animation, narration (week 6) |
 | **Node.js, Express, MongoDB Atlas** | 22, 4, M0 free tier | Optional anonymous progress API (shown as optional in the architecture diagram) |
 
 ## 3. Set up the environment
@@ -185,7 +183,7 @@ The browser version ([`docs/prototype/index.html`](docs/prototype/index.html)) s
 
 ## 6. Assets
 
-Full list with sources, licences and a justification for each: **[docs/assets.md](docs/assets.md)**. In short: a low-poly guide character and community figures (Blender, Quaternius CC0, Mixamo animations) so lessons show situations without showing real children; floor zones and a reticle generated in code; the Andika typeface for early readers; English and Kinyarwanda narration; content as JSON for expert review.
+Full list with sources, licences and a justification for each: **[docs/assets.md](docs/assets.md)**. In short: a low-poly guide character and community figures (Sketchfab, Quaternius CC0, Mixamo animations) so lessons show situations without showing real children; floor zones and a reticle generated in code; the Andika typeface for early readers; English and Kinyarwanda narration; content as JSON for expert review.
 
 ## 7. Hardware integration
 
