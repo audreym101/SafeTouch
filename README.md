@@ -7,9 +7,9 @@ The child places Keza, a friendly guide character, on the real floor through the
 | | |
 |---|---|
 | **GitHub repository** | <https://github.com/audreym101/SafeTouch> |
-| **Video demo** | *Add your YouTube (unlisted) or Google Drive link here* |
-| **Figma prototype** | *Add your Figma share link here* (built from [`docs/designs/figma`](docs/designs/figma/README.md)) |
-| **Clickable prototype (browser)** | [`docs/prototype/index.html`](docs/prototype/index.html) |
+| **Video demo** | https://youtu.be/FnD_9e-jiUc  |
+| **Figma prototype** | https://www.figma.com/proto/LGF1ZxkHqCZH1Lswr6zrMm/Untitled?page-id=1%3A1521&node-id=1-2914&p=f&viewport=165%2C-166%2C0.17&t=y4xb4JWYI30hmsgq-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=1%3A2890&show-proto-sidebar=1  |
+| **Clickable prototype (browser)** | https://www.figma.com/proto/LGF1ZxkHqCZH1Lswr6zrMm/Untitled?page-id=1%3A1521&node-id=1-2914&p=f&viewport=165%2C-166%2C0.17&t=y4xb4JWYI30hmsgq-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=1%3A2890&show-proto-sidebar=1 |
 | **Platform** | Android 8.0+ (API 26) phones on the ARCore supported list |
 | **Built with** | Unity 6 LTS, AR Foundation 6, Google ARCore XR Plugin, C#; optional Node.js + Express + MongoDB Atlas API |
 
