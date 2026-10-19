@@ -27,6 +27,8 @@ namespace SafeTouch.Data
         public bool voiceEnabled = true;        // spoken NO practice; a parent can switch it off
         public int strongNoCount;               // three-star spoken NOs; a count only, never audio or pitch values
         public string skinTone = SkinTones.DefaultId;   // how the child chose Keza to look (not the child's own data)
+        public int bestGuardScore;              // best Bubble Guard score
+        public int guardGamesPlayed;
         public bool cloudSyncConsent;           // set only by a parent in the parent section
         public string lastUpdated;
 

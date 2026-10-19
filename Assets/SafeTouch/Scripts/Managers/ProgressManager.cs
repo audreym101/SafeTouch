@@ -15,6 +15,10 @@ namespace SafeTouch.Managers
     {
         public const int LessonCount = 5;   // four lessons + the Memory Quest end game
 
+        /// <summary>Bubble Guard: a replayable game, opened by the STOP lesson. It is not a lesson, so it never counts towards finishing.</summary>
+        public const int GameLevel = 6;
+        public const int GameUnlockedBy = 3;
+
         [SerializeField] List<int> levels = new List<int>();   // unlocked lesson levels
         [SerializeField] List<int> scores = new List<int>();   // mirror of progress.quizScores for the inspector
         [SerializeField] List<Badge> badges = new List<Badge>();
@@ -75,6 +79,7 @@ namespace SafeTouch.Managers
 
         public bool IsUnlocked(int level)
         {
+            if (level == GameLevel) return progress.IsLevelComplete(GameUnlockedBy);
             return levels.Contains(level);
         }
 
@@ -102,6 +107,15 @@ namespace SafeTouch.Managers
         public void RecordChase(float seconds)
         {
             if (progress.bestChaseSeconds <= 0f || seconds < progress.bestChaseSeconds) progress.bestChaseSeconds = seconds;
+            UpdateBadges();
+            Save();
+        }
+
+        /// <summary>Saves a Bubble Guard result; the best score unlocks the "Bubble Guard" badge.</summary>
+        public void RecordGuard(int score)
+        {
+            progress.guardGamesPlayed++;
+            progress.bestGuardScore = Mathf.Max(progress.bestGuardScore, score);
             UpdateBadges();
             Save();
         }
@@ -174,6 +188,7 @@ namespace SafeTouch.Managers
                 case "all": return progress.completedLevels.Count >= LessonCount;
                 case "fast": return progress.bestChaseSeconds > 0f && progress.bestChaseSeconds <= value;
                 case "voice": return progress.strongNoCount >= value;
+                case "guard": return progress.bestGuardScore >= value;
                 default: return false;
             }
         }
