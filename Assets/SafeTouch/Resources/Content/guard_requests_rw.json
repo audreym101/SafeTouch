@@ -1,0 +1,19 @@
+{
+  "_note": "Kinyarwanda version of guard_requests.json (same ids and answers). Keep each line short for the speech bubble. First draft for review by a native speaker and the content experts.",
+  "items": [
+    { "requestId": "G01", "level": 1, "safe": true,  "text": "Dukoranaho ibiganza!",                    "explain": "Gukoranaho ibiganza n'inshuti ni ugukorwaho gutekanye." },
+    { "requestId": "G02", "level": 1, "safe": true,  "text": "Ushaka ko dukina umupira?",               "explain": "Gukinira hamwe ahagaragara biratekanye kandi birashimisha." },
+    { "requestId": "G03", "level": 1, "safe": true,  "text": "Reka dukarabe intoki mbere yo kurya.",    "explain": "Gufasha mu migenzo myiza y'isuku biratekanye." },
+    { "requestId": "G04", "level": 1, "safe": true,  "text": "Wantiza ikaramu?",                        "explain": "Gusangira ku ishuri biratekanye." },
+    { "requestId": "G05", "level": 1, "safe": true,  "text": "Igihe cyo gutaha na Mama!",               "explain": "Gutaha uri kumwe n'umuntu mukuru wizeye biratekanye." },
+    { "requestId": "G06", "level": 1, "safe": false, "text": "Reka dukine umukino w'ibanga wo gukorakorana.", "explain": "Imikino yo gukorakorana n'amabanga ntabwo ari meza na rimwe. Vuga OYA kandi ubivuge." },
+    { "requestId": "G07", "level": 1, "safe": false, "text": "Ngwino tujyane. Ntubibwire Mama.",       "explain": "Ntukigere ujyana n'umuntu ukubwira ngo ntubivuge. Vuga OYA kandi ubivuge." },
+    { "requestId": "G08", "level": 1, "safe": false, "text": "Icara ku bibero byanjye nguhe bombo.",   "explain": "Impano zihabwa umuntu ngo yemere gukorwaho ni ikimenyetso kibi. Vuga OYA." },
+    { "requestId": "G09", "level": 1, "safe": false, "text": "Injira, nta muntu uzabimenya.",           "explain": "\"Nta muntu uzabimenya\" ni ikimenyetso kibi. Vuga OYA ujye ku bantu wizeye." },
+    { "requestId": "G10", "level": 1, "safe": false, "text": "Reka ndebe munsi y'imyenda yawe.",       "explain": "Imyanya y'ibanga ni iy'ibanga. Vuga OYA kandi ubibwire umuntu mukuru wizeye." },
+    { "requestId": "G11", "level": 2, "safe": true,  "text": "Umuforomo: nsuzume ukuboko?",            "explain": "Umuforomo usuzuma umubyeyi ahari, kandi asobanura impamvu, nta kibazo." },
+    { "requestId": "G12", "level": 2, "safe": false, "text": "Nyoherereza ifoto yawe.",                 "explain": "Ntukigere woherereza amafoto umuntu uzi kuri interineti gusa. Ubyereke umuntu mukuru." },
+    { "requestId": "G13", "level": 2, "safe": false, "text": "Injira mu modoka yanjye nkugeze mu rugo.", "explain": "Jyana gusa n'abantu bakuru umuryango wawe wemeye. Vuga OYA." },
+    { "requestId": "G14", "level": 2, "safe": false, "text": "Nubivuga uzagira ibibazo.",               "explain": "Ntuzigera ugira ibibazo kubera kuvuga. Vuga OYA kandi ubivuge." }
+  ]
+}
