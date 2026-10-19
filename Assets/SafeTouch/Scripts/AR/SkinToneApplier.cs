@@ -23,8 +23,41 @@ namespace SafeTouch.AR
             public int materialIndex;
         }
 
+        [Tooltip("Show the tone as a flat colour instead of tinting the model's skin texture. " +
+                 "Tinting a light texture can only make it darker, so dark tones would look muddy.")]
+        [SerializeField] bool replaceSkinTexture = true;
+
         readonly List<Slot> slots = new List<Slot>();
+        MaterialPropertyBlock block;
         bool searched;
+
+        /// <summary>The colour the skin shows now.</summary>
+        public Color Current { get; private set; }
+
+        /// <summary>
+        /// Paints every skin slot. Uses a MaterialPropertyBlock, so shared
+        /// material assets are never changed and Keza and a visitor that use
+        /// the same model can have different tones.
+        /// </summary>
+        public void Apply(Color color)
+        {
+            if (!searched) FindSkin();
+            if (block == null) block = new MaterialPropertyBlock();
+            foreach (var slot in slots)
+            {
+                if (slot.renderer == null) continue;
+                slot.renderer.GetPropertyBlock(block, slot.materialIndex);
+                block.SetColor("_Color", color);       // Built-in Standard shader
+                block.SetColor("_BaseColor", color);   // URP Lit, if the project moves to URP
+                if (replaceSkinTexture)
+                {
+                    block.SetTexture("_MainTex", Texture2D.whiteTexture);
+                    block.SetTexture("_BaseMap", Texture2D.whiteTexture);
+                }
+                slot.renderer.SetPropertyBlock(block, slot.materialIndex);
+            }
+            Current = color;
+        }
 
         /// <summary>How many material slots were recognised as skin (0 means this model can't be tinted).</summary>
         public int SkinSlotCount
