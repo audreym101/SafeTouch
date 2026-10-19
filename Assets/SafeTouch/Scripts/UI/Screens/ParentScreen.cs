@@ -9,7 +9,7 @@ namespace SafeTouch.UI.Screens
     /// <summary>
     /// Parent and teacher section (FR9): conversation guides, warning signs,
     /// Rwandan support services, and settings (language, optional anonymous
-    /// sync, reset).
+    /// sync, voice practice, reset).
     /// </summary>
     public class ParentScreen : UIScreen
     {
@@ -79,6 +79,20 @@ namespace SafeTouch.UI.Screens
                 progress.cloudSyncConsent ? Theme.Safe : Theme.Card, progress.cloudSyncConsent ? Color.white : Theme.Ink, () =>
                 {
                     game.SetCloudSync(!progress.cloudSyncConsent);
+                    OnShow();
+                });
+
+            UIFactory.Label(list, Localization.T("parent.voice.title", "Saying NO out loud"), Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
+            UIFactory.Label(list, Localization.T("parent.voice.body",
+                "In the lessons your child practises saying NO out loud, and Keza coaches how it sounded: loud, steady and short. " +
+                "The microphone opens only while Keza is listening and closes straight after. SafeTouch measures loudness, pitch and length, " +
+                "then forgets them. No sound is recorded, saved or sent. Switched off, the lessons use a NO button instead."),
+                Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
+            UIFactory.Button(list, Localization.T(progress.voiceEnabled ? "parent.voice.on" : "parent.voice.off",
+                    progress.voiceEnabled ? "Voice practice is on" : "Voice practice is off"),
+                progress.voiceEnabled ? Theme.Safe : Theme.Card, progress.voiceEnabled ? Color.white : Theme.Ink, () =>
+                {
+                    game.SetVoiceEnabled(!progress.voiceEnabled);
                     OnShow();
                 });
 
