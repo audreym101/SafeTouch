@@ -54,7 +54,7 @@ The child places Keza, a friendly guide character, on the real floor through the
 | **NFR4 / NFR5** Child-friendly, not frightening | Large targets, calm colours, no buzzers. The only timer is in the final chase game; being "caught" just explains what to do and replays the chase | `UI/Theme.cs` |
 | **NFR6** Easy exit from any screen | Back button top-left on every screen, Android back button returns to the lesson map | `UIScreen.StandardColumn()`, `GameManager.Update()` |
 
-**Models:** Keza (the Mixamo child, with her greeting wave), two adult visitors and the school desk and playground come from `Assets/SafeTouch/Models` once **SafeTouch > 4. Build Character Prefabs From Models** has run; until then the simple shapes are used. Previews are in [docs/designs/models](docs/designs/models).
+**Models:** Keza (the Mixamo child, with her greeting wave), **Mum and Dad** (they share the skin tone the child picks for Keza), two more adult visitors, and the scenery (school desk, chalkboard, playground, grass and the family dog) come from `Assets/SafeTouch/Models` once **SafeTouch > 4. Build Character Prefabs From Models** has run; until then the simple shapes are used. Previews are in [docs/designs/models](docs/designs/models).
 
 **Placeholders in this build:** sound effects are generated tones. Narration and card illustrations are listed in [docs/assets.md](docs/assets.md) and arrive in week 6. Lesson text is a draft for the expert review in week 7.
 
