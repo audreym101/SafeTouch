@@ -58,16 +58,57 @@ namespace SafeTouch.EditorTools
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.OpenGLES3 });
 
-            bool arcore = TryAssignLoader(BuildTargetGroup.Android, "UnityEngine.XR.ARCore.ARCoreLoader");
-            bool simulation = TryAssignLoader(BuildTargetGroup.Standalone, "UnityEngine.XR.Simulation.SimulationLoader");
-            AssetDatabase.SaveAssets();
-
-            string xr = arcore && simulation
+            bool arcore = EnsureXRLoaders();
+            string xr = arcore
                 ? "Google ARCore (Android) and XR Simulation (Editor) are enabled."
-                : "Please tick Google ARCore (Android tab) and XR Simulation (Desktop tab) in Project Settings > XR Plug-in Management.";
+                : "Google ARCore could not be enabled automatically. Tick it on the Android tab of Project Settings > XR Plug-in Management, or the phone will show a black screen.";
             EditorUtility.DisplayDialog("SafeTouch",
                 "Android AR player settings applied: API 26+, IL2CPP ARM64, OpenGL ES 3, portrait.\n\n" + xr +
                 "\n\nNext: File > Build Profiles > Android > Switch Platform, then SafeTouch > 2. Build SafeTouch Scene.", "OK");
+        }
+
+        public const string ARCoreLoaderType = "UnityEngine.XR.ARCore.ARCoreLoader";
+        public const string SimulationLoaderType = "UnityEngine.XR.Simulation.SimulationLoader";
+
+        /// <summary>
+        /// Turns on Google ARCore for Android and XR Simulation for the Editor
+        /// in XR Plug-in Management, and makes ARCore required. Without the
+        /// ARCore loader the app never starts AR: it never asks for the camera
+        /// and every AR screen stays black. Safe to call repeatedly; returns
+        /// true when ARCore is active for Android.
+        /// </summary>
+        public static bool EnsureXRLoaders()
+        {
+            bool arcore = TryAssignLoader(BuildTargetGroup.Android, ARCoreLoaderType);
+            bool simulation = TryAssignLoader(BuildTargetGroup.Standalone, SimulationLoaderType);
+            RequireARCore();
+            AssetDatabase.SaveAssets();
+            if (!arcore) Debug.LogError("[SafeTouch] Google ARCore is NOT enabled for Android. Tick it in Project Settings > XR Plug-in Management (Android tab).");
+            if (!simulation) Debug.LogWarning("[SafeTouch] XR Simulation is not enabled for the Editor; Play mode will use the virtual floor instead.");
+            return arcore;
+        }
+
+        /// <summary>True when the ARCore loader is switched on for Android builds.</summary>
+        public static bool ARCoreEnabled()
+        {
+            XRGeneralSettingsPerBuildTarget perTarget;
+            EditorBuildSettings.TryGetConfigObject(XRGeneralSettings.k_SettingsKey, out perTarget);
+            var settings = perTarget != null ? perTarget.SettingsForBuildTarget(BuildTargetGroup.Android) : null;
+            return settings != null && settings.Manager != null && settings.InitManagerOnStart
+                && settings.Manager.activeLoaders.Any(l => l != null && l.GetType().FullName == ARCoreLoaderType);
+        }
+
+        /// <summary>ARCore "Required": the Play Store only offers the app to ARCore phones, and ARCore is installed with it.</summary>
+        static void RequireARCore()
+        {
+            UnityEngine.Object arcoreSettings;
+            if (!EditorBuildSettings.TryGetConfigObject("UnityEditor.XR.ARCore.ARCoreSettings", out arcoreSettings) || arcoreSettings == null) return;
+            var so = new SerializedObject(arcoreSettings);
+            var requirement = so.FindProperty("m_Requirement");
+            if (requirement == null) return;
+            requirement.enumValueIndex = 0;   // Required
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(arcoreSettings);
         }
 
         static bool TryAssignLoader(BuildTargetGroup group, string loaderType)
@@ -101,8 +142,13 @@ namespace SafeTouch.EditorTools
                     AssetDatabase.AddObjectToAsset(manager, path);
                 }
                 settings.InitManagerOnStart = true;
+                // AssignLoader returns false when the loader is already on, so check the result instead.
+                if (!settings.Manager.activeLoaders.Any(l => l != null && l.GetType().FullName == loaderType))
+                    XRPackageMetadataStore.AssignLoader(settings.Manager, loaderType, group);
+                EditorUtility.SetDirty(settings.Manager);
+                EditorUtility.SetDirty(settings);
                 EditorUtility.SetDirty(perTarget);
-                return XRPackageMetadataStore.AssignLoader(settings.Manager, loaderType, group);
+                return settings.Manager.activeLoaders.Any(l => l != null && l.GetType().FullName == loaderType);
             }
             catch (System.Exception e)
             {
@@ -119,6 +165,7 @@ namespace SafeTouch.EditorTools
         public static void BuildScene()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            EnsureXRLoaders();   // without the ARCore loader the phone shows a black screen
             EnsureFolder(Root + "/Scenes");
             EnsureFolder(Root + "/Materials");
             EnsureFolder(Root + "/Prefabs");
@@ -148,6 +195,8 @@ namespace SafeTouch.EditorTools
             // AR Session and XR Origin (camera, plane detection, raycasts, anchors)
             var session = Object.FindFirstObjectByType<ARSession>();
             if (session == null) session = new GameObject("AR Session", typeof(ARSession), typeof(ARInputManager)).GetComponent<ARSession>();
+            // AR starts only after the child has seen why SafeTouch needs the camera and said yes (ARManager.BeginPlacement).
+            session.enabled = false;
             var origin = CreateOrigin();
             var planes = GetOrAdd<ARPlaneManager>(origin.gameObject);
             planes.planePrefab = planePrefab;
