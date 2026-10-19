@@ -363,6 +363,42 @@
     {
       "key": "game.end.best",
       "value": "That's your best score yet!"
+    },
+    {
+      "key": "home.look",
+      "value": "Keza's look"
+    },
+    {
+      "key": "look.title",
+      "value": "Keza's look"
+    },
+    {
+      "key": "look.done",
+      "value": "Done"
+    },
+    {
+      "key": "skin.sand",
+      "value": "Sand"
+    },
+    {
+      "key": "skin.honey",
+      "value": "Honey"
+    },
+    {
+      "key": "skin.caramel",
+      "value": "Caramel"
+    },
+    {
+      "key": "skin.cocoa",
+      "value": "Cocoa"
+    },
+    {
+      "key": "skin.coffee",
+      "value": "Coffee"
+    },
+    {
+      "key": "skin.ebony",
+      "value": "Ebony"
     }
   ]
 }
