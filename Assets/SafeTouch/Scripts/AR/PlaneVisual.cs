@@ -22,7 +22,7 @@ namespace SafeTouch.AR
         [Tooltip("Unlit transparent material (Sprites/Default); tinted and textured at runtime.")]
         [SerializeField] Material material;
         [SerializeField] float gridCell = 0.1f;       // metres per grid square
-        [SerializeField] float frameWidth = 0.012f;   // metres
+        [SerializeField] float frameWidth = 0.016f;   // metres
         [SerializeField] float smoothing = 6f;        // higher follows ARCore's estimate faster
         [Tooltip("Surfaces smaller than this are not drawn yet, so tiny flickering patches stay hidden.")]
         [SerializeField] float minVisibleSide = 0.15f;
@@ -103,7 +103,7 @@ namespace SafeTouch.AR
             alpha = Mathf.Lerp(alpha, show ? (Highlighted ? 1f : 0.65f) : 0f, 1f - Mathf.Exp(-4f * Time.deltaTime));
 
             bool visible = alpha > 0.01f;
-            gridMaterial.color = Colour(0.35f);
+            gridMaterial.color = Colour(0.6f);
             frameMaterial.color = Colour(0.95f);
             gridRenderer.enabled = frameRenderer.enabled = visible;
             if (visible) Rebuild();

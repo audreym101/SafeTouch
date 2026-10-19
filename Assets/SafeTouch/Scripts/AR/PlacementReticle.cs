@@ -73,7 +73,7 @@ namespace SafeTouch.AR
         {
             var verts = new System.Collections.Generic.List<Vector3>();
             var tris = new System.Collections.Generic.List<int>();
-            float h = size * 0.5f, arm = size * 0.28f, t = size * 0.05f;
+            float h = size * 0.5f, arm = size * 0.3f, t = size * 0.075f;
 
             System.Action<float, float, float, float> rect = (x0, z0, x1, z1) =>
             {
