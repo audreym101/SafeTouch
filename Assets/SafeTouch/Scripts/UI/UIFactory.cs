@@ -51,6 +51,44 @@ namespace SafeTouch.UI
             }
         }
 
+        static Sprite circle;
+
+        /// <summary>A smooth filled circle, for stars, the mic dot and colour swatches.</summary>
+        public static Sprite Circle
+        {
+            get
+            {
+                if (circle != null) return circle;
+                const int size = 96;
+                var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                tex.filterMode = FilterMode.Bilinear;
+                tex.wrapMode = TextureWrapMode.Clamp;
+                var pixels = new Color32[size * size];
+                float r = size * 0.5f;
+                for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float d = Mathf.Sqrt((x + 0.5f - r) * (x + 0.5f - r) + (y + 0.5f - r) * (y + 0.5f - r));
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(r - d) * 255));
+                }
+                tex.SetPixels32(pixels);
+                tex.Apply();
+                circle = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+                return circle;
+            }
+        }
+
+        public static Image Dot(Transform parent, string name, Color color, float size)
+        {
+            var img = Panel(parent, name, color, false);
+            img.sprite = Circle;
+            img.preserveAspect = true;
+            var le = img.gameObject.AddComponent<LayoutElement>();
+            le.minWidth = le.preferredWidth = size;
+            le.minHeight = le.preferredHeight = size;
+            return img;
+        }
+
         public static RectTransform Rect(Transform parent, string name)
         {
             var go = new GameObject(name, typeof(RectTransform));
