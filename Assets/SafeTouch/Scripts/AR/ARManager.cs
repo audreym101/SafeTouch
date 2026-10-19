@@ -73,7 +73,8 @@ namespace SafeTouch.AR
         void Update()
         {
             if (!placing) return;
-            hasPose = DetectPlane();
+            StartSession();   // also picks up a camera allowed in Android Settings while the app was away
+            hasPose = CameraPermission.Granted && DetectPlane();
             if (reticle == null) return;
             reticle.gameObject.SetActive(hasPose);
             if (hasPose) reticle.SetPositionAndRotation(currentPose.position, currentPose.rotation);
@@ -85,6 +86,64 @@ namespace SafeTouch.AR
             placing = true;
             hasPose = false;
             SetPlanesVisible(true);
+            StartSession();
+        }
+
+        // ---- Camera and AR start-up ----
+
+        /// <summary>What the "find the floor" screen should tell the child.</summary>
+        public enum ARStatus
+        {
+            NeedsCamera,    // not asked yet: explain, then ask
+            CameraDenied,   // the child said no
+            Preparing,      // checking or installing ARCore, starting the camera
+            Unsupported,    // this phone cannot run ARCore
+            Searching,      // camera on, looking for a floor or table
+            Ready           // a surface is under the reticle
+        }
+
+        bool cameraDenied;
+
+        /// <summary>False once Android will no longer show the camera question (only Settings can change it).</summary>
+        public bool CanAskForCamera { get; private set; } = true;
+
+        public ARStatus Status
+        {
+            get
+            {
+                if (!CameraPermission.Granted) return cameraDenied ? ARStatus.CameraDenied : ARStatus.NeedsCamera;
+                if (editorFloorFallback && Application.isEditor && !ARSupported())
+                    return hasPose ? ARStatus.Ready : ARStatus.Searching;
+                switch (ARSession.state)
+                {
+                    case ARSessionState.Unsupported: return ARStatus.Unsupported;
+                    case ARSessionState.SessionInitializing:
+                    case ARSessionState.SessionTracking: return hasPose ? ARStatus.Ready : ARStatus.Searching;
+                    default: return ARStatus.Preparing;
+                }
+            }
+        }
+
+        /// <summary>Shows Android's camera question; once allowed, AR starts.</summary>
+        public void RequestCamera(Action answered)
+        {
+            CameraPermission.Request((granted, canAskAgain) =>
+            {
+                cameraDenied = !granted;
+                CanAskForCamera = canAskAgain;
+                if (granted) StartSession();
+                if (answered != null) answered();
+            });
+        }
+
+        /// <summary>
+        /// Starts ARCore. The scene keeps the session off until now, so the
+        /// camera never opens before the child has agreed to it.
+        /// </summary>
+        public void StartSession()
+        {
+            if (session == null || session.enabled || !CameraPermission.Granted) return;
+            session.enabled = true;
         }
 
         public void CancelPlacement()
