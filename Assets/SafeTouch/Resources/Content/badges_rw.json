@@ -1,0 +1,13 @@
+{
+  "_note": "Kinyarwanda version of badges.json (same ids and requirements). First draft for review by a native speaker.",
+  "items": [
+    { "badgeId": "bubble",   "title": "Umurinzi w'uruziga",     "description": "Yarangije isomo ry'Uruziga rwanjye",              "requirement": "complete:1" },
+    { "badgeId": "spotter",  "title": "Ubona akaga",            "description": "Yashyize amakarita yose mu matsinda yayo",        "requirement": "complete:2" },
+    { "badgeId": "stop",     "title": "Inyenyeri ya STOP",      "description": "Yitoje Vuga oya, Bwira, Sobanura, Irinde",        "requirement": "complete:3" },
+    { "badgeId": "hand",     "title": "Ikiganza cy'abafasha",   "description": "Yavuze nibura abantu bakuru 2 yizeye",            "requirement": "adults:2" },
+    { "badgeId": "quick",    "title": "Wihuta kandi utekanye",  "description": "Yavuze OYA mu masegonda 3 cyangwa munsi mu kwiruka", "requirement": "fast:3" },
+    { "badgeId": "voice",    "title": "Ijwi rikomeye",          "description": "Yavuze OYA mu ijwi riranguruye abona inyenyeri eshatu, inshuro eshatu", "requirement": "voice:3" },
+    { "badgeId": "guard",    "title": "Murinzi w'Uruziga",      "description": "Yabonye amanota 8 cyangwa arenga mu mukino w'Umurinzi w'Uruziga", "requirement": "guard:8" },
+    { "badgeId": "champion", "title": "Intwari ya SafeTouch",   "description": "Yarangije amasomo yose n'Urugendo rwo Kwibuka",  "requirement": "all" }
+  ]
+}
