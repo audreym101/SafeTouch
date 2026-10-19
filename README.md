@@ -114,6 +114,7 @@ git clone https://github.com/audreym101/SafeTouch.git
 
 * **On the laptop:** press **Play**. XR Simulation shows a virtual room; hold the right mouse button and use WASD to look around until the floor is found. The UI appears at phone size in the Game view (set the Game view to a 1080 × 1920 portrait resolution).
 * **On the phone:** connect it by USB, **File > Build Profiles > Android > Build And Run**. Choose a file name such as `Builds/SafeTouch.apk`.
+* **The phone asks for the camera** the first time Keza is placed: tap **Allow the camera**, then **Allow**. If the AR view is black and no camera question appears, ARCore is switched off: run **SafeTouch > 1. Configure Android AR Settings** (or tick **Google ARCore** under Project Settings > XR Plug-in Management > Android) and build again. The build now stops with this message instead of producing a black-screen APK.
 
 ### 4.4 Optional: the anonymous progress API
 
@@ -241,7 +242,7 @@ The managers match the class diagram in the proposal: `GameManager`, `UIManager`
 
 * No account, name, photo, location or voice recording. Only an age band and a random device id (Law N° 058/2021 on personal data, Article 9).
 * The microphone opens only while Keza listens for a spoken NO, and closes straight after. Sound sits in a one-second loop that is constantly overwritten: SafeTouch measures loudness, pitch and length, then forgets them. Nothing is recorded, saved or sent, and no speech recognition runs. Parents can switch voice practice off; the lessons then use a NO button. See [docs/voice-coach.md](docs/voice-coach.md).
-* The camera feed is never saved or sent.
+* The camera is used only for AR. SafeTouch asks for it on the "find the floor" screen, after explaining why (to show Keza in the room), not when the app opens. The camera feed is never saved or sent. If the camera is refused, the app explains and offers to try again or open Settings.
 * Keza's skin tone describes the guide character, not the child, and is not synced.
 * Anonymous sync is **off** by default, can only be switched on in the grown-ups section, and switching it off deletes the server copy.
 * Scenario wording is non-graphic and every answer ends by pointing the child to a trusted adult; all content is reviewed by child-protection experts before any child uses the app.
