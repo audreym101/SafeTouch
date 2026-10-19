@@ -48,15 +48,8 @@ namespace SafeTouch.EditorTools
             PlayerSettings.productName = "SafeTouch";
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.alu.safetouch");
             PlayerSettings.bundleVersion = "0.1.0";
-            PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
-
-            // ARCore needs Android 8.0 (API 26), 64-bit IL2CPP and OpenGL ES 3 (NFR2).
-            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
-            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
-            PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
-            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
-            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
-            PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.OpenGLES3 });
+            ApplyAndroidBuildSettings();
+            AssetDatabase.SaveAssets();
 
             bool arcore = EnsureXRLoaders();
             string xr = arcore
@@ -65,6 +58,59 @@ namespace SafeTouch.EditorTools
             EditorUtility.DisplayDialog("SafeTouch",
                 "Android AR player settings applied: API 26+, IL2CPP ARM64, OpenGL ES 3, portrait.\n\n" + xr +
                 "\n\nNext: File > Build Profiles > Android > Switch Platform, then SafeTouch > 2. Build SafeTouch Scene.", "OK");
+        }
+
+        /// <summary>Settings that can be fixed during a build: the build simply carries on with them.</summary>
+        public static System.Collections.Generic.List<string> ApplySafeAndroidSettings()
+        {
+            var changed = new System.Collections.Generic.List<string>();
+            // ARCore needs Android 8.0 (API 26) as a minimum (NFR2); ARCore "Required" refuses anything below 24.
+            if (PlayerSettings.Android.minSdkVersion < AndroidSdkVersions.AndroidApiLevel26)
+            {
+                PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
+                changed.Add("minimum Android version -> 8.0 (API 26)");
+            }
+            if (PlayerSettings.Android.targetSdkVersion != AndroidSdkVersions.AndroidApiLevelAuto
+                && PlayerSettings.Android.targetSdkVersion < AndroidSdkVersions.AndroidApiLevel26)
+            {
+                PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+                changed.Add("target Android version -> highest installed");
+            }
+            if (PlayerSettings.defaultInterfaceOrientation != UIOrientation.Portrait)
+            {
+                PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;   // the UI is laid out for portrait
+                changed.Add("orientation -> portrait");
+            }
+            return changed;
+        }
+
+        /// <summary>
+        /// Settings a running build has already used: if one is wrong it is
+        /// fixed here, but the build must be started again to pick it up.
+        /// </summary>
+        public static System.Collections.Generic.List<string> ApplyAndroidBuildSettings()
+        {
+            var changed = ApplySafeAndroidSettings();
+            // 64-bit IL2CPP: Google Play requires 64-bit, and ARCore ships ARM64 libraries.
+            if (PlayerSettings.GetScriptingBackend(NamedBuildTarget.Android) != ScriptingImplementation.IL2CPP)
+            {
+                PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
+                changed.Add("scripting backend -> IL2CPP");
+            }
+            if ((PlayerSettings.Android.targetArchitectures & AndroidArchitecture.ARM64) == 0)
+            {
+                PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+                changed.Add("CPU architecture -> ARM64");
+            }
+            // OpenGL ES 3: the graphics API ARCore's camera background is built for.
+            var apis = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
+            if (PlayerSettings.GetUseDefaultGraphicsAPIs(BuildTarget.Android) || apis.Length != 1 || apis[0] != GraphicsDeviceType.OpenGLES3)
+            {
+                PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+                PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.OpenGLES3 });
+                changed.Add("graphics API -> OpenGL ES 3");
+            }
+            return changed;
         }
 
         public const string ARCoreLoaderType = "UnityEngine.XR.ARCore.ARCoreLoader";
