@@ -20,8 +20,13 @@ namespace SafeTouch.Core
             new LessonInfo { level = 5, titleKey = "lesson5.title", summaryKey = "lesson5.summary", color = Theme.Sun },
         };
 
+        /// <summary>Bubble Guard, the replayable voice game. Shown below the lessons, not part of the lesson order.</summary>
+        public static readonly LessonInfo Game =
+            new LessonInfo { level = 6, titleKey = "game.title", summaryKey = "game.summary", color = Theme.Hex("#7A5CC7") };
+
         public static LessonInfo For(int level)
         {
+            if (level == Game.level) return Game;
             return All[Mathf.Clamp(level - 1, 0, All.Length - 1)];
         }
     }
