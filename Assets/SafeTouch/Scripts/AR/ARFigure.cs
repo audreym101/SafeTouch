@@ -40,6 +40,73 @@ namespace SafeTouch.AR
             if (nameLabel != null) nameLabel.text = label;
         }
 
+        GameObject speech;
+
+        /// <summary>
+        /// Shows a speech bubble above the figure (what a visitor asks Keza in
+        /// Bubble Guard). Lines wrap at about 18 characters to stay readable at
+        /// arm's length; an empty text removes the bubble.
+        /// </summary>
+        public void Say(string text, Material background)
+        {
+            if (speech != null) Destroy(speech);
+            if (string.IsNullOrEmpty(text)) return;
+
+            float top = 0f;
+            foreach (var r in GetComponentsInChildren<Renderer>())
+                if (r.GetComponent<TextMesh>() == null) top = Mathf.Max(top, r.bounds.max.y);
+            if (top <= 0f) top = transform.position.y + 0.7f;
+
+            speech = new GameObject("Speech");
+            speech.transform.SetParent(transform, true);
+            speech.transform.position = new Vector3(transform.position.x, top + 0.16f, transform.position.z);
+            speech.AddComponent<Billboard>();
+
+            string wrapped = Wrap(text, 18);
+            int lines = wrapped.Split('\n').Length;
+            var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Destroy(card.GetComponent<Collider>());
+            card.transform.SetParent(speech.transform, false);
+            card.transform.localScale = new Vector3(0.36f, 0.05f + 0.045f * lines, 1f);
+            var cardRenderer = card.GetComponent<Renderer>();
+            if (background != null) cardRenderer.material = new Material(background);
+            cardRenderer.material.color = Color.white;
+
+            var label = new GameObject("Text");
+            label.transform.SetParent(speech.transform, false);
+            label.transform.localPosition = new Vector3(0f, 0f, -0.005f);
+            var mesh = label.AddComponent<TextMesh>();
+            mesh.text = wrapped;
+            mesh.anchor = TextAnchor.MiddleCenter;
+            mesh.alignment = TextAlignment.Center;
+            mesh.fontSize = 64;
+            mesh.characterSize = 0.0065f;
+            mesh.color = new Color(0.12f, 0.16f, 0.27f);   // Theme.Ink
+        }
+
+        static string Wrap(string text, int width)
+        {
+            var words = text.Split(' ');
+            var result = new System.Text.StringBuilder();
+            int lineLength = 0;
+            foreach (var word in words)
+            {
+                if (lineLength > 0 && lineLength + 1 + word.Length > width)
+                {
+                    result.Append('\n');
+                    lineLength = 0;
+                }
+                else if (lineLength > 0)
+                {
+                    result.Append(' ');
+                    lineLength++;
+                }
+                result.Append(word);
+                lineLength += word.Length;
+            }
+            return result.ToString();
+        }
+
         public void FaceTowards(Vector3 worldPoint)
         {
             var flat = Vector3.ProjectOnPlane(worldPoint - transform.position, Vector3.up);
