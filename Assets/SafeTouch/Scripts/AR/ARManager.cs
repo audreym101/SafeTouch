@@ -7,10 +7,11 @@ using UnityEngine.XR.ARSubsystems;
 namespace SafeTouch.AR
 {
     /// <summary>
-    /// Finds a floor or table with ARCore plane detection (FR1), shows a
-    /// placement reticle and places the guide character, Keza, on it (FR2).
-    /// The character is anchored so it stays put while the child walks
-    /// around it.
+    /// Finds a floor or table with ARCore plane detection (FR1), horizontal
+    /// surfaces facing up only, shows each one as a rectangle and a square
+    /// reticle where Keza will stand, and places her (FR2) once the surface
+    /// is at least MinSurfaceSide wide and deep. She is anchored so she stays
+    /// put while the child walks around her.
     /// </summary>
     public class ARManager : MonoBehaviour
     {
@@ -70,14 +71,57 @@ namespace SafeTouch.AR
             }
         }
 
+        /// <summary>
+        /// Keza needs a surface at least this wide and deep (metres) before she
+        /// can be placed: room for her and most of her bubble. A table works;
+        /// the floor gives the whole 0.9 m green zone.
+        /// </summary>
+        public const float MinSurfaceSide = 0.75f;
+
+        ARPlane targetPlane;
+
+        /// <summary>Width and depth (metres) of the surface under the reticle; zero when there is none.</summary>
+        public Vector2 SurfaceSize { get; private set; }
+
+        /// <summary>True when the surface under the reticle is big enough for Keza.</summary>
+        public bool SurfaceBigEnough
+        {
+            get { return hasPose && SurfaceSize.x >= MinSurfaceSide && SurfaceSize.y >= MinSurfaceSide; }
+        }
+
+        void Awake()
+        {
+            // Floors and tables only: walls and ceilings are never detected or used.
+            if (planeManager != null) planeManager.requestedDetectionMode = PlaneDetectionMode.Horizontal;
+        }
+
         void Update()
         {
             if (!placing) return;
             StartSession();   // also picks up a camera allowed in Android Settings while the app was away
             hasPose = CameraPermission.Granted && DetectPlane();
+            UpdateSurfaceHighlight();
             if (reticle == null) return;
+            var square = reticle.GetComponent<PlacementReticle>();
+            if (square != null)
+            {
+                if (hasPose) square.Show(currentPose, CameraTransform.position, SurfaceBigEnough);
+                else square.Hide();
+                return;
+            }
             reticle.gameObject.SetActive(hasPose);
             if (hasPose) reticle.SetPositionAndRotation(currentPose.position, currentPose.rotation);
+        }
+
+        /// <summary>Brightens the rectangle of the surface the reticle is on.</summary>
+        void UpdateSurfaceHighlight()
+        {
+            if (planeManager == null) return;
+            foreach (var plane in planeManager.trackables)
+            {
+                var visual = plane.GetComponent<PlaneVisual>();
+                if (visual != null) visual.Highlighted = plane == targetPlane;
+            }
         }
 
         /// <summary>Starts looking for a surface and shows plane outlines.</summary>
@@ -99,6 +143,7 @@ namespace SafeTouch.AR
             Preparing,      // checking or installing ARCore, starting the camera
             Unsupported,    // this phone cannot run ARCore
             Searching,      // camera on, looking for a floor or table
+            TooSmall,       // a floor or table is found but is still smaller than MinSurfaceSide
             Ready           // a surface is under the reticle
         }
 
@@ -113,15 +158,29 @@ namespace SafeTouch.AR
             {
                 if (!CameraPermission.Granted) return cameraDenied ? ARStatus.CameraDenied : ARStatus.NeedsCamera;
                 if (editorFloorFallback && Application.isEditor && !ARSupported())
-                    return hasPose ? ARStatus.Ready : ARStatus.Searching;
+                    return Found();
                 switch (ARSession.state)
                 {
                     case ARSessionState.Unsupported: return ARStatus.Unsupported;
                     case ARSessionState.SessionInitializing:
-                    case ARSessionState.SessionTracking: return hasPose ? ARStatus.Ready : ARStatus.Searching;
+                    case ARSessionState.SessionTracking: return Found();
                     default: return ARStatus.Preparing;
                 }
             }
+        }
+
+        ARStatus Found()
+        {
+            if (!hasPose) return ARStatus.Searching;
+            return SurfaceBigEnough ? ARStatus.Ready : ARStatus.TooSmall;
+        }
+
+        void HideReticle()
+        {
+            if (reticle == null) return;
+            var square = reticle.GetComponent<PlacementReticle>();
+            if (square != null) square.Hide();
+            else reticle.gameObject.SetActive(false);
         }
 
         /// <summary>Shows Android's camera question; once allowed, AR starts.</summary>
@@ -150,7 +209,7 @@ namespace SafeTouch.AR
         {
             placing = false;
             hasPose = false;
-            if (reticle != null) reticle.gameObject.SetActive(false);
+            HideReticle();
             SetPlanesVisible(false);
         }
 
@@ -161,18 +220,29 @@ namespace SafeTouch.AR
         public bool DetectPlane()
         {
             var centre = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-            if (raycastManager != null && raycastManager.Raycast(centre, Hits, TrackableType.PlaneWithinPolygon))
+            targetPlane = null;
+            SurfaceSize = Vector2.zero;
+            // Within bounds: the hit area is the rectangle the child sees, not the ragged polygon.
+            if (raycastManager != null && raycastManager.Raycast(centre, Hits, TrackableType.PlaneWithinBounds))
             {
-                currentPose = Hits[0].pose;
-                return true;
+                foreach (var hit in Hits)   // nearest first
+                {
+                    var plane = planeManager != null ? planeManager.GetPlane(hit.trackableId) : null;
+                    if (plane == null || plane.alignment != PlaneAlignment.HorizontalUp || plane.subsumedBy != null) continue;
+                    currentPose = hit.pose;
+                    targetPlane = plane;
+                    SurfaceSize = plane.size;
+                    return true;
+                }
             }
             if (editorFloorFallback && Application.isEditor && !ARSupported())
             {
-                // Virtual floor 1.2 m below the camera, 1.5 m ahead.
+                // Virtual floor 1.2 m below the camera, 1.5 m ahead, big enough to place on.
                 var cam = CameraTransform;
                 var forward = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
                 if (forward == Vector3.zero) forward = Vector3.forward;
                 currentPose = new Pose(cam.position + forward * 1.5f + Vector3.down * 1.2f, Quaternion.LookRotation(forward));
+                SurfaceSize = new Vector2(3f, 3f);
                 return true;
             }
             return false;
@@ -181,7 +251,7 @@ namespace SafeTouch.AR
         /// <summary>Called by the Place button on the scan screen.</summary>
         public bool PlaceAtReticle()
         {
-            if (!hasPose) return false;
+            if (!hasPose || !SurfaceBigEnough) return false;   // keep scanning until the surface is big enough
             PlaceCharacter(currentPose);
             return true;
         }
@@ -204,7 +274,7 @@ namespace SafeTouch.AR
 
             placing = false;
             hasPose = false;
-            if (reticle != null) reticle.gameObject.SetActive(false);
+            HideReticle();
             SetPlanesVisible(false);
             if (CharacterPlaced != null) CharacterPlaced(character);
         }
@@ -407,8 +477,12 @@ namespace SafeTouch.AR
 
         public void SetPlanesVisible(bool visible)
         {
+            // The rectangles read this flag every frame, so surfaces ARCore finds
+            // after Keza is placed stay hidden too.
+            PlaneVisual.ShowSurfaces = visible;
             if (planeManager == null) return;
-            foreach (var plane in planeManager.trackables) plane.gameObject.SetActive(visible);
+            foreach (var plane in planeManager.trackables)
+                if (plane.GetComponent<PlaneVisual>() == null) plane.gameObject.SetActive(visible);
         }
 
         /// <summary>Removes Keza so the child can place her somewhere new.</summary>
