@@ -42,7 +42,6 @@ namespace SafeTouch.AR
                 r.material = baseMaterial != null ? new Material(baseMaterial) : r.material;
                 r.material.color = color;
             }
-            if (nameLabel != null) nameLabel.text = label;
         }
 
         GameObject speech;

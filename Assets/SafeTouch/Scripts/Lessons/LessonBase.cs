@@ -137,9 +137,10 @@ namespace SafeTouch.Lessons
             game.Audio.PlayVoice(clipKey + "_" + Localization.Language);
         }
 
-        protected ARFigure Spawn(string label, Color color, float radius, float angle)
+        /// <summary>Places a person in the room. role ("parent", "mum", a trusted-adult id...) picks a matching model when there is one.</summary>
+        protected ARFigure Spawn(string label, Color color, float radius, float angle, string role = null)
         {
-            var f = game.AR.SpawnFigure(label, color, radius, angle);
+            var f = game.AR.SpawnFigure(label, color, radius, angle, role);
             figures.Add(f);
             return f;
         }

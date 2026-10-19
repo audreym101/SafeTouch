@@ -157,7 +157,7 @@ namespace SafeTouch.Lessons
             for (int i = 0; i < helpers.Count; i++)
             {
                 float angle = helpers.Count == 1 ? 180f : 180f - arc / 2f + arc * i / (helpers.Count - 1);
-                figures.Add(Spawn(helpers[i].name, helpers[i].GetColor(), 0.8f, angle));
+                figures.Add(Spawn(helpers[i].name, helpers[i].GetColor(), 0.8f, angle, helpers[i].adultId));
             }
 
             var options = new List<PromptOption>();
@@ -223,7 +223,7 @@ namespace SafeTouch.Lessons
                     AddProp(PrimitiveType.Cube, 1.3f, 200f, new Vector3(0.6f, 0.2f, 0.25f), 0.1f, Theme.Hex("#C9725A"));    // sofa
                     break;
             }
-            placeHelpers.Add(Spawn(names[0], colors[0], 0.8f, -115f));
+            placeHelpers.Add(Spawn(names[0], colors[0], 0.8f, -115f, place == "home" ? "parent" : null));
             placeHelpers.Add(Spawn(names[1], colors[1], 0.8f, -50f));
             RunChase();
         }

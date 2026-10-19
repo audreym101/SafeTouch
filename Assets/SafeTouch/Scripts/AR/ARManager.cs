@@ -191,14 +191,50 @@ namespace SafeTouch.AR
             return choices[(int)((hash >> 8) % (uint)choices.Count)];
         }
 
-        /// <summary>Spawns a figure (visitor or trusted adult) at a point around Keza.</summary>
-        public ARFigure SpawnFigure(string label, Color color, float radius, float angleDegrees)
+        /// <summary>A person model kept for one role, e.g. "mum" or "dad" (set up by SafeTouch > Build Character Prefabs).</summary>
+        [System.Serializable]
+        public class RolePrefab
         {
-            var go = Instantiate(FigurePrefabFor(label));
+            public string role;
+            public GameObject prefab;
+        }
+
+        [Tooltip("Models for particular roles. \"parent\" uses mum or dad; any role not listed uses the figure variants.")]
+        [SerializeField] RolePrefab[] rolePrefabs = new RolePrefab[0];
+
+        /// <summary>Roles that are Keza's family: they take the skin tone the child picked for Keza.</summary>
+        static bool IsFamily(string role)
+        {
+            return role == "parent" || role == "mum" || role == "dad";
+        }
+
+        GameObject RolePrefabFor(string role, string label)
+        {
+            if (string.IsNullOrEmpty(role)) return null;
+            if (role == "parent")
+            {
+                // "Mum or Dad": the same label always gets the same parent.
+                uint hash = 2166136261;
+                foreach (char c in label ?? "") { hash ^= c; hash *= 16777619; }
+                return RolePrefabFor((hash >> 4) % 2 == 0 ? "mum" : "dad", label) ?? RolePrefabFor("mum", label) ?? RolePrefabFor("dad", label);
+            }
+            foreach (var r in rolePrefabs) if (r != null && r.role == role && r.prefab != null) return r.prefab;
+            return null;
+        }
+
+        /// <summary>Spawns a figure (visitor or trusted adult) at a point around Keza. role picks a model, e.g. "parent".</summary>
+        public ARFigure SpawnFigure(string label, Color color, float radius, float angleDegrees, string role = null)
+        {
+            var go = Instantiate(RolePrefabFor(role, label) ?? FigurePrefabFor(label));
             var figure = GetOrAdd<ARFigure>(go);
             figure.Setup(label, color, opaqueMaterial);
             // A mix of skin tones in every lesson; the same name always gets the same tone.
-            GetOrAdd<SkinToneApplier>(go).SetTone(Data.SkinTones.ForName(label), false);
+            // Mum and Dad match Keza, so they look like her family.
+            var kezaTone = character != null ? character.GetComponent<SkinToneApplier>() : null;
+            var tone = IsFamily(role) && kezaTone != null && !string.IsNullOrEmpty(kezaTone.ToneId)
+                ? Data.SkinTones.Get(kezaTone.ToneId)
+                : Data.SkinTones.ForName(label);
+            GetOrAdd<SkinToneApplier>(go).SetTone(tone, false);
             go.transform.position = PointAroundCharacter(radius, angleDegrees);
             if (anchorRoot != null) go.transform.SetParent(anchorRoot, true);
             figure.FaceTowards(character.transform.position);

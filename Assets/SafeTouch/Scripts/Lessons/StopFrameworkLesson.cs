@@ -166,7 +166,7 @@ namespace SafeTouch.Lessons
                     new PromptOption(T("stop.more.next", "Tell another trusted adult"), Theme.Safe, () =>
                     {
                         if (firstTry) score++;
-                        var parent = Spawn(T("stop.parent", "Mum"), Theme.Hex("#F28C38"), 1.0f, -20f);
+                        var parent = Spawn(T("stop.parent", "Mum"), Theme.Hex("#F28C38"), 1.0f, -20f, "mum");
                         parent.WalkTo(game.AR.PointAroundCharacter(0.5f, -20f), null);
                         Feedback(true, T("stop.more.fb", "Yes! Keza keeps telling until someone helps: a parent, a nurse, the Child Helpline on 116. Being ignored once doesn't mean she was wrong."),
                             () => Finish(score, 5));

@@ -35,7 +35,7 @@ namespace SafeTouch.Lessons
             {
                 float angle = chosen.Count == 1 ? 180f : 180f - arc / 2f + arc * i / (chosen.Count - 1);
                 var adult = chosen[i];
-                var figure = Spawn(adult.name, adult.GetColor(), 0.8f, angle);
+                var figure = Spawn(adult.name, adult.GetColor(), 0.8f, angle, adult.adultId);
                 figure.Bounce();
                 adult.PlaceInAR();
             }
