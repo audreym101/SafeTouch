@@ -102,12 +102,13 @@ git clone https://github.com/audreym101/SafeTouch.git
 2. The first open imports the packages listed in `Packages/manifest.json` (AR Foundation, ARCore, XR Plug-in Management, Input System). This takes a few minutes.
 3. If Unity asks to **enable the new Input System backends and restart**, click **Yes**.
 
-### 4.2 Configure and build the scene (two clicks)
+### 4.2 Configure and build the scene
 
 1. Menu **SafeTouch > 1. Configure Android AR Settings**. This sets the app id `com.alu.safetouch`, minimum API 26, IL2CPP ARM64, OpenGL ES 3, portrait, and turns on the **Google ARCore** loader (Android) and **XR Simulation** (desktop).
 2. **File > Build Profiles** (Build Settings in older versions) > **Android** > **Switch Platform**.
-3. Menu **SafeTouch > 2. Build SafeTouch Scene**. This creates `Assets/SafeTouch/Scenes/SafeTouch.unity` with the AR Session, XR Origin (plane, raycast and anchor managers), the managers from the class diagram, the four lessons, materials and prefabs, and adds the scene to the build.
-4. Check **Edit > Project Settings > XR Plug-in Management**: **Google ARCore** ticked on the Android tab, **XR Simulation** ticked on the desktop tab. Tick them by hand if the dialog in step 1 asked you to. Under **Google ARCore**, set **Requirement** to **Required**.
+3. *(Recommended)* Menu **SafeTouch > 4. Build Character Prefabs From Models**. This turns the FBX files in `Assets/SafeTouch/Models` into Keza (with her skin mask and greeting wave), two adult visitors, and the school and playground scenery. Run it before step 4 so the scene uses them. **SafeTouch > 5. Render Skin Tone Preview** then writes `docs/designs/skin-tones.png` to check the result.
+4. Menu **SafeTouch > 2. Build SafeTouch Scene**. This creates `Assets/SafeTouch/Scenes/SafeTouch.unity` with the AR Session, XR Origin (plane, raycast and anchor managers), the managers from the class diagram, the four lessons, materials and prefabs, and adds the scene to the build.
+5. Check **Edit > Project Settings > XR Plug-in Management**: **Google ARCore** ticked on the Android tab, **XR Simulation** ticked on the desktop tab. Tick them by hand if the dialog in step 1 asked you to. Under **Google ARCore**, set **Requirement** to **Required**.
 
 ### 4.3 Run it
 
