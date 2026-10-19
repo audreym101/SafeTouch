@@ -10,12 +10,14 @@ namespace SafeTouch.UI.Screens
     /// buttons and the prompt card with up to four choices at the bottom,
     /// within thumb reach.
     /// </summary>
-    public class LessonScreen : UIScreen
+    public class LessonScreen : UIScreen, ITickable
     {
         Text title, step, heading, body, zoneReadout;
         RectTransform options;
         Button replay, movePlace, who;
         readonly List<Button> optionButtons = new List<Button>();
+        GameObject promptCard;
+        readonly VoicePanel voice = new VoicePanel();
 
         public System.Action ReplayNarration;
 
@@ -58,6 +60,36 @@ namespace SafeTouch.UI.Screens
             body = UIFactory.Label(cardRt, "", Theme.Body, Theme.Ink, TextAnchor.UpperLeft, false);
             options = UIFactory.Rect(cardRt, "Options");
             UIFactory.Column(options, 20f, 0);
+            promptCard = card.gameObject;
+
+            // The "Say NO!" card takes the prompt card's place while it listens.
+            voice.Build(col);
+        }
+
+        public void Tick()
+        {
+            voice.Tick();
+        }
+
+        /// <summary>
+        /// Swaps the prompt card for the voice card and listens for the child's
+        /// NO. done gets the best try, or null if the child chose to tap.
+        /// </summary>
+        public void ShowVoice(string promptHeading, string promptBody, SafeTouch.Voice.VoiceCoach coach, System.Action<SafeTouch.Voice.NoRating> done)
+        {
+            promptCard.SetActive(false);
+            voice.Show(promptHeading, promptBody, coach, rating =>
+            {
+                promptCard.SetActive(true);
+                if (done != null) done(rating);
+            });
+        }
+
+        /// <summary>Closes the voice card (and the microphone) if it is open.</summary>
+        public void HideVoice()
+        {
+            voice.Hide();
+            promptCard.SetActive(true);
         }
 
         public override void OnShow()
@@ -145,6 +177,7 @@ namespace SafeTouch.UI.Screens
         /// <summary>Shows a question or instruction with up to four choice buttons.</summary>
         public void ShowPrompt(string promptHeading, string promptBody, params PromptOption[] choices)
         {
+            if (voice.Visible) HideVoice();
             heading.text = promptHeading;
             heading.gameObject.SetActive(!string.IsNullOrEmpty(promptHeading));
             body.text = promptBody;
