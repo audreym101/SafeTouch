@@ -21,7 +21,7 @@ namespace SafeTouch.Lessons
     ///    walks to the one the child picks.
     /// 4. Safe places chase: the child picks home, school or playground;
     ///    someone walks towards Keza three times, a little faster each time.
-    ///    The child wins by tapping NO!, tapping the person, or walking Keza
+    ///    The child wins by saying NO out loud, tapping NO!, tapping the person, or walking Keza
     ///    to a helper with the move buttons. Faster answers earn more stars
     ///    and the fastest time unlocks the "Quick and Safe" badge.
     /// It ends with an "I remember!" certificate.
@@ -278,9 +278,21 @@ namespace SafeTouch.Lessons
             chaseStart = Time.time;
             chasing = true;
             Header(string.Format(T("review.chase.step", "Chase {0} of 3"), chaseIndex + 1));
+            bool listening = game.Voice != null && game.Voice.Available;
             Prompt(T("review.chase.title", "Someone is coming too close!"),
-                PlaceLine + " " + T("review.chase.body", "Say NO, tap the person, or walk Keza to a helper with the arrows."),
+                PlaceLine + " " + (listening
+                    ? T("review.chase.body.voice", "Shout NO out loud, tap the person, or walk Keza to a helper with the arrows.")
+                    : T("review.chase.body", "Say NO, tap the person, or walk Keza to a helper with the arrows.")),
                 new PromptOption(T("review.chase.no", "NO!"), Theme.Unsafe, () => Win(T("review.chase.said", "Keza said NO!"))));
+
+            // A spoken NO wins the chase too; the time to it is what earns the stars.
+            if (listening)
+                game.Voice.ListenContinuously(rating =>
+                {
+                    if (!chasing || !rating.Heard) return;
+                    game.Progress.RecordNo(rating);
+                    Win(T("review.chase.heard", "Keza heard your NO!"));
+                });
         }
 
         void Update()
@@ -324,6 +336,7 @@ namespace SafeTouch.Lessons
         {
             if (!chasing) return;
             chasing = false;
+            if (game.Voice != null) game.Voice.Stop();
             float seconds = Time.time - chaseStart;
             int stars = seconds <= 3f ? 3 : seconds <= 6f ? 2 : 1;
             score += stars;
@@ -343,6 +356,7 @@ namespace SafeTouch.Lessons
         void Caught()
         {
             chasing = false;
+            if (game.Voice != null) game.Voice.Stop();
             Feedback(false, T("review.chase.caught", "The person got into Keza's red zone. When someone comes too close: shout NO in a strong voice, move towards a trusted adult, and tell them. Let's try that chase again."), RunChase);
         }
 
