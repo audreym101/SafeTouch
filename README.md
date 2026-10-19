@@ -216,12 +216,18 @@ SafeTouch/
 │   │   ├── Core/          GameManager (flow), Localization, LessonInfo
 │   │   ├── AR/            ARManager (planes, placement, anchors), ARCharacter, ARFigure, Billboard
 │   │   ├── Managers/      ProgressManager, ScenarioManager, AudioManager
-│   │   ├── Lessons/       LessonBase + the four lessons + ReviewLesson (Memory Quest)
-│   │   ├── UI/            UIManager, Theme (style guide), UIFactory, Screens/ (12 screens)
-│   │   ├── Data/          Scenario, Progress, TrustedAdult, Badge, ContentLibrary
+│   │   ├── Lessons/       LessonBase + the four lessons + ReviewLesson (Memory Quest) + BubbleGuardGame
+│   │   ├── UI/            UIManager, Theme (style guide), UIFactory, VoicePanel, Screens/ (13 screens)
+│   │   ├── Voice/         MicrophoneInput, VoiceCoach; Analysis/ (own assembly): PitchDetector (YIN),
+│   │   │                  FrameAnalyzer, UtteranceSegmenter, Utterance, NoCoach
+│   │   ├── Data/          Scenario, Progress, TrustedAdult, Badge, SkinTone, ContentLibrary
 │   │   └── Services/      CloudSyncService (optional, off by default)
-│   ├── Editor/            SafeTouchSetup: the SafeTouch menu (player settings, scene builder)
-│   └── Resources/Content/ scenarios, review pairs, trusted adults, badges, parent resources, strings (JSON)
+│   ├── Editor/            The SafeTouch menu: SafeTouchSetup (player settings, scene builder),
+│   │                      SafeTouchCharacters (prefabs from the models), SafeTouchModels (previews)
+│   ├── Models/            FBX models: Keza (Mixamo child), adults, school desk, playground
+│   ├── Shaders/           Skin Tone shader (recolours masked skin only)
+│   ├── Tests/EditMode/    Voice analysis tests with synthetic voices
+│   └── Resources/Content/ scenarios, review pairs, game requests, trusted adults, badges, parent resources, strings (JSON)
 ├── Packages/manifest.json Unity packages
 ├── ProjectSettings/       Unity version (other settings are generated on first open)
 ├── backend/               Optional Node.js + Express API with tests
