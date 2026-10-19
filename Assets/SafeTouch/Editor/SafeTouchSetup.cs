@@ -260,6 +260,10 @@ namespace SafeTouch.EditorTools
             hitBox.height = 0.8f;
             hitBox.radius = 0.15f;
 
+            // Skin tone: finds the "Head" part; Keza takes the child's pick, visitors a mix of tones.
+            var skinTone = root.AddComponent<SkinToneApplier>();
+            Set(skinTone, "sparkleMaterial", mat);
+
             var labelGo = new GameObject("Name label", typeof(TextMesh), typeof(Billboard));
             labelGo.transform.SetParent(root.transform, false);
             labelGo.transform.localPosition = new Vector3(0f, 0.82f, 0f);
