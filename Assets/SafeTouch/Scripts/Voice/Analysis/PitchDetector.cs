@@ -49,10 +49,31 @@ namespace SafeTouch.Voice
                 diff[lag] = (float)sum;
             }
 
-            int best = minLag;
-            for (int lag = minLag + 1; lag < top; lag++)
-                if (diff[lag] < diff[best]) best = lag;
-            return diff[best] > 0f ? (float)sampleRate / best : 0f;
+            // Step 2, cumulative mean normalised difference. Without it the
+            // raw minimum often lands on twice the period (an octave too low).
+            diff[0] = 1f;
+            double running = 0;
+            for (int lag = 1; lag <= top; lag++)
+            {
+                running += diff[lag];
+                diff[lag] = running > 0 ? (float)(diff[lag] * lag / running) : 1f;
+            }
+
+            // Step 3, absolute threshold: take the first dip below the
+            // threshold and follow it down to its lowest point.
+            for (int lag = minLag; lag < top; lag++)
+            {
+                if (diff[lag] >= Threshold) continue;
+                while (lag + 1 < top && diff[lag + 1] < diff[lag]) lag++;
+                return (float)sampleRate / lag;
+            }
+            return 0f;   // no clear period: breath, "sss", noise or silence
         }
+
+        /// <summary>
+        /// How periodic a frame must be to count as voiced (0 = perfectly
+        /// periodic). 0.15 is the value recommended in the YIN paper.
+        /// </summary>
+        public float Threshold { get; set; } = 0.15f;
     }
 }
