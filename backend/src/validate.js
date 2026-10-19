@@ -4,6 +4,7 @@
 const AGE_BANDS = ['6-8', '9-11'];
 const LANGUAGES = ['en', 'rw'];
 const ANSWERS = ['A', 'B', 'C'];
+const LESSON_COUNT = 5; // four lessons + the Memory Quest (ProgressManager.LessonCount)
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ID = /^[a-z0-9_]{1,32}$/i;
 const ALLOWED_KEYS = new Set([
@@ -29,7 +30,7 @@ function validateProgress(body) {
   if (typeof body.deviceId !== 'string' || !UUID.test(body.deviceId)) errors.push('deviceId must be a random UUID.');
   if (!AGE_BANDS.includes(body.ageBand)) errors.push('ageBand must be "6-8" or "9-11".');
   if (body.language !== undefined && !LANGUAGES.includes(body.language)) errors.push('language must be "en" or "rw".');
-  if (body.completedLevels !== undefined && !isIntList(body.completedLevels, 1, 4)) errors.push('completedLevels must be lesson numbers 1-4.');
+  if (body.completedLevels !== undefined && !isIntList(body.completedLevels, 1, LESSON_COUNT)) errors.push(`completedLevels must be lesson numbers 1-${LESSON_COUNT}.`);
   if (body.quizScores !== undefined && !isIntList(body.quizScores, 0, 100)) errors.push('quizScores must be whole numbers 0-100.');
   if (body.badges !== undefined && !isIdList(body.badges)) errors.push('badges must be badge ids.');
   if (body.trustedAdultRoles !== undefined && !isIdList(body.trustedAdultRoles)) errors.push('trustedAdultRoles must be role ids, not names.');
