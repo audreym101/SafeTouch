@@ -1,5 +1,8 @@
 using System;
 using UnityEngine;
+#if UNITY_ANDROID && !UNITY_EDITOR
+using UnityEngine.Android;
+#endif
 
 namespace SafeTouch.Voice
 {
@@ -30,6 +33,24 @@ namespace SafeTouch.Voice
         public bool IsCapturing { get { return loop != null && Microphone.IsRecording(device); } }
 
         public static bool HasDevice { get { return Microphone.devices.Length > 0; } }
+
+        /// <summary>
+        /// Asks Android for the microphone the first time a lesson needs it.
+        /// If the answer is no, the lessons keep their tap buttons instead.
+        /// </summary>
+        public static void RequestPermission(Action<bool> answered)
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (Permission.HasUserAuthorizedPermission(Permission.Microphone)) { answered(true); return; }
+            var callbacks = new PermissionCallbacks();
+            callbacks.PermissionGranted += _ => answered(true);
+            callbacks.PermissionDenied += _ => answered(false);
+            callbacks.PermissionDeniedAndDontAskAgain += _ => answered(false);
+            Permission.RequestUserPermission(Permission.Microphone, callbacks);
+#else
+            answered(HasDevice);
+#endif
+        }
 
         /// <summary>Opens the default microphone. Returns false if the phone has none.</summary>
         public bool StartCapture()
