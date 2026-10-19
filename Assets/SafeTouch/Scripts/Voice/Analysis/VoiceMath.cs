@@ -44,5 +44,15 @@ namespace SafeTouch.Voice
         {
             return referenceHz * Mathf.Pow(2f, semitones / 12f);
         }
+
+        /// <summary>Median of a list (0 when empty). Robust to the odd octave error from the pitch detector.</summary>
+        public static float Median(System.Collections.Generic.List<float> values)
+        {
+            if (values == null || values.Count == 0) return 0f;
+            var sorted = new System.Collections.Generic.List<float>(values);
+            sorted.Sort();
+            int mid = sorted.Count / 2;
+            return sorted.Count % 2 == 1 ? sorted[mid] : 0.5f * (sorted[mid - 1] + sorted[mid]);
+        }
     }
 }
