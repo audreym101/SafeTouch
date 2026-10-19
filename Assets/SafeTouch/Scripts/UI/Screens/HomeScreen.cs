@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using SafeTouch.Core;
+using SafeTouch.Managers;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace SafeTouch.UI.Screens
 {
     /// <summary>
-    /// The lesson map: four lessons and the Memory Quest in order, stars earned, and the two
+    /// The lesson map: four lessons and the Memory Quest in order, the Bubble Guard game, stars earned, and the
     /// secondary destinations (badges, Keza's look, grown-ups).
     /// </summary>
     public class HomeScreen : UIScreen
@@ -30,12 +31,14 @@ namespace SafeTouch.UI.Screens
             heading = UIFactory.Label(col, "", Theme.Display, Theme.Ink, TextAnchor.MiddleLeft, true);
             stars = UIFactory.Label(col, "", Theme.Label, Theme.Muted, TextAnchor.MiddleLeft, false);
 
-            foreach (var info in LessonInfo.All)
+            // The four lessons and the Memory Quest, then the Bubble Guard game.
+            var all = new List<LessonInfo>(LessonInfo.All) { LessonInfo.Game };
+            foreach (var info in all)
             {
                 var lesson = info;
                 var card = new Card { info = info };
                 card.button = UIFactory.Button(col, "", Theme.Card, Theme.Ink, () => game.StartLesson(lesson.level));
-                UIFactory.FixedHeight(card.button, 196f);
+                UIFactory.FixedHeight(card.button, 168f);   // six cards fit a 1920 px tall phone
                 Object.Destroy(card.button.GetComponentInChildren<Text>().gameObject);
 
                 var inner = UIFactory.Rect(card.button.transform, "Inner");
@@ -77,8 +80,19 @@ namespace SafeTouch.UI.Screens
             {
                 int level = card.info.level;
                 bool unlocked = game.Progress.IsUnlocked(level);
-                bool done = progress.IsLevelComplete(level);
                 card.button.interactable = unlocked;
+                if (card.info == LessonInfo.Game)
+                {
+                    card.title.text = Localization.T(card.info.titleKey, "Bubble Guard");
+                    card.summary.text = Localization.T(card.info.summaryKey, "Game: say NO to keep Keza's bubble safe");
+                    card.status.text = !unlocked
+                        ? string.Format(Localization.T("status.locked"), ProgressManager.GameUnlockedBy)
+                        : progress.guardGamesPlayed > 0
+                            ? string.Format(Localization.T("game.best", "Best score: {0}"), progress.bestGuardScore)
+                            : Localization.T("game.ready", "Ready to play");
+                    continue;
+                }
+                bool done = progress.IsLevelComplete(level);
                 card.title.text = level + ". " + Localization.T(card.info.titleKey);
                 card.summary.text = Localization.T(card.info.summaryKey);
                 card.status.text = done ? Localization.T("status.done")
