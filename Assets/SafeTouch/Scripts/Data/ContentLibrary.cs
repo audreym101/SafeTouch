@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using SafeTouch.Core;
 using UnityEngine;
 
 namespace SafeTouch.Data
 {
     /// <summary>
-    /// Loads the lesson content bundled in Resources/Content. Content is
+    /// Loads the lesson content bundled in Resources/Content, in the chosen
+    /// language (Kinyarwanda files end in _rw). Content is
     /// data, not code, so experts' corrections in week 7 are JSON edits.
     /// </summary>
     public static class ContentLibrary
@@ -26,37 +28,64 @@ namespace SafeTouch.Data
 
         public static List<Scenario> Scenarios
         {
-            get { return scenarios ?? (scenarios = (Load<ScenarioList>("scenarios").items ?? new List<Scenario>())); }
+            get { CheckLanguage(); return scenarios ?? (scenarios = (Load<ScenarioList>("scenarios").items ?? new List<Scenario>())); }
         }
 
         public static List<TrustedAdult> TrustedAdults
         {
-            get { return adults ?? (adults = (Load<AdultList>("trusted_adults").items ?? new List<TrustedAdult>())); }
+            get { CheckLanguage(); return adults ?? (adults = (Load<AdultList>("trusted_adults").items ?? new List<TrustedAdult>())); }
         }
 
         public static List<Badge> Badges
         {
-            get { return badges ?? (badges = (Load<BadgeList>("badges").items ?? new List<Badge>())); }
+            get { CheckLanguage(); return badges ?? (badges = (Load<BadgeList>("badges").items ?? new List<Badge>())); }
         }
 
         public static List<ParentResource> ParentResources
         {
-            get { return resources ?? (resources = (Load<ResourceList>("parent_resources").items ?? new List<ParentResource>())); }
+            get { CheckLanguage(); return resources ?? (resources = (Load<ResourceList>("parent_resources").items ?? new List<ParentResource>())); }
         }
 
         public static List<ReviewPair> ReviewPairs
         {
-            get { return reviewPairs ?? (reviewPairs = (Load<ReviewList>("review").items ?? new List<ReviewPair>())); }
+            get { CheckLanguage(); return reviewPairs ?? (reviewPairs = (Load<ReviewList>("review").items ?? new List<ReviewPair>())); }
         }
 
         public static List<GuardRequest> GuardRequests
         {
-            get { return guardRequests ?? (guardRequests = (Load<GuardList>("guard_requests").items ?? new List<GuardRequest>())); }
+            get { CheckLanguage(); return guardRequests ?? (guardRequests = (Load<GuardList>("guard_requests").items ?? new List<GuardRequest>())); }
         }
 
+        static string loadedLanguage;
+
+        /// <summary>
+        /// Forgets the loaded content when the language changes, so the next
+        /// read loads the right language. Called by every getter.
+        /// </summary>
+        static void CheckLanguage()
+        {
+            string language = string.IsNullOrEmpty(Localization.Language) ? "en" : Localization.Language;
+            if (language == loadedLanguage) return;
+            loadedLanguage = language;
+            scenarios = null;
+            adults = null;
+            badges = null;
+            resources = null;
+            reviewPairs = null;
+            guardRequests = null;
+        }
+
+        /// <summary>
+        /// Loads Content/file_rw.json in Kinyarwanda (and so on for other
+        /// languages) when it exists, otherwise the English Content/file.json.
+        /// The translated files keep the same ids, so progress is unchanged.
+        /// </summary>
         static T Load<T>(string file) where T : new()
         {
-            var asset = Resources.Load<TextAsset>("Content/" + file);
+            TextAsset asset = null;
+            if (loadedLanguage != null && loadedLanguage != "en")
+                asset = Resources.Load<TextAsset>("Content/" + file + "_" + loadedLanguage);
+            if (asset == null) asset = Resources.Load<TextAsset>("Content/" + file);
             if (asset == null)
             {
                 Debug.LogError("[SafeTouch] Missing content file Resources/Content/" + file + ".json");
