@@ -12,6 +12,22 @@
     {
       "key": "home.grownups",
       "value": "Ababyeyi"
+    },
+    {
+      "key": "game.no",
+      "value": "OYA!"
+    },
+    {
+      "key": "stop.s.button",
+      "value": "OYA!"
+    },
+    {
+      "key": "review.chase.no",
+      "value": "OYA!"
+    },
+    {
+      "key": "voice.check.yes",
+      "value": "yego"
     }
   ]
 }
