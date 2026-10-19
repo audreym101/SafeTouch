@@ -33,3 +33,16 @@ The Mixamo Keza has **one** texture for skin and clothes. For her, `SafeTouch > 
 2. Gives her the **`SafeTouch/Skin Tone`** shader. Masked pixels take the chosen tone, scaled by each pixel's brightness compared with the painted skin, so shading stays.
 
 The tone id is saved in Progress (`skinTone`). It describes Keza, not the child, and is not sent by cloud sync.
+
+## Keza's family
+
+Mum and Dad (from the parents-and-dog model) take the tone the child picks for Keza, so they look like her family wherever a lesson brings in a parent: the Trusted Adults lesson, the STOP lesson's "keep telling" step and the home chase in the Memory Quest. Other visitors keep a mix of tones.
+
+![Mum, Keza and Dad in three tones](designs/family-tones.png)
+
+Their texture also holds hair, a beard and clothes, so their masks are built more carefully:
+1. Only the texture areas used by their **skin parts** count: head, arms and legs for Dad; head and hands for Mum. Clothes keep their own material, even where Mum's shirt shares texture pixels with her neck.
+2. Within those areas, a pixel is skin if its hue, saturation and brightness are close to the skin painted on the arms or hands. That leaves out the beard (too dark), light hair (too saturated), teeth and eyes (too white) and lips (too red).
+3. The mask is smoothed and then sharpened, so stray strands of hair don't speckle and shadowed eyelids don't leave holes.
+
+Dad's lens meshes imported as opaque dark discs, so they are hidden and his glasses show as frames.
