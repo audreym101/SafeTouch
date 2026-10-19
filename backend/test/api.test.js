@@ -62,3 +62,13 @@ test('a parent can withdraw and delete the record', () => withServer(async (base
   const after = await fetch(`${base}/api/progress/${sample.deviceId}`);
   assert.strictEqual(after.status, 404);
 }));
+
+test('accepts the Memory Quest as level 5', () => withServer(async (base) => {
+  const res = await post(base, { ...sample, completedLevels: [1, 2, 3, 4, 5] });
+  assert.strictEqual(res.status, 201);
+}));
+
+test('rejects level numbers outside the lessons', () => withServer(async (base) => {
+  const res = await post(base, { ...sample, completedLevels: [1, 6] });
+  assert.strictEqual(res.status, 400);
+}));
