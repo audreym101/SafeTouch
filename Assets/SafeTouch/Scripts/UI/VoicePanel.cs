@@ -20,6 +20,9 @@ namespace SafeTouch.UI
         Text heading, body, status;
         Button primary, secondary;
         Action primaryAction, secondaryAction;
+        Image meterFill;
+        RectTransform meterTarget;
+        float meterShown;
 
         VoiceCoach coach;
         Action<NoRating> done;
@@ -38,11 +41,41 @@ namespace SafeTouch.UI
             heading = UIFactory.Label(root, "", Theme.Title, Theme.Ink, TextAnchor.UpperLeft, true);
             body = UIFactory.Label(root, "", Theme.Body, Theme.Ink, TextAnchor.UpperLeft, false);
             status = UIFactory.Label(root, "", Theme.Title, Theme.Primary, TextAnchor.MiddleCenter, true);
+            BuildMeter();
 
             var row = UIFactory.Row(root, "Voice buttons", 20f, Theme.TouchTarget);
             primary = UIFactory.Button(row.transform, "", Theme.Unsafe, Color.white, () => { if (primaryAction != null) primaryAction(); });
             secondary = UIFactory.Button(row.transform, "", Theme.Card, Theme.Ink, () => { if (secondaryAction != null) secondaryAction(); });
             root.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Loudness meter: it fills as the child speaks and turns green past
+        /// the dark line, which marks a strong voice for this room.
+        /// </summary>
+        void BuildMeter()
+        {
+            var meter = UIFactory.Panel(root, "Loudness meter", Theme.Sky, true);
+            UIFactory.FixedHeight(meter, 56f);
+            meterFill = UIFactory.Panel(meter.transform, "Fill", Theme.Primary, true);
+            var fill = (RectTransform)meterFill.transform;
+            fill.anchorMin = Vector2.zero;
+            fill.anchorMax = new Vector2(0f, 1f);
+            fill.offsetMin = fill.offsetMax = Vector2.zero;
+
+            meterTarget = (RectTransform)UIFactory.Panel(meter.transform, "Strong voice line", Theme.Ink, false).transform;
+            meterTarget.sizeDelta = new Vector2(8f, 0f);
+            meterTarget.anchorMin = new Vector2(0.66f, 0f);
+            meterTarget.anchorMax = new Vector2(0.66f, 1f);
+        }
+
+        void UpdateMeter(float level, float strong)
+        {
+            meterShown = Mathf.Lerp(meterShown, level, 0.5f);
+            ((RectTransform)meterFill.transform).anchorMax = new Vector2(meterShown, 1f);
+            meterFill.color = meterShown >= strong ? Theme.Safe : Theme.Primary;
+            meterTarget.anchorMin = new Vector2(strong, 0f);
+            meterTarget.anchorMax = new Vector2(strong, 1f);
         }
 
         /// <summary>Opens the card and starts the first try. onDone gets the best try, or null if the child tapped.</summary>
@@ -72,6 +105,7 @@ namespace SafeTouch.UI
         public void Tick()
         {
             if (!Visible || !waiting || coach == null) return;
+            UpdateMeter(coach.Level01, coach.StrongLevel01);
             if (coach.Hearing) SetStatus(T("voice.hearing", "Listening..."), Theme.Primary);
             else if (coach.Ready) SetStatus(T("voice.now", "Say NO now!"), Theme.Unsafe);
         }
@@ -80,6 +114,8 @@ namespace SafeTouch.UI
         {
             tries++;
             waiting = true;
+            meterShown = 0f;
+            UpdateMeter(0f, coach.StrongLevel01);
             SetStatus(T("voice.ready", "Get ready..."), Theme.Muted);
             SetButtons(null, null, T("voice.tap", "Tap NO instead"), () => Finish(null));
             coach.ListenForNo(OnResult);
