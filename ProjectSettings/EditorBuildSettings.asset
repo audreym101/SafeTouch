@@ -4,8 +4,12 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/SafeTouch/Scenes/SafeTouch.unity
+    guid: c3b8a4454a25c554086d8c758c1b1e24
   m_configObjects:
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 6426cf93fff87c34b81ae286ba0f9c8f, type: 2}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 28a7e266f9cfa074ca3a5f9eb93df32d, type: 2}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: e2d5e2eb62bdeef4186c1a85e658b583, type: 2}
   m_UseUCBPForAssetBundles: 0
