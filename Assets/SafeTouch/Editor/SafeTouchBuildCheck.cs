@@ -6,14 +6,18 @@ using UnityEngine;
 namespace SafeTouch.EditorTools
 {
     /// <summary>
-    /// Runs before every Android build. An APK built without the ARCore
-    /// loader opens to a black screen and never asks for the camera, so this
-    /// switches ARCore on if it is off, and stops the build with a clear
-    /// message if that is not possible.
+    /// Runs before every Android build, ahead of ARCore's own checks, so a
+    /// project that never ran SafeTouch > 1. Configure Android AR Settings
+    /// still builds a working AR app:
+    ///   - ARCore is switched on (without it: no camera prompt, black screen);
+    ///   - the minimum Android version, target version and portrait
+    ///     orientation are fixed, and the build carries on;
+    ///   - IL2CPP, ARM64 and OpenGL ES 3 are fixed too, but the build has
+    ///     already used them, so it stops and asks for Build to be pressed again.
     /// </summary>
     public class SafeTouchBuildCheck : IPreprocessBuildWithReport
     {
-        public int callbackOrder { get { return 0; } }
+        public int callbackOrder { get { return -100; } }
 
         public void OnPreprocessBuild(BuildReport report)
         {
@@ -29,8 +33,18 @@ namespace SafeTouch.EditorTools
                     "SafeTouch needs Google ARCore for the camera and AR. Open Project Settings > XR Plug-in Management, " +
                     "Android tab, and tick Google ARCore (or run SafeTouch > 1. Configure Android AR Settings), then build again.");
 
-            if (PlayerSettings.Android.minSdkVersion < AndroidSdkVersions.AndroidApiLevel26)
-                Debug.LogWarning("[SafeTouch] ARCore needs Android 8.0 (API 26) or newer. Run SafeTouch > 1. Configure Android AR Settings.");
+            var fixedNow = SafeTouchSetup.ApplySafeAndroidSettings();
+            if (fixedNow.Count > 0)
+                Debug.LogWarning("[SafeTouch] Fixed Android settings for AR: " + string.Join(", ", fixedNow.ToArray()) + ".");
+
+            var needRestart = SafeTouchSetup.ApplyAndroidBuildSettings();
+            if (needRestart.Count > 0)
+            {
+                AssetDatabase.SaveAssets();
+                throw new BuildFailedException(
+                    "SafeTouch fixed Android settings that AR needs (" + string.Join(", ", needRestart.ToArray()) +
+                    "). This build had already started with the old ones: press Build again.");
+            }
         }
     }
 }
