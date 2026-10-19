@@ -34,7 +34,8 @@ namespace SafeTouch.AR
             tint.renderQueue = 3100;   // above the surface grid
             shape.sharedMaterial = tint;
             shape.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            gameObject.SetActive(false);
+            // No SetActive(false) here: the scene keeps the reticle inactive, so Awake first
+            // runs inside Show's SetActive(true), and switching it off again would hide it.
         }
 
         /// <summary>Moves the square towards a hit on a surface. canPlace turns it green.</summary>
