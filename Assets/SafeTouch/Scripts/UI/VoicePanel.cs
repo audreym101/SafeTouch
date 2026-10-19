@@ -23,6 +23,9 @@ namespace SafeTouch.UI
         Image meterFill;
         RectTransform meterTarget;
         float meterShown;
+        RectTransform pitchArea;
+        Image[] pitchDots;
+        readonly System.Collections.Generic.List<float> pitchHistory = new System.Collections.Generic.List<float>();
 
         VoiceCoach coach;
         Action<NoRating> done;
@@ -42,6 +45,7 @@ namespace SafeTouch.UI
             body = UIFactory.Label(root, "", Theme.Body, Theme.Ink, TextAnchor.UpperLeft, false);
             status = UIFactory.Label(root, "", Theme.Title, Theme.Primary, TextAnchor.MiddleCenter, true);
             BuildMeter();
+            BuildPitchLine();
 
             var row = UIFactory.Row(root, "Voice buttons", 20f, Theme.TouchTarget);
             primary = UIFactory.Button(row.transform, "", Theme.Unsafe, Color.white, () => { if (primaryAction != null) primaryAction(); });
@@ -78,10 +82,82 @@ namespace SafeTouch.UI
             meterTarget.anchorMax = new Vector2(strong, 1f);
         }
 
+        // ---- Pitch line ----
+
+        const int PitchDots = 48;
+        const float LowestSemitone = -8f, HighestSemitone = 12f;   // relative to the talking voice
+
+        /// <summary>
+        /// The pitch line: one dot per frame while the child speaks, scrolling
+        /// left. The muted line is the child's talking voice; dots above the
+        /// orange line are squeaky. A firm NO stays level or slopes down.
+        /// </summary>
+        void BuildPitchLine()
+        {
+            var area = UIFactory.Panel(root, "Pitch line", Theme.Sky, true);
+            UIFactory.FixedHeight(area, 150f);
+            pitchArea = (RectTransform)area.transform;
+            GuideLine(0f, Theme.WithAlpha(Theme.Muted, 0.5f), "Talking voice");
+            GuideLine(6f, Theme.WithAlpha(Theme.Caution, 0.7f), "Too high");
+
+            pitchDots = new Image[PitchDots];
+            for (int i = 0; i < PitchDots; i++)
+            {
+                var dot = UIFactory.Panel(pitchArea, "Pitch dot", Theme.Primary, false);
+                dot.sprite = UIFactory.Circle;
+                var rt = (RectTransform)dot.transform;
+                rt.sizeDelta = new Vector2(16f, 16f);
+                float x = (i + 0.5f) / PitchDots;
+                rt.anchorMin = rt.anchorMax = new Vector2(x, 0.5f);
+                dot.raycastTarget = false;
+                pitchDots[i] = dot;
+            }
+        }
+
+        void GuideLine(float semitones, Color color, string lineName)
+        {
+            var line = (RectTransform)UIFactory.Panel(pitchArea, lineName, color, false).transform;
+            float y = PitchY(semitones);
+            line.anchorMin = new Vector2(0f, y);
+            line.anchorMax = new Vector2(1f, y);
+            line.sizeDelta = new Vector2(0f, 4f);
+        }
+
+        static float PitchY(float semitones)
+        {
+            return Mathf.InverseLerp(LowestSemitone, HighestSemitone, semitones);
+        }
+
+        void OnFrameHeard(VoiceFrame frame)
+        {
+            if (!waiting || !coach.Hearing) return;
+            pitchHistory.Add(frame.Voiced ? VoiceMath.Semitones(frame.pitchHz, coach.Settings.talkingPitchHz) : float.NaN);
+            if (pitchHistory.Count > PitchDots) pitchHistory.RemoveAt(0);
+            DrawPitch();
+        }
+
+        void DrawPitch()
+        {
+            int start = PitchDots - pitchHistory.Count;
+            for (int i = 0; i < PitchDots; i++)
+            {
+                var dot = pitchDots[i];
+                float st = i >= start ? pitchHistory[i - start] : float.NaN;
+                dot.enabled = !float.IsNaN(st);
+                if (!dot.enabled) continue;
+                var rt = (RectTransform)dot.transform;
+                float y = Mathf.Clamp01(PitchY(st));
+                rt.anchorMin = rt.anchorMax = new Vector2((i + 0.5f) / PitchDots, y);
+                dot.color = st > coach.Settings.maxAboveTalkingSemitones ? Theme.Unsafe : Theme.Primary;
+            }
+        }
+
         /// <summary>Opens the card and starts the first try. onDone gets the best try, or null if the child tapped.</summary>
         public void Show(string title, string text, VoiceCoach voiceCoach, Action<NoRating> onDone)
         {
+            if (coach != null) coach.FrameHeard -= OnFrameHeard;
             coach = voiceCoach;
+            coach.FrameHeard += OnFrameHeard;
             done = onDone;
             best = null;
             tries = 0;
@@ -97,7 +173,11 @@ namespace SafeTouch.UI
         public void Hide()
         {
             waiting = false;
-            if (coach != null) coach.Stop();
+            if (coach != null)
+            {
+                coach.FrameHeard -= OnFrameHeard;
+                coach.Stop();
+            }
             if (root != null) root.gameObject.SetActive(false);
         }
 
@@ -116,6 +196,8 @@ namespace SafeTouch.UI
             waiting = true;
             meterShown = 0f;
             UpdateMeter(0f, coach.StrongLevel01);
+            pitchHistory.Clear();
+            DrawPitch();
             SetStatus(T("voice.ready", "Get ready..."), Theme.Muted);
             SetButtons(null, null, T("voice.tap", "Tap NO instead"), () => Finish(null));
             coach.ListenForNo(OnResult);
