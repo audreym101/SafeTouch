@@ -20,6 +20,7 @@ namespace SafeTouch.Voice
         UtteranceSegmenter segmenter;
         NoCoachSettings settings = new NoCoachSettings();
         Action<NoRating> onNo;
+        Action<bool> onTalk;
         bool permitted;
 
         public NoCoachSettings Settings { get { return settings; } }
@@ -49,6 +50,19 @@ namespace SafeTouch.Voice
         public void ListenForNo(Action<NoRating> done)
         {
             onNo = done;
+            onTalk = null;
+            Begin();
+        }
+
+        /// <summary>
+        /// Listens to the child talking normally ("Hello Keza!") to learn
+        /// their everyday pitch, so a high voice is not mistaken for a squeak.
+        /// done gets true if a voiced answer was heard. Kept for this session only.
+        /// </summary>
+        public void ListenToTalkingVoice(Action<bool> done)
+        {
+            onTalk = done;
+            onNo = null;
             Begin();
         }
 
@@ -57,6 +71,7 @@ namespace SafeTouch.Voice
         {
             Listening = false;
             onNo = null;
+            onTalk = null;
             microphone.StopCapture();
         }
 
@@ -108,14 +123,25 @@ namespace SafeTouch.Voice
         void OnUtterance(Utterance utterance)
         {
             if (!Listening) return;
+            if (onTalk != null)
+            {
+                bool voiced = utterance.MedianPitch > 0f && utterance.VoicedFraction >= settings.minVoicedFraction;
+                if (voiced) settings.SetTalkingPitch(utterance.MedianPitch);
+                var talked = onTalk;
+                Stop();
+                talked(voiced);
+                return;
+            }
             Deliver(NoCoach.Rate(utterance, settings));
         }
 
         void Deliver(NoRating rating)
         {
             var done = onNo;
+            var talked = onTalk;
             Stop();
             if (done != null) done(rating);
+            if (talked != null) talked(false);
         }
     }
 }
