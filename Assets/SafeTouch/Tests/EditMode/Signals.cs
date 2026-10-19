@@ -59,9 +59,11 @@ namespace SafeTouch.Tests
         /// <summary>Adds quiet room noise under a clip, as a real microphone would hear it.</summary>
         public static float[] WithRoom(float[] clip, float noiseAmplitude = 0.002f, int seed = 7)
         {
-            var noise = Noise((float)clip.Length / Rate, noiseAmplitude, seed);
+            // Noise is generated per sample: going through seconds can round one sample short.
+            var random = new System.Random(seed);
             var mixed = new float[clip.Length];
-            for (int i = 0; i < clip.Length; i++) mixed[i] = Mathf.Clamp(clip[i] + noise[i], -1f, 1f);
+            for (int i = 0; i < clip.Length; i++)
+                mixed[i] = Mathf.Clamp(clip[i] + noiseAmplitude * (float)(random.NextDouble() * 2.0 - 1.0), -1f, 1f);
             return mixed;
         }
 
