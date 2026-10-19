@@ -27,5 +27,22 @@ namespace SafeTouch.Voice
             if (amplitude <= 0.00001f) return SilenceDb;
             return Mathf.Max(SilenceDb, 20f * Mathf.Log10(amplitude));
         }
+
+        /// <summary>
+        /// Distance between two pitches in semitones (12 per octave). Positive
+        /// when hz is higher than reference. Children hear a 2-semitone change
+        /// as "going up", which is why the coach works in semitones, not hertz.
+        /// </summary>
+        public static float Semitones(float hz, float referenceHz)
+        {
+            if (hz <= 0f || referenceHz <= 0f) return 0f;
+            return 12f * Mathf.Log(hz / referenceHz, 2f);
+        }
+
+        /// <summary>The pitch a number of semitones away from referenceHz.</summary>
+        public static float ShiftSemitones(float referenceHz, float semitones)
+        {
+            return referenceHz * Mathf.Pow(2f, semitones / 12f);
+        }
     }
 }
