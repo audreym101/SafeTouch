@@ -130,8 +130,10 @@ namespace SafeTouch.UI
 
         void SetCheck(int index, string label, bool passed)
         {
+            // Colour plus a word, not a tick glyph: the built-in font has no tick,
+            // and colour alone fails for colour-blind children.
             checks[index].color = passed ? Theme.Safe : Theme.Caution;
-            checkLabels[index].text = (passed ? "✓ " : "") + label;   // tick mark when passed
+            checkLabels[index].text = label + (passed ? ": " + T("voice.check.yes", "yes") : ": " + T("voice.check.notyet", "not yet"));
         }
 
         // ---- Pitch line ----
