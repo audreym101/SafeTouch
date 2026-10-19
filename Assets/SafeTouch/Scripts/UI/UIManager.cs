@@ -77,6 +77,7 @@ namespace SafeTouch.UI
             screens.Add(Certificate);
             screens.Add(Places);
             screens.Add(new BadgesScreen());
+            screens.Add(new LookScreen());
             screens.Add(new ParentGateScreen());
             screens.Add(new ParentScreen());
 
