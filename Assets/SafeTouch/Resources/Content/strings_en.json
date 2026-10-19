@@ -411,6 +411,11 @@
     { "key": "scan.unsupported.title", "value": "This phone can't show AR" },
     { "key": "scan.unsupported.body", "value": "SafeTouch needs a phone that works with Google Play Services for AR (ARCore). Ask a grown-up to try another phone." },
     { "key": "scan.unsupported.back", "value": "Back to the lessons" },
-    { "key": "scan.preparing", "value": "Getting the camera ready..." }
+    { "key": "scan.preparing", "value": "Getting the camera ready..." },
+    { "key": "scan.search.title", "value": "Find the floor or a table" },
+    { "key": "scan.search.body", "value": "Point your phone at the floor or a big table and move it slowly from side to side. Squares appear where Keza can stand." },
+    { "key": "scan.small.title", "value": "Found it! Keep going..." },
+    { "key": "scan.small.body", "value": "This surface is {0:0.0} x {1:0.0} m. Keza needs about {2:0.0} x {2:0.0} m: move your phone slowly over more of it until the squares turn green." },
+    { "key": "scan.ready.title", "value": "Big enough!" }
   ]
 }

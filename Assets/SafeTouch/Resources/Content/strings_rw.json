@@ -318,6 +318,11 @@
     { "key": "scan.unsupported.title", "value": "Iyi telefoni ntishobora kwerekana AR" },
     { "key": "scan.unsupported.body", "value": "SafeTouch ikeneye telefoni ikorana na Google Play Services for AR (ARCore). Saba umuntu mukuru kugerageza indi telefoni." },
     { "key": "scan.unsupported.back", "value": "Subira ku masomo" },
-    { "key": "scan.preparing", "value": "Kamera iri gutegurwa..." }
+    { "key": "scan.preparing", "value": "Kamera iri gutegurwa..." },
+    { "key": "scan.search.title", "value": "Shaka hasi cyangwa ku meza" },
+    { "key": "scan.search.body", "value": "Erekeza telefoni yawe hasi cyangwa ku meza manini, uyizunguze buhoro uva ku ruhande ujya ku rundi. Udusanduku tugaragara aho Keza ashobora guhagarara." },
+    { "key": "scan.small.title", "value": "Habonetse! Komeza..." },
+    { "key": "scan.small.body", "value": "Aha hantu hangana na metero {0:0.0} kuri {1:0.0}. Keza akeneye nibura metero {2:0.0} kuri {2:0.0}: komeza uzunguze telefoni buhoro kugeza udusanduku duhindutse icyatsi." },
+    { "key": "scan.ready.title", "value": "Harahagije!" }
   ]
 }
