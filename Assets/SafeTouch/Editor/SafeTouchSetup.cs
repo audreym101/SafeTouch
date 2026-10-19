@@ -171,6 +171,7 @@ namespace SafeTouch.EditorTools
                 lessonRoot.AddComponent<StopFrameworkLesson>(),
                 lessonRoot.AddComponent<TrustedAdultsLesson>(),
                 lessonRoot.AddComponent<ReviewLesson>(),
+                lessonRoot.AddComponent<BubbleGuardGame>(),
             };
 
             var reticleInstance = (GameObject)PrefabUtility.InstantiatePrefab(reticle);
