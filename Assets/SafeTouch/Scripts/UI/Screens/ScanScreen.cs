@@ -101,7 +101,7 @@ namespace SafeTouch.UI.Screens
                     Set(T("scan.small.title", "Found it! Keep going..."), SizeLine(), null);
                     break;
                 default:
-                    Set(T("scan.ready.title", "Big enough!"), T("scan.found"), null);
+                    Set(T("scan.ready.title", "Big enough!"), T("scan.found", "Found it! Tap the button to place Keza."), null);
                     break;
             }
         }
