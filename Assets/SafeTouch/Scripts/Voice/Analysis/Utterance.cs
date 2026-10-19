@@ -50,6 +50,42 @@ namespace SafeTouch.Voice
             return pitches;
         }
 
+        /// <summary>
+        /// Rough syllable count from the loudness envelope: each rise of
+        /// SyllableDipDb after a dip is a new beat. "No" is 1, "Oya" (no in
+        /// Kinyarwanda) is 1-2, "No no no" or a sentence is 3 or more. It
+        /// does not recognise words; it checks the answer was short.
+        /// </summary>
+        public int Syllables { get; private set; }
+
+        public const float SyllableDipDb = 6f;
+
+        void CountSyllables()
+        {
+            Syllables = 0;
+            if (frames.Count == 0) return;
+            float valley = noiseFloorDb, peak = 0f;
+            bool inBeat = false;
+            for (int i = 0; i < frames.Count; i++)
+            {
+                // A 3-frame moving average keeps one vowel from counting twice.
+                float sum = 0f; int n = 0;
+                for (int j = Mathf.Max(0, i - 1); j <= Mathf.Min(frames.Count - 1, i + 1); j++) { sum += frames[j].levelDb; n++; }
+                float level = sum / n;
+
+                if (!inBeat)
+                {
+                    valley = Mathf.Min(valley, level);
+                    if (level - valley >= SyllableDipDb) { inBeat = true; peak = level; Syllables++; }
+                }
+                else
+                {
+                    peak = Mathf.Max(peak, level);
+                    if (peak - level >= SyllableDipDb) { inBeat = false; valley = level; }
+                }
+            }
+        }
+
         void SummarisePitch()
         {
             var pitches = PitchContour();
@@ -80,6 +116,7 @@ namespace SafeTouch.Voice
             MeanDb = frames.Count > 0 ? 10f * Mathf.Log10((float)(power / frames.Count)) : VoiceMath.SilenceDb;
             ClippedFraction = frames.Count > 0 ? (float)clipped / frames.Count : 0f;
             SummarisePitch();
+            CountSyllables();
         }
     }
 }
