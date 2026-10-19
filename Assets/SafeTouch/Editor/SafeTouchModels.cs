@@ -44,7 +44,10 @@ namespace SafeTouch.EditorTools
         public static void RenderPreviews()
         {
             Directory.CreateDirectory(PreviewFolder);
+            // The source models, plus the prefabs built from them when they exist.
+            var builtFolders = new[] { "Assets/SafeTouch/Prefabs", "Assets/SafeTouch/Resources/Props" }.Where(AssetDatabase.IsValidFolder).ToArray();
             var paths = AssetDatabase.FindAssets("t:Model", new[] { ModelsFolder })
+                .Concat(builtFolders.Length > 0 ? AssetDatabase.FindAssets("t:Prefab", builtFolders) : new string[0])
                 .Select(AssetDatabase.GUIDToAssetPath).Distinct().OrderBy(p => p).ToArray();
             foreach (var path in paths)
             {
@@ -71,7 +74,9 @@ namespace SafeTouch.EditorTools
         {
             var instance = Object.Instantiate(model);
             instance.hideFlags = HideFlags.HideAndDontSave;
-            var bounds = Bounds(instance.GetComponentsInChildren<Renderer>());
+            foreach (var label in instance.GetComponentsInChildren<TextMesh>())
+                label.transform.rotation = Quaternion.LookRotation(-new Vector3(0.35f, 0.25f, 1f));   // face the preview camera
+            var bounds = Bounds(instance.GetComponentsInChildren<Renderer>().Where(r => r.GetComponent<TextMesh>() == null).ToArray());
 
             var light = new GameObject("Preview light") { hideFlags = HideFlags.HideAndDontSave }.AddComponent<Light>();
             light.type = LightType.Directional;
@@ -108,11 +113,13 @@ namespace SafeTouch.EditorTools
             Object.DestroyImmediate(instance);
         }
 
+        /// <summary>World bounds of the renderers that draw (switched-off parts, like the other adult, are skipped).</summary>
         public static Bounds Bounds(Renderer[] renderers)
         {
-            if (renderers.Length == 0) return new Bounds(Vector3.zero, Vector3.one);
-            var b = renderers[0].bounds;
-            foreach (var r in renderers) b.Encapsulate(r.bounds);
+            var shown = renderers.Where(r => r.enabled).ToArray();
+            if (shown.Length == 0) return new Bounds(Vector3.zero, Vector3.one);
+            var b = shown[0].bounds;
+            foreach (var r in shown) b.Encapsulate(r.bounds);
             return b;
         }
 
