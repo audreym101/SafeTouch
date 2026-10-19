@@ -22,6 +22,7 @@ namespace SafeTouch.Voice
         Action<NoRating> onNo;
         Action<bool> onTalk;
         bool permitted;
+        bool continuous;
 
         public NoCoachSettings Settings { get { return settings; } }
         public bool Listening { get; private set; }
@@ -51,6 +52,19 @@ namespace SafeTouch.Voice
         {
             onNo = done;
             onTalk = null;
+            continuous = false;
+            Begin();
+        }
+
+        /// <summary>
+        /// Keeps the microphone open and rates every word until Stop, for the
+        /// Bubble Guard game. There is no silence timeout in this mode.
+        /// </summary>
+        public void ListenContinuously(Action<NoRating> eachTry)
+        {
+            onNo = eachTry;
+            onTalk = null;
+            continuous = true;
             Begin();
         }
 
@@ -106,7 +120,7 @@ namespace SafeTouch.Voice
         void Update()
         {
             // Silence for too long: hand back "nothing heard" so the lesson can encourage the child.
-            if (Listening && !segmenter.InUtterance && Time.unscaledTime - listenStart > noAnswerSeconds)
+            if (Listening && !continuous && !segmenter.InUtterance && Time.unscaledTime - listenStart > noAnswerSeconds)
                 Deliver(NoRating.NothingHeard());
         }
 
@@ -132,7 +146,13 @@ namespace SafeTouch.Voice
                 talked(voiced);
                 return;
             }
-            Deliver(NoCoach.Rate(utterance, settings));
+            var rating = NoCoach.Rate(utterance, settings);
+            if (continuous)
+            {
+                if (onNo != null) onNo(rating);   // stay open for the next word
+                return;
+            }
+            Deliver(rating);
         }
 
         void Deliver(NoRating rating)
