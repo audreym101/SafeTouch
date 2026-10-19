@@ -727,17 +727,20 @@ document.getElementById("swatches").innerHTML = [
   ["Primary","#2474C6","Main buttons"],["Sun","#F6B73C","Stars, badges"],["Safe","#3BA776","Green zone, Safe"],["Caution","#EE9B2F","Yellow zone, Uncomfortable"],["Unsafe","#E4574C","Red zone, Unsafe"],["Keza","#F28C38","Guide character"]]
   .map(([n,h,u]) => `<div class="sw"><i style="--c:${h}"></i><div><b>${n}</b><code>${h}</code><span class="note">${u}</span></div></div>`).join("");
 
-// ---------- Downloads (downloads capability) ----------
+// ---------- Downloads ----------
 const status = document.getElementById("dlstatus");
 const bar = document.getElementById("downloads");
-let dl = null;
-if (window.claude && window.claude.use) {
-  window.claude.use("downloads").then(ns => { dl = ns; if (!ns) status.textContent = "Downloads are not available in this view. The zip is also in the project files."; }).catch(() => {});
+// A plain browser download, so the prototype works wherever it is opened.
+function save(filename, data) {
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 bar.addEventListener("click", async e => {
   const b = e.target.closest("[data-file]"); if (!b) return;
   const file = b.dataset.file;
-  if (!dl) { status.textContent = "Downloads are not available in this view. The zip is also in the project files."; return; }
   status.textContent = "Preparing " + file + "...";
   try {
     // Archives are published as base64 text and rebuilt here before saving.
@@ -751,10 +754,10 @@ bar.addEventListener("click", async e => {
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       data = new Blob([bytes], { type: "application/zip" });
     } else data = await res.blob();
-    await dl.save({ filename: file, data });
+    save(file, data);
     status.textContent = "Saved " + file + ".";
   } catch (err) {
-    status.textContent = err && err.code === "declined" ? "Download cancelled." : "Could not save " + file + ". Try again.";
+    status.textContent = "Could not save " + file + ". The file is also in the project folder.";
   }
 });
 })();
