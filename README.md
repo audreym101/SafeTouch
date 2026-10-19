@@ -228,7 +228,9 @@ The managers match the class diagram in the proposal: `GameManager`, `UIManager`
 ## 10. Privacy and child safety
 
 * No account, name, photo, location or voice recording. Only an age band and a random device id (Law N° 058/2021 on personal data, Article 9).
-* The microphone is not used. The camera feed is never saved or sent.
+* The microphone opens only while Keza listens for a spoken NO, and closes straight after. Sound sits in a one-second loop that is constantly overwritten: SafeTouch measures loudness, pitch and length, then forgets them. Nothing is recorded, saved or sent, and no speech recognition runs. Parents can switch voice practice off; the lessons then use a NO button. See [docs/voice-coach.md](docs/voice-coach.md).
+* The camera feed is never saved or sent.
+* Keza's skin tone describes the guide character, not the child, and is not synced.
 * Anonymous sync is **off** by default, can only be switched on in the grown-ups section, and switching it off deletes the server copy.
 * Scenario wording is non-graphic and every answer ends by pointing the child to a trusted adult; all content is reviewed by child-protection experts before any child uses the app.
 * SafeTouch is an educational tool. It does not diagnose, investigate or replace child-protection services.
