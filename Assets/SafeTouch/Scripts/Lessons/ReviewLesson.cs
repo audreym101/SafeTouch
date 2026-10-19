@@ -206,13 +206,16 @@ namespace SafeTouch.Lessons
                 case "school":
                     names = new[] { T("places.teacher", "Teacher"), T("places.head", "Head teacher") };
                     colors = new[] { Theme.Primary, Theme.Hex("#5A8FD6") };
-                    AddProp(PrimitiveType.Cube, 1.3f, 180f, new Vector3(0.6f, 0.4f, 0.04f), 0.5f, Theme.Hex("#2F5D4A"));   // chalkboard
+                    if (!AddModelProp("school", 1.2f, 180f)) AddProp(PrimitiveType.Cube, 1.3f, 180f, new Vector3(0.6f, 0.4f, 0.04f), 0.5f, Theme.Hex("#2F5D4A"));   // chalkboard
                     break;
                 case "playground":
                     names = new[] { T("places.izu", "IZU volunteer"), T("places.friendmum", "Friend's mum") };
                     colors = new[] { Theme.Safe, Theme.Hex("#2BA3A0") };
-                    AddProp(PrimitiveType.Cylinder, 1.3f, 200f, new Vector3(0.06f, 0.3f, 0.06f), 0.3f, Theme.Hex("#8A6A4E")); // tree trunk
-                    AddProp(PrimitiveType.Sphere, 1.3f, 200f, new Vector3(0.4f, 0.4f, 0.4f), 0.75f, Theme.Hex("#4E9A48"));    // tree top
+                    if (!AddModelProp("playground", 1.4f, 190f))
+                    {
+                        AddProp(PrimitiveType.Cylinder, 1.3f, 200f, new Vector3(0.06f, 0.3f, 0.06f), 0.3f, Theme.Hex("#8A6A4E")); // tree trunk
+                        AddProp(PrimitiveType.Sphere, 1.3f, 200f, new Vector3(0.4f, 0.4f, 0.4f), 0.75f, Theme.Hex("#4E9A48"));    // tree top
+                    }
                     break;
                 default:
                     names = new[] { T("places.parent", "Mum or Dad"), T("places.grandparent", "Grandparent") };
@@ -223,6 +226,24 @@ namespace SafeTouch.Lessons
             placeHelpers.Add(Spawn(names[0], colors[0], 0.8f, -115f));
             placeHelpers.Add(Spawn(names[1], colors[1], 0.8f, -50f));
             RunChase();
+        }
+
+        /// <summary>
+        /// Places scenery built from the repo's models (Resources/Props/school
+        /// and playground, made by SafeTouch > Build Character Prefabs).
+        /// Returns false when the prop hasn't been built, so a block is used.
+        /// </summary>
+        bool AddModelProp(string propName, float radius, float angle)
+        {
+            var prefab = Resources.Load<GameObject>("Props/" + propName);
+            if (prefab == null) return false;
+            var go = Instantiate(prefab);
+            go.transform.position = game.AR.PointAroundCharacter(radius, angle);
+            var toKeza = Vector3.ProjectOnPlane(keza.transform.position - go.transform.position, Vector3.up);
+            if (toKeza.sqrMagnitude > 0.0001f) go.transform.rotation = Quaternion.LookRotation(toKeza);
+            if (game.AR.AnchorRoot != null) go.transform.SetParent(game.AR.AnchorRoot, true);
+            sceneProps.Add(go);
+            return true;
         }
 
         /// <summary>A simple scenery block so each place looks different in the room.</summary>
