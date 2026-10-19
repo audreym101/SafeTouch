@@ -26,7 +26,7 @@ namespace SafeTouch.Voice
 
         public bool loud;      // strong voice compared with the room
         public bool steady;    // pitch flat or falling, not squeaky
-        public bool short_;    // one short word
+        public bool brief;     // one short word
 
         public float loudnessDb;              // dB above the room
         public float medianPitchHz;
