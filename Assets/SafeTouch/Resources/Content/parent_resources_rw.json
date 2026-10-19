@@ -1,0 +1,33 @@
+{
+  "_note": "Kinyarwanda version of parent_resources.json (same ids). First draft for review by a native speaker and the content experts. Phone numbers must be re-confirmed with NCDA / RIB before the evaluation sessions.",
+  "items": [
+    { "resourceId": "talk1", "section": "talk", "title": "Koresha amazina nyayo y'ibice by'umubiri",
+      "body": "Abana bazi amagambo nyayo bashobora gusobanura ibyababayeho. Vuga imyanya y'ibanga utuje, nk'uko uvuga inkokora cyangwa ivi." },
+    { "resourceId": "talk2", "section": "talk", "title": "Ibitunguranye, si amabanga",
+      "body": "Sobanura itandukaniro: igitunguranye kirashimisha kandi kivugwa vuba (nk'impano y'isabukuru). Ibanga rituma umuntu ahangayika rigomba kuvugwa buri gihe." },
+    { "resourceId": "talk_voice", "section": "talk", "title": "Mwitoze hamwe kuvuga OYA ikomeye",
+      "body": "Mu masomo, umwana wawe yitoza kuvuga OYA mu ijwi riranguruye: cyane, ryo hasi kandi rigufi, nka \"OYA.\" aho kuba \"oya?\". Mwitoze no mu rugo, kandi rimwe na rimwe nawe uvuge oya mu mikino. Mushime ijwi rye, kandi umwereke ko OYA yubahwa, n'iyo ari wowe ubwirwa."},
+    { "resourceId": "talk3", "section": "talk", "title": "Mubaze nyuma ya buri somo",
+      "body": "Saba umwana wawe akwigishe STOP. Mureke avuge abantu bakuru yizeye, kandi wiyongereho ku rutonde niba utaruriho." },
+    { "resourceId": "talk4", "section": "talk", "title": "Niba umwana wawe hari icyo akubwiye",
+      "body": "Tuza, umwemere, umushimire kuba akubwiye, kandi umubwire ko atari ikosa rye. Ntumubaze ibibazo byinshi birambuye; vugana n'inzego ziri hasi aha." },
+    { "resourceId": "signs1", "section": "signs", "title": "Impinduka mu myitwarire",
+      "body": "Gutinya bitunguranye umuntu cyangwa ahantu, kwiheza, uburakari, kunyara ku buriri cyangwa inzozi mbi bitari bisanzwe." },
+    { "resourceId": "signs2", "section": "signs", "title": "Amabanga n'impano",
+      "body": "Impano nshya, amafaranga cyangwa amayinite ya telefoni bivuye ku muntu mukuru nta mpamvu igaragara, cyangwa kuvuga ibanga ryihariye." },
+    { "resourceId": "signs3", "section": "signs", "title": "Ubumenyi burenze imyaka ye",
+      "body": "Amagambo cyangwa imikino yerekeye imibonano mpuzabitsina y'abantu bakuru umwana w'imyaka ye atakagombye kumenya." },
+    { "resourceId": "signs4", "section": "signs", "title": "Ibimenyetso ku mubiri",
+      "body": "Ububabare, ibikomere cyangwa kuva amaraso hafi y'imyanya y'ibanga, cyangwa kugorwa no kugenda cyangwa kwicara. Shaka ubuvuzi kuri Isange One Stop Centre." },
+    { "resourceId": "help1", "section": "help", "title": "Umurongo ufasha abana (ni ubuntu)",
+      "body": "Umurongo w'igihugu utishyurwa ku bana no ku muntu wese uhangayikishijwe n'umwana.", "phone": "116" },
+    { "resourceId": "help2", "section": "help", "title": "Isange One Stop Centre",
+      "body": "Ubufasha bw'ubuntu mu by'ubuvuzi, ubujyanama n'amategeko ku ihohoterwa rikorerwa abana n'irishingiye ku gitsina, mu bitaro byo mu Rwanda hose.", "phone": "3029" },
+    { "resourceId": "help3", "section": "help", "title": "Urwego rw'Igihugu rw'Ubugenzacyaha (RIB)",
+      "body": "Menyesha RIB ihohoterwa rikorerwa abana.", "phone": "166" },
+    { "resourceId": "help4", "section": "help", "title": "Ubutabazi bwihuse (Polisi y'u Rwanda)",
+      "body": "Niba umwana ari mu kaga ubu nonaha.", "phone": "112" },
+    { "resourceId": "help5", "section": "help", "title": "Inshuti z'Umuryango zo mu mudugudu wawe",
+      "body": "Inshuti z'Umuryango ziri muri buri mudugudu zishobora gufasha imiryango kubona ubufasha." }
+  ]
+}
