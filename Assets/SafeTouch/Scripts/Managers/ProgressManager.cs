@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SafeTouch.Data;
+using SafeTouch.Voice;
 using UnityEngine;
 
 namespace SafeTouch.Managers
@@ -105,6 +106,21 @@ namespace SafeTouch.Managers
             Save();
         }
 
+        /// <summary>Counts a spoken NO. Three-star tries count towards the "Strong Voice" badge.</summary>
+        public void RecordNo(NoRating rating)
+        {
+            if (rating == null || rating.stars < 3) return;
+            progress.strongNoCount++;
+            UpdateBadges();
+            Save();
+        }
+
+        public void SetVoiceEnabled(bool on)
+        {
+            progress.voiceEnabled = on;
+            Save();
+        }
+
         public void SetTrustedAdults(IEnumerable<string> adultIds)
         {
             progress.trustedAdults = new List<string>(adultIds);
@@ -151,6 +167,7 @@ namespace SafeTouch.Managers
                 case "adults": return progress.trustedAdults.Count >= value;
                 case "all": return progress.completedLevels.Count >= LessonCount;
                 case "fast": return progress.bestChaseSeconds > 0f && progress.bestChaseSeconds <= value;
+                case "voice": return progress.strongNoCount >= value;
                 default: return false;
             }
         }
