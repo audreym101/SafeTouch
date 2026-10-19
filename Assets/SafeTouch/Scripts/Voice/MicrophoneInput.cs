@@ -14,8 +14,16 @@ namespace SafeTouch.Voice
         /// <summary>16 kHz is plenty for a child's voice and keeps the pitch maths cheap.</summary>
         public const int PreferredRate = 16000;
 
+        /// <summary>Samples handed on per read. GetData wraps around the end of the loop.</summary>
+        const int Block = 512;
+
         AudioClip loop;
         string device;
+        int readPosition;
+        readonly float[] block = new float[Block];
+
+        /// <summary>Raised with new samples (buffer, count) on the main thread. The buffer is reused.</summary>
+        public event Action<float[], int> SamplesReady;
 
         public int SampleRate { get; private set; }
 
@@ -37,7 +45,25 @@ namespace SafeTouch.Voice
             loop = Microphone.Start(device, true, 1, SampleRate);
             if (loop == null) return false;
             SampleRate = loop.frequency;
+            readPosition = 0;
             return true;
+        }
+
+        /// <summary>Reads whatever the microphone wrote since last frame, in fixed blocks.</summary>
+        void Update()
+        {
+            if (!IsCapturing) return;
+            int writePosition = Microphone.GetPosition(device);
+            if (writePosition < 0) return;
+            int available = writePosition - readPosition;
+            if (available < 0) available += loop.samples;
+            while (available >= Block)
+            {
+                loop.GetData(block, readPosition);
+                readPosition = (readPosition + Block) % loop.samples;
+                available -= Block;
+                if (SamplesReady != null) SamplesReady(block, Block);
+            }
         }
 
         /// <summary>Closes the microphone; the phone's recording indicator goes off.</summary>
