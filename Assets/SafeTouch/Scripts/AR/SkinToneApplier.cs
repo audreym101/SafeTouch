@@ -21,7 +21,10 @@ namespace SafeTouch.AR
         {
             public Renderer renderer;
             public int materialIndex;
+            public bool masked;   // uses the "SafeTouch/Skin Tone" shader: only the masked skin changes
         }
+
+        static readonly int SkinColorId = Shader.PropertyToID("_SkinColor");
 
         [Tooltip("Show the tone as a flat colour instead of tinting the model's skin texture. " +
                  "Tinting a light texture can only make it darker, so dark tones would look muddy.")]
@@ -47,6 +50,13 @@ namespace SafeTouch.AR
             {
                 if (slot.renderer == null) continue;
                 slot.renderer.GetPropertyBlock(block, slot.materialIndex);
+                if (slot.masked)
+                {
+                    // One texture holds skin and clothes; the shader's mask keeps the clothes.
+                    block.SetColor(SkinColorId, color);
+                    slot.renderer.SetPropertyBlock(block, slot.materialIndex);
+                    continue;
+                }
                 block.SetColor("_Color", color);       // Built-in Standard shader
                 block.SetColor("_BaseColor", color);   // URP Lit, if the project moves to URP
                 if (replaceSkinTexture)
@@ -175,15 +185,18 @@ namespace SafeTouch.AR
                 for (int i = 0; i < materials.Length; i++)
                 {
                     string materialName = materials[i] != null ? materials[i].name.ToLowerInvariant() : "";
-                    bool skin = IsSkin(materialName) || (materials.Length == 1 && IsSkin(r.name.ToLowerInvariant()));
-                    if (skin) slots.Add(new Slot { renderer = r, materialIndex = i });
+                    bool masked = materials[i] != null && materials[i].HasProperty(SkinColorId);
+                    bool skin = masked || IsSkin(materialName) || (materials.Length == 1 && IsSkin(r.name.ToLowerInvariant()));
+                    if (skin) slots.Add(new Slot { renderer = r, materialIndex = i, masked = masked });
                 }
             }
             // Start blends from the colour the model was made with.
             if (slots.Count > 0 && Current == default(Color))
             {
                 var m = slots[0].renderer.sharedMaterials[slots[0].materialIndex];
-                Current = m != null && m.HasProperty("_Color") ? m.color : Color.gray;
+                Current = m == null ? Color.gray
+                    : m.HasProperty(SkinColorId) ? m.GetColor(SkinColorId)
+                    : m.HasProperty("_Color") ? m.color : Color.gray;
             }
         }
 
