@@ -148,10 +148,17 @@ namespace SafeTouch.Lessons
                         new PromptOption(T("bubble.stranger.stop", "Say \"Stop! Please step back\""), Theme.Unsafe, () =>
                         {
                             if (firstTry) score++;
-                            keza.Bounce();
-                            stranger.WalkTo(game.AR.PointAroundCharacter(VisitorStart, 150f), null);
-                            Feedback(true, T("bubble.stranger.stopfb", "Keza used a loud, clear voice and the person stepped back. Then Keza tells a trusted adult."),
-                                () => { if (Older) OnlineBubble(); else Finish(score, 3); });
+                            // Right answer: now the child says it, so the words are practised, not just picked.
+                            SayNo(T("bubble.stranger.say.title", "Say it out loud!"),
+                                T("bubble.stranger.say.body", "Help Keza: say \"STOP!\" or \"NO!\" in your big, strong voice."),
+                                T("bubble.stranger.say.button", "STOP!"),
+                                rating =>
+                                {
+                                    keza.Bounce();
+                                    stranger.WalkTo(game.AR.PointAroundCharacter(VisitorStart, 150f), null);
+                                    Feedback(true, T("bubble.stranger.stopfb", "Keza used a loud, clear voice and the person stepped back. Then Keza tells a trusted adult."),
+                                        () => { if (Older) OnlineBubble(); else Finish(score, 3); });
+                                });
                         }),
                         new PromptOption(T("bubble.stranger.wait", "Let them come closer"), Theme.Card, () =>
                         {
