@@ -17,6 +17,29 @@ namespace SafeTouch.EditorTools
         const string PreviewFolder = "docs/designs/models";
         const int PreviewSize = 512;
 
+        /// <summary>
+        /// The Mixamo and Sketchfab FBX files carry their textures inside the
+        /// file, but Unity shows them white until they are extracted. This
+        /// writes them to Models/Textures/&lt;model&gt; and reimports, so the
+        /// materials pick them up by name.
+        /// </summary>
+        public static void ExtractTextures(string modelPath)
+        {
+            var importer = AssetImporter.GetAtPath(modelPath) as ModelImporter;
+            if (importer == null) return;
+            string folder = ModelsFolder + "/Textures/" + Slug(Path.GetFileNameWithoutExtension(modelPath));
+            if (AssetDatabase.IsValidFolder(folder)) return;   // already done
+            Directory.CreateDirectory(folder);
+            AssetDatabase.Refresh();
+            if (importer.ExtractTextures(folder))
+            {
+                AssetDatabase.Refresh();
+                importer.SearchAndRemapMaterials(ModelImporterMaterialName.BasedOnMaterialName, ModelImporterMaterialSearch.Everywhere);
+                importer.SaveAndReimport();
+                Debug.Log("[SafeTouch] Extracted textures of " + modelPath + " to " + folder);
+            }
+        }
+
         [MenuItem("SafeTouch/3. Render Model Previews", priority = 3)]
         public static void RenderPreviews()
         {
