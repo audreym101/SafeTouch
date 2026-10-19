@@ -51,6 +51,7 @@ namespace SafeTouch.Lessons
                 .OrderBy(r => Random.value)
                 .Take(Older ? 10 : 8));
             maxScore = deck.Count;
+            if (Listening) maxScore += deck.Count(r => !r.safe);   // a strong-voice bonus is possible on each unsafe visitor
 
             Header(T("game.title", "Bubble Guard"));
             Prompt(T("game.intro.title", "Guard Keza's bubble!"),
@@ -58,9 +59,24 @@ namespace SafeTouch.Lessons
                 new PromptOption(T("game.start", "Start!"), Theme.Primary, NextVisitor));
         }
 
+        bool Listening { get { return game.Voice != null && game.Voice.Available; } }
+
+        /// <summary>Opens the microphone once for the whole game; every word heard answers the current visitor.</summary>
+        void StartListening()
+        {
+            if (!Listening || game.Voice.Listening) return;
+            game.Voice.ListenContinuously(rating =>
+            {
+                if (!Running || !answering || !rating.Heard) return;
+                game.Progress.RecordNo(rating);
+                Answer(true, rating);
+            });
+        }
+
         void NextVisitor()
         {
             ClearFigures();
+            StartListening();
             if (index >= deck.Count || hearts <= 0) { EndGame(); return; }
             current = deck[index];
             float progress = deck.Count > 1 ? (float)index / (deck.Count - 1) : 0f;
@@ -73,9 +89,10 @@ namespace SafeTouch.Lessons
             visitor.Say(current.text, game.AR.OpaqueMaterial);
             answering = true;
             ShowStatus();
-            Prompt("\"" + current.text + "\"", T("game.ask", "Is that okay?"),
-                new PromptOption(T("game.no", "NO!"), Theme.Unsafe, () => Answer(true)),
-                new PromptOption(T("game.ok", "OK"), Theme.Safe, () => Answer(false)));
+            Prompt("\"" + current.text + "\"",
+                Listening ? T("game.ask.voice", "Is that okay? If not, say NO out loud!") : T("game.ask", "Is that okay?"),
+                new PromptOption(T("game.no", "NO!"), Theme.Unsafe, () => Answer(true, null)),
+                new PromptOption(T("game.ok", "OK"), Theme.Safe, () => Answer(false, null)));
         }
 
         void ShowStatus()
@@ -89,14 +106,15 @@ namespace SafeTouch.Lessons
             var toKeza = Vector3.ProjectOnPlane(keza.transform.position - visitor.transform.position, Vector3.up);
             float distance = toKeza.magnitude;
 
-            if (current.safe && distance <= PersonalSpaceBubbleLesson.YellowRadius) { Answer(false); return; }   // a friend just arrives
+            if (current.safe && distance <= PersonalSpaceBubbleLesson.YellowRadius) { Answer(false, null); return; }   // a friend just arrives
             if (!current.safe && distance <= PersonalSpaceBubbleLesson.RedRadius) { TooClose(); return; }
 
             visitor.FaceTowards(keza.transform.position);
             visitor.transform.position += toKeza.normalized * visitor.WalkSpeed * Time.deltaTime;
         }
 
-        void Answer(bool saidNo)
+        /// <summary>voice is the spoken try that answered, or null for a tap.</summary>
+        void Answer(bool saidNo, Voice.NoRating voice)
         {
             if (!answering) return;
             answering = false;
@@ -108,6 +126,12 @@ namespace SafeTouch.Lessons
                 score++;
                 keza.Bounce();
                 result = T("game.result.no", "They walked away!");
+                if (voice != null && voice.stars == 3)
+                {
+                    score++;
+                    result = T("game.result.strong", "Strong voice bonus! They walked away fast.");
+                }
+                else if (voice != null) result += " " + VoiceTips.For(voice.tip);
                 game.Audio.PlaySFX("correct");
                 LeaveFast();
             }
