@@ -323,6 +323,46 @@
     {
       "key": "parent.voice.off",
       "value": "Voice practice is off"
+    },
+    {
+      "key": "game.title",
+      "value": "Bubble Guard"
+    },
+    {
+      "key": "game.summary",
+      "value": "Game: say NO to keep Keza's bubble safe"
+    },
+    {
+      "key": "game.start",
+      "value": "Start!"
+    },
+    {
+      "key": "game.no",
+      "value": "NO!"
+    },
+    {
+      "key": "game.ok",
+      "value": "OK"
+    },
+    {
+      "key": "game.ready",
+      "value": "Ready to play"
+    },
+    {
+      "key": "game.best",
+      "value": "Best score: {0}"
+    },
+    {
+      "key": "game.end.title",
+      "value": "Bubble Guard complete!"
+    },
+    {
+      "key": "game.end.body",
+      "value": "You scored {0} out of {1}."
+    },
+    {
+      "key": "game.end.best",
+      "value": "That's your best score yet!"
     }
   ]
 }
