@@ -33,6 +33,26 @@ namespace SafeTouch.Voice
         /// <summary>True when a lesson can ask the child to speak (switched on, and the phone has a mic).</summary>
         public bool Available { get { return Enabled && MicrophoneInput.HasDevice; } }
 
+        /// <summary>Loudness for the on-screen meter: 0 at the room's level, 1 at a full-marks voice and beyond.</summary>
+        public float Level01 { get; private set; }
+
+        /// <summary>Where a strong voice starts on the meter (the target line).</summary>
+        public float StrongLevel01 { get { return settings.strongLoudnessDb / MeterRangeDb; } }
+
+        /// <summary>The pitch heard in the latest frame, 0 when none.</summary>
+        public float PitchHz { get; private set; }
+
+        /// <summary>False for the first moments while the room's noise is measured ("get ready").</summary>
+        public bool Ready { get { return Listening && segmenter != null && segmenter.Settled; } }
+
+        /// <summary>True while the child is speaking.</summary>
+        public bool Hearing { get { return Listening && segmenter != null && segmenter.InUtterance; } }
+
+        /// <summary>Raised for every analysed frame while listening, for the pitch line.</summary>
+        public event Action<VoiceFrame> FrameHeard;
+
+        const float MeterRangeDb = 30f;
+
         void Awake()
         {
             if (microphone == null) microphone = GetComponent<MicrophoneInput>();
@@ -86,6 +106,8 @@ namespace SafeTouch.Voice
             Listening = false;
             onNo = null;
             onTalk = null;
+            Level01 = 0f;
+            PitchHz = 0f;
             microphone.StopCapture();
         }
 
@@ -131,7 +153,12 @@ namespace SafeTouch.Voice
 
         void OnFrame(VoiceFrame frame)
         {
-            if (Listening) segmenter.Add(frame);
+            if (!Listening) return;
+            float target = Mathf.Clamp01((frame.levelDb - segmenter.NoiseFloorDb) / MeterRangeDb);
+            Level01 = target > Level01 ? target : Mathf.Lerp(Level01, target, 0.25f);   // rise fast, fall gently
+            PitchHz = frame.Voiced ? frame.pitchHz : 0f;
+            segmenter.Add(frame);
+            if (FrameHeard != null) FrameHeard(frame);
         }
 
         void OnUtterance(Utterance utterance)
