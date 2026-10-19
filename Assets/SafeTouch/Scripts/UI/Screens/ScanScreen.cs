@@ -49,7 +49,12 @@ namespace SafeTouch.UI.Screens
         public void Tick()
         {
             var now = game.AR.Status;
-            if (!first && now == shown) return;
+            if (!first && now == shown)
+            {
+                // The surface grows while the child scans: keep its size up to date.
+                if (now == ARManager.ARStatus.TooSmall && Time.frameCount % 10 == 0) status.text = SizeLine();
+                return;
+            }
             first = false;
             shown = now;
             Show(now);
@@ -58,7 +63,7 @@ namespace SafeTouch.UI.Screens
         void Show(ARManager.ARStatus s)
         {
             // Before the camera is on, the card is solid so the screen isn't a confusing black.
-            bool cameraOn = s == ARManager.ARStatus.Searching || s == ARManager.ARStatus.Ready;
+            bool cameraOn = s == ARManager.ARStatus.Searching || s == ARManager.ARStatus.TooSmall || s == ARManager.ARStatus.Ready;
             Root.GetComponent<Image>().color = cameraOn ? Theme.Clear : Theme.Sky;
             place.gameObject.SetActive(cameraOn);
             place.interactable = s == ARManager.ARStatus.Ready;
@@ -89,12 +94,24 @@ namespace SafeTouch.UI.Screens
                     Set(T("scan.preparing", "Getting the camera ready..."), "", null);
                     break;
                 case ARManager.ARStatus.Searching:
-                    Set(Localization.T("scan.hint"), Localization.T("scan.searching"), null);
+                    Set(T("scan.search.title", "Find the floor or a table"),
+                        T("scan.search.body", "Point your phone at the floor or a big table and move it slowly from side to side. Squares appear where Keza can stand."), null);
+                    break;
+                case ARManager.ARStatus.TooSmall:
+                    Set(T("scan.small.title", "Found it! Keep going..."), SizeLine(), null);
                     break;
                 default:
-                    Set(Localization.T("scan.hint"), Localization.T("scan.found"), null);
+                    Set(T("scan.ready.title", "Big enough!"), T("scan.found"), null);
                     break;
             }
+        }
+
+        /// <summary>How big the surface is now and how big it needs to be, in metres.</summary>
+        string SizeLine()
+        {
+            var size = game.AR.SurfaceSize;
+            return string.Format(T("scan.small.body", "This surface is {0:0.0} x {1:0.0} m. Keza needs about {2:0.0} x {2:0.0} m: move your phone slowly over more of it until the squares turn green."),
+                size.x, size.y, ARManager.MinSurfaceSide);
         }
 
         void Set(string title, string body, string button)
