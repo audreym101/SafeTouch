@@ -16,7 +16,10 @@ namespace SafeTouch.EditorTools
     ///             wave for "Bounce".
     ///   Adults  - the two people in the Eve model, split into two visitors
     ///             and helpers whose "RealismBody" skin takes the palette.
-    ///   Props   - the playground and the school desk, at table-top size,
+    ///   Mum/Dad - from the parents-and-dog model, with skin masks so they
+    ///             can match Keza's tone (Keza's family).
+    ///   Props   - the playground, school desk, chalkboard, family dog and a
+    ///             merged grass patch, at table-top size,
     ///             in Resources/Props for the Memory Quest chase.
     /// Run it before SafeTouch > 2. Build SafeTouch Scene, which then uses
     /// these prefabs instead of the simple shapes. Everything it writes can
@@ -32,6 +35,7 @@ namespace SafeTouch.EditorTools
         const string AdultsModel = Models + "/haveto-the-parent-of-the-glasses/source/Haveto1TheGlassesPublish1.fbx";
         const string PlaygroundModel = Models + "/playground/source/child.fbx";
         const string DeskModel = Models + "/school-chair/source/Silla.fbx";
+        const string ChalkboardModel = Models + "/chalk-board/source/MenuBoard.fbx";
 
         const string PrefabFolder = "Assets/SafeTouch/Prefabs";
         const string GeneratedFolder = "Assets/SafeTouch/Generated";
@@ -57,6 +61,9 @@ namespace SafeTouch.EditorTools
             BuildAdults(sparkle);
             BuildProp(PlaygroundModel, "playground", 1.1f, true);
             BuildProp(DeskModel, "school", 0.32f, false);
+            BuildProp(ChalkboardModel, "chalkboard", 0.45f, false);
+            BuildFamily(sparkle);
+            BuildGrass();
             AssetDatabase.SaveAssets();
             Debug.Log("[SafeTouch] Character prefabs built. Now run SafeTouch > 2. Build SafeTouch Scene to use them.");
         }
@@ -224,6 +231,270 @@ namespace SafeTouch.EditorTools
         }
 
         // ---------------------------------------------------------------
+        // Mum, Dad and the dog
+        // ---------------------------------------------------------------
+
+        const string FamilyModel = Models + "/js-parents-and-dog/source/d.fbx";
+        public const string MumPrefabPath = PrefabFolder + "/Mum.prefab";
+        public const string DadPrefabPath = PrefabFolder + "/Dad.prefab";
+
+        /// <summary>
+        /// The family model holds a father, a mother and a dog, each made of
+        /// several part meshes named "...DadJ:...", "...MomJ:..." and
+        /// "...Perro...". Mum and Dad become helpers whose skin can match
+        /// Keza's tone; the dog becomes a prop for the home scene.
+        /// </summary>
+        static void BuildFamily(Material sparkle)
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(FamilyModel);
+            if (model == null) { Debug.LogWarning("[SafeTouch] Family model is missing: " + FamilyModel); return; }
+
+            // Parts that show skin, and the parts that are only skin (used to sample the painted skin colour).
+            BuildParent(model, "MomJ", "Mum", MumPrefabPath, new[] { "Cabeza", "Mano" }, new[] { "Mano" }, sparkle);
+            BuildParent(model, "DadJ", "Dad", DadPrefabPath, new[] { "Cabeza", "Brazo", "Pierna" }, new[] { "Brazo" }, sparkle);
+
+            var dog = new GameObject("dog");
+            var body = (GameObject)PrefabUtility.InstantiatePrefab(model);
+            body.transform.SetParent(dog.transform, false);
+            foreach (var r in body.GetComponentsInChildren<Renderer>(true)) r.enabled = r.name.Contains("Perro");
+            FitHeight(dog, body, 0.2f);
+            Save(dog, PropsFolder + "/dog.prefab");
+        }
+
+        static void BuildParent(GameObject model, string key, string label, string path, string[] skinParts, string[] pureSkinParts, Material sparkle)
+        {
+            var root = new GameObject(label);
+            var body = (GameObject)PrefabUtility.InstantiatePrefab(model);
+            body.name = "Model";
+            body.transform.SetParent(root.transform, false);
+            var mine = body.GetComponentsInChildren<Renderer>(true).Where(r => r.name.Contains(key)).ToArray();
+            foreach (var r in body.GetComponentsInChildren<Renderer>(true)) r.enabled = mine.Contains(r);
+
+            var texture = mine.Select(r => r.sharedMaterial != null ? r.sharedMaterial.mainTexture as Texture2D : null).FirstOrDefault(t => t != null);
+            if (texture != null)
+            {
+                Color painted;
+                var mask = BuildIslandSkinMask(AssetDatabase.GetAssetPath(texture),
+                    MeshesOf(mine, skinParts), MeshesOf(mine, pureSkinParts),
+                    GeneratedFolder + "/" + label + " Skin Mask.png", out painted);
+                var material = new Material(Shader.Find("SafeTouch/Skin Tone"));
+                material.SetTexture("_MainTex", texture);
+                material.SetTexture("_SkinMask", mask);
+                material.SetColor("_SkinReference", painted);
+                material.SetColor("_SkinColor", painted);
+                material = SaveAsset(material, GeneratedFolder + "/" + label + " Skin Tone.mat");
+                foreach (var r in mine)
+                {
+                    // Dad's lens meshes import as opaque dark discs (sunglasses); hide them and keep the frames.
+                    bool lens = r.sharedMaterials.Any(m => m != null && m.name.Contains("Trans"));
+                    if (lens) { r.enabled = false; continue; }
+                    // Only the skin parts get the tone. Clothes keep their own material even
+                    // where they share texture pixels with the neck (Mum's shirt does).
+                    if (skinParts.Any(p => r.name.Contains(p)))
+                        r.sharedMaterials = Enumerable.Repeat(material, r.sharedMaterials.Length).ToArray();
+                }
+            }
+
+            var size = FitHeight(root, body, AdultHeight);
+            AddPersonParts(root, size, label, false, sparkle, new Renderer[0]);
+            var keep = new SerializedObject(root.GetComponent<ARFigure>());
+            keep.FindProperty("keepOwnColours").boolValue = true;
+            keep.ApplyModifiedPropertiesWithoutUndo();
+            Save(root, path);
+        }
+
+        static Mesh[] MeshesOf(Renderer[] renderers, string[] partNames)
+        {
+            return renderers.Where(r => partNames.Any(p => r.name.Contains(p)))
+                .Select(r => r is SkinnedMeshRenderer ? ((SkinnedMeshRenderer)r).sharedMesh : r.GetComponent<MeshFilter>() != null ? r.GetComponent<MeshFilter>().sharedMesh : null)
+                .Where(m => m != null).ToArray();
+        }
+
+        /// <summary>
+        /// A skin mask for a texture that also holds hair, a beard and clothes.
+        /// Only texture areas used by the skin parts can be skin, and within
+        /// them a pixel counts when its hue, saturation and brightness are
+        /// close to the skin painted on the arms or hands. That keeps the
+        /// beard (too dark), light hair (too saturated), teeth and eyes (too
+        /// white) and lips (too red) as they are.
+        /// </summary>
+        public static Texture2D BuildIslandSkinMask(string texturePath, Mesh[] skinMeshes, Mesh[] pureSkinMeshes, string maskPath, out Color painted)
+        {
+            var source = new Texture2D(2, 2);
+            source.LoadImage(File.ReadAllBytes(texturePath));
+            int w = source.width, h = source.height;
+            var pixels = source.GetPixels32();
+            Object.DestroyImmediate(source);
+
+            var skinArea = Islands(skinMeshes, w, h);
+            var pureArea = Islands(pureSkinMeshes, w, h);
+
+            // The painted skin colour: the average of the arm or hand pixels.
+            double rs = 0, gs = 0, bs = 0; int n = 0;
+            for (int i = 0; i < pixels.Length; i++)
+                if (pureArea[i] && pixels[i].a > 128) { rs += pixels[i].r; gs += pixels[i].g; bs += pixels[i].b; n++; }
+            painted = n > 0 ? new Color((float)(rs / n / 255), (float)(gs / n / 255), (float)(bs / n / 255)) : new Color(0.85f, 0.65f, 0.57f);
+            float refH, refS, refV;
+            Color.RGBToHSV(painted, out refH, out refS, out refV);
+
+            var weights = new float[w * h];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                if (!skinArea[i]) continue;
+                float hue, sat, val;
+                Color.RGBToHSV(pixels[i], out hue, out sat, out val);
+                float dh = Mathf.Abs(hue - refH); dh = Mathf.Min(dh, 1f - dh);
+                float byHue = 1f - Mathf.Clamp01((dh - 0.03f) / 0.04f);
+                float bySat = 1f - Mathf.Clamp01((Mathf.Abs(sat - refS) - 0.08f) / 0.08f);
+                float byVal = Mathf.Clamp01((val / Mathf.Max(refV, 0.01f) - 0.5f) / 0.15f);
+                weights[i] = Mathf.Min(byHue, Mathf.Min(bySat, byVal));
+            }
+
+            // Smooth, then sharpen: scattered specks (strands of hair, a beard)
+            // fade away, small holes in a face (shadowed eyelids) fill in, and
+            // edges become soft instead of pixel-sharp.
+            weights = BoxBlur(BoxBlur(weights, w, h, 4), w, h, 4);
+            var mask = new Color32[w * h];
+            int skin = 0;
+            for (int i = 0; i < weights.Length; i++)
+            {
+                float weight = skinArea[i] ? Mathf.Clamp01((weights[i] - 0.4f) / 0.3f) : 0f;
+                byte v = (byte)(weight * 255f);
+                mask[i] = new Color32(v, v, v, 255);
+                if (weight > 0.9f) skin++;
+            }
+
+            var texture = new Texture2D(w, h, TextureFormat.RGB24, false);
+            texture.SetPixels32(mask);
+            texture.Apply();
+            File.WriteAllBytes(maskPath, texture.EncodeToPNG());
+            Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(maskPath);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(maskPath);
+            importer.sRGBTexture = false;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.SaveAndReimport();
+            Debug.Log(string.Format("[SafeTouch] Skin mask {0}: {1:0.0}% of the texture is skin", maskPath, 100f * skin / (w * h)));
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(maskPath);
+        }
+
+        /// <summary>A separable box blur of the given radius (in pixels) over a w x h grid.</summary>
+        static float[] BoxBlur(float[] src, int w, int h, int radius)
+        {
+            var tmp = new float[src.Length];
+            var dst = new float[src.Length];
+            float norm = 1f / (2 * radius + 1);
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                float sum = 0f;
+                for (int k = -radius; k <= radius; k++) sum += src[y * w + Mathf.Clamp(x + k, 0, w - 1)];
+                tmp[y * w + x] = sum * norm;
+            }
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                float sum = 0f;
+                for (int k = -radius; k <= radius; k++) sum += tmp[Mathf.Clamp(y + k, 0, h - 1) * w + x];
+                dst[y * w + x] = sum * norm;
+            }
+            return dst;
+        }
+
+        /// <summary>Marks every texture pixel covered by the meshes' UV triangles.</summary>
+        static bool[] Islands(Mesh[] meshes, int w, int h)
+        {
+            var covered = new bool[w * h];
+            foreach (var mesh in meshes)
+            {
+                var uv = mesh.uv;
+                if (uv == null || uv.Length == 0) continue;
+                var tris = mesh.triangles;
+                for (int t = 0; t < tris.Length; t += 3)
+                {
+                    Vector2 a = Wrap(uv[tris[t]]) * new Vector2(w, h), b = Wrap(uv[tris[t + 1]]) * new Vector2(w, h), c = Wrap(uv[tris[t + 2]]) * new Vector2(w, h);
+                    int x0 = Mathf.Max(0, Mathf.FloorToInt(Mathf.Min(a.x, Mathf.Min(b.x, c.x)))), x1 = Mathf.Min(w - 1, Mathf.CeilToInt(Mathf.Max(a.x, Mathf.Max(b.x, c.x))));
+                    int y0 = Mathf.Max(0, Mathf.FloorToInt(Mathf.Min(a.y, Mathf.Min(b.y, c.y)))), y1 = Mathf.Min(h - 1, Mathf.CeilToInt(Mathf.Max(a.y, Mathf.Max(b.y, c.y))));
+                    float area = Edge(a, b, c);
+                    if (Mathf.Abs(area) < 1e-6f) continue;
+                    for (int y = y0; y <= y1; y++)
+                    for (int x = x0; x <= x1; x++)
+                    {
+                        var p = new Vector2(x + 0.5f, y + 0.5f);
+                        float w0 = Edge(b, c, p) / area, w1 = Edge(c, a, p) / area, w2 = Edge(a, b, p) / area;
+                        if (w0 >= -0.01f && w1 >= -0.01f && w2 >= -0.01f) covered[y * w + x] = true;
+                    }
+                }
+            }
+            return covered;
+        }
+
+        static Vector2 Wrap(Vector2 uv)
+        {
+            return new Vector2(uv.x - Mathf.Floor(uv.x), uv.y - Mathf.Floor(uv.y));
+        }
+
+        static float Edge(Vector2 a, Vector2 b, Vector2 p)
+        {
+            return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+        }
+
+        // ---------------------------------------------------------------
+        // Grass
+        // ---------------------------------------------------------------
+
+        const string GrassModel = Models + "/patch-of-grass/source/Grass.fbx";
+
+        /// <summary>
+        /// The grass model is 9,437 separate blades on a 2 m patch, far too many
+        /// draw calls for a phone. This keeps a round patch from the middle,
+        /// every second blade, and merges them into one mesh (about 7,000
+        /// vertices) about 0.6 m across. The soil plane is dropped: the real
+        /// floor shows through in AR.
+        /// </summary>
+        static void BuildGrass()
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(GrassModel);
+            if (model == null) { Debug.LogWarning("[SafeTouch] Grass model is missing: " + GrassModel); return; }
+            var instance = Object.Instantiate(model);
+            var whole = SafeTouchModels.Bounds(instance.GetComponentsInChildren<Renderer>());
+            float keepRadius = whole.extents.x * 0.45f;
+
+            var parts = new System.Collections.Generic.List<CombineInstance>();
+            Material grassMaterial = null;
+            int index = 0, vertices = 0;
+            foreach (var filter in instance.GetComponentsInChildren<MeshFilter>())
+            {
+                var r = filter.GetComponent<Renderer>();
+                if (filter.sharedMesh == null || r == null || r.sharedMaterial == null || r.sharedMaterial.name.Contains("Soil")) continue;
+                var offset = r.bounds.center - whole.center;
+                if (new Vector2(offset.x, offset.z).magnitude > keepRadius || index++ % 2 == 1) continue;
+                grassMaterial = r.sharedMaterial;
+                parts.Add(new CombineInstance { mesh = filter.sharedMesh, transform = filter.transform.localToWorldMatrix });
+                vertices += filter.sharedMesh.vertexCount;
+            }
+
+            var mesh = new Mesh { name = "Grass Patch" };
+            if (vertices > 65000) mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            mesh.CombineMeshes(parts.ToArray(), true, true);
+            var b = mesh.bounds;
+            var shift = new Vector3(-b.center.x, -b.min.y, -b.center.z);
+            var verts = mesh.vertices;
+            for (int i = 0; i < verts.Length; i++) verts[i] += shift;
+            mesh.vertices = verts;
+            mesh.RecalculateBounds();
+            Object.DestroyImmediate(instance);
+            mesh = SaveAsset(mesh, GeneratedFolder + "/Grass Patch.asset");
+
+            var root = new GameObject("grass");
+            root.AddComponent<MeshFilter>().sharedMesh = mesh;
+            root.AddComponent<MeshRenderer>().sharedMaterial = grassMaterial;
+            root.transform.localScale = Vector3.one * (0.6f / Mathf.Max(mesh.bounds.size.x, 0.0001f));
+            Save(root, PropsFolder + "/grass.prefab");
+            Debug.Log("[SafeTouch] Grass patch: " + parts.Count + " blades, " + mesh.vertexCount + " vertices");
+        }
+
+        // ---------------------------------------------------------------
         // Props
         // ---------------------------------------------------------------
 
@@ -309,11 +580,78 @@ namespace SafeTouch.EditorTools
             Debug.Log("[SafeTouch] Wrote docs/designs/skin-tones.png");
         }
 
-        /// <summary>Batch-mode entry: build the prefabs, then render the tone preview.</summary>
+        /// <summary>
+        /// Renders Mum, Keza and Dad together in three tones to
+        /// docs/designs/family-tones.png: the family takes the tone the child
+        /// picks for Keza. Checks that beards, hair, clothes and glasses stay put.
+        /// </summary>
+        [MenuItem("SafeTouch/6. Render Family Preview", priority = 6)]
+        public static void RenderFamilyPreview()
+        {
+            var family = new[] { MumPrefabPath, KezaPrefabPath, DadPrefabPath }.Select(p => AssetDatabase.LoadAssetAtPath<GameObject>(p)).ToArray();
+            if (family.Any(p => p == null)) { Debug.LogWarning("[SafeTouch] Build the character prefabs first."); return; }
+            var tones = new[] { "honey", "cocoa", "ebony" };
+
+            var people = new System.Collections.Generic.List<GameObject>();
+            for (int g = 0; g < tones.Length; g++)
+            for (int i = 0; i < family.Length; i++)
+            {
+                var person = (GameObject)PrefabUtility.InstantiatePrefab(family[i]);
+                person.transform.position = new Vector3((g - 1) * 1.15f + (i - 1) * 0.34f, 0f, 0f);
+                person.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+                person.GetComponent<SkinToneApplier>().Apply(SkinTones.Get(tones[g]).Color);
+                foreach (var label in person.GetComponentsInChildren<TextMesh>())
+                {
+                    label.text = i == 1 ? SkinTones.Get(tones[g]).english : "";
+                    label.transform.rotation = Quaternion.identity;
+                }
+                people.Add(person);
+            }
+            RenderStrip(people, "docs/designs/family-tones.png", 0.62f, 0.4f);
+            foreach (var p in people) Object.DestroyImmediate(p);
+        }
+
+        /// <summary>Renders the given objects, front on, into a wide PNG.</summary>
+        static void RenderStrip(System.Collections.Generic.List<GameObject> objects, string file, float halfHeight, float lookHeight)
+        {
+            var light = new GameObject("Preview light").AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.transform.rotation = Quaternion.Euler(35f, 200f, 0f);
+            var cam = new GameObject("Preview camera").AddComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.918f, 0.957f, 0.984f);
+            cam.orthographic = true;
+            cam.orthographicSize = halfHeight;
+            cam.transform.position = new Vector3(0f, lookHeight, -3f);
+            cam.transform.LookAt(new Vector3(0f, lookHeight, 0f));
+
+            const int width = 1800, height = 600;
+            var target = new RenderTexture(width, height, 24);
+            cam.targetTexture = target;
+            cam.aspect = (float)width / height;
+            cam.Render();
+            RenderTexture.active = target;
+            var png = new Texture2D(width, height, TextureFormat.RGB24, false);
+            png.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            png.Apply();
+            Directory.CreateDirectory(Path.GetDirectoryName(file));
+            File.WriteAllBytes(file, png.EncodeToPNG());
+
+            RenderTexture.active = null;
+            cam.targetTexture = null;
+            Object.DestroyImmediate(png);
+            Object.DestroyImmediate(target);
+            Object.DestroyImmediate(cam.gameObject);
+            Object.DestroyImmediate(light.gameObject);
+            Debug.Log("[SafeTouch] Wrote " + file);
+        }
+
+        /// <summary>Batch-mode entry: build the prefabs, then render the previews.</summary>
         public static void BuildAndPreview()
         {
             BuildAll();
             RenderSkinTonePreview();
+            RenderFamilyPreview();
         }
 
         // ---------------------------------------------------------------
