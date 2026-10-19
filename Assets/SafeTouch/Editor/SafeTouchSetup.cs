@@ -30,7 +30,7 @@ namespace SafeTouch.EditorTools
     /// One-click project setup, so the repo carries code rather than
     /// hand-edited scene files:
     ///   SafeTouch > 1. Configure Android AR Settings
-    ///   SafeTouch > 2. Build SafeTouch Scene
+    ///   SafeTouch > 2. Build SafeTouch Scene (uses the model prefabs from step 4 when built)
     /// </summary>
     public static class SafeTouchSetup
     {
@@ -129,6 +129,13 @@ namespace SafeTouch.EditorTools
 
             var keza = PersonPrefab("Keza", opaque, Theme.Hex("#F28C38"), 0.75f, true);
             var figure = PersonPrefab("Figure", opaque, Theme.Hex("#8C99AD"), 1f, false);
+
+            // Prefabs from the repo's 3D models (SafeTouch > 4. Build Character Prefabs From Models), when built.
+            var kezaModel = AssetDatabase.LoadAssetAtPath<GameObject>(SafeTouchCharacters.KezaPrefabPath);
+            if (kezaModel != null) keza = kezaModel;
+            var people = SafeTouchCharacters.AdultPrefabPaths
+                .Select(p => AssetDatabase.LoadAssetAtPath<GameObject>(p)).Where(p => p != null)
+                .Concat(new[] { figure }).ToArray();
             var reticle = ReticlePrefab(transparent);
             var planePrefab = PlanePrefab(planeMat);
 
@@ -179,6 +186,7 @@ namespace SafeTouch.EditorTools
 
             Set(ar, "characterPrefab", keza);
             Set(ar, "figurePrefab", figure);
+            SetArray(ar, "figureVariants", people);
             Set(ar, "reticle", reticleInstance.transform);
             Set(ar, "raycastManager", raycasts);
             Set(ar, "planeManager", planes);
