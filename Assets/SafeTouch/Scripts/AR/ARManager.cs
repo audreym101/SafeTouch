@@ -168,12 +168,24 @@ namespace SafeTouch.AR
             character.transform.SetParent(anchorRoot, true);
         }
 
+        /// <summary>
+        /// Shows the tone the child picked on Keza. With animate the colour
+        /// blends and sparkles; used live from the "Keza's look" screen.
+        /// </summary>
+        public void ApplySkinTone(Data.SkinTone tone, bool animate)
+        {
+            if (character == null) return;
+            GetOrAdd<SkinToneApplier>(character.gameObject).SetTone(tone, animate);
+        }
+
         /// <summary>Spawns a simple figure (visitor or trusted adult) at a point around Keza.</summary>
         public ARFigure SpawnFigure(string label, Color color, float radius, float angleDegrees)
         {
             var go = Instantiate(figurePrefab != null ? figurePrefab : characterPrefab);
             var figure = GetOrAdd<ARFigure>(go);
             figure.Setup(label, color, opaqueMaterial);
+            // A mix of skin tones in every lesson; the same name always gets the same tone.
+            GetOrAdd<SkinToneApplier>(go).SetTone(Data.SkinTones.ForName(label), false);
             go.transform.position = PointAroundCharacter(radius, angleDegrees);
             if (anchorRoot != null) go.transform.SetParent(anchorRoot, true);
             figure.FaceTowards(character.transform.position);
