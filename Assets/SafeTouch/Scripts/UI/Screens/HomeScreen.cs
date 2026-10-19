@@ -7,7 +7,7 @@ namespace SafeTouch.UI.Screens
 {
     /// <summary>
     /// The lesson map: four lessons and the Memory Quest in order, stars earned, and the two
-    /// secondary destinations (badges, grown-ups).
+    /// secondary destinations (badges, Keza's look, grown-ups).
     /// </summary>
     public class HomeScreen : UIScreen
     {
@@ -20,7 +20,7 @@ namespace SafeTouch.UI.Screens
 
         readonly List<Card> cards = new List<Card>();
         Text heading, stars;
-        Button badges, grownUps;
+        Button badges, look, grownUps;
 
         public override string Name { get { return "home"; } }
 
@@ -60,6 +60,7 @@ namespace SafeTouch.UI.Screens
             UIFactory.Spacer(col, 1f);
             var row = UIFactory.Row(col, "Secondary", Theme.Gap, Theme.TouchTarget);
             badges = UIFactory.Button(row.transform, "My badges", Theme.Sun, Theme.Ink, () => ui.ShowMenu("badges"));
+            look = UIFactory.Button(row.transform, "Keza's look", Theme.Card, Theme.Ink, () => ui.ShowMenu("look"));
             grownUps = UIFactory.Button(row.transform, "Grown-ups", Theme.Card, Theme.Ink, () => ui.ShowMenu("parentGate"));
         }
 
@@ -69,6 +70,7 @@ namespace SafeTouch.UI.Screens
             heading.text = Localization.T("home.heading");
             stars.text = string.Format(Localization.T("home.stars"), progress.GetTotalScore(), progress.badgesEarned.Count);
             UIFactory.SetButtonLabel(badges, Localization.T("home.badges"));
+            UIFactory.SetButtonLabel(look, Localization.T("home.look", "Keza's look"));
             UIFactory.SetButtonLabel(grownUps, Localization.T("home.grownups"));
 
             foreach (var card in cards)
