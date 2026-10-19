@@ -1,11 +1,13 @@
 using SafeTouch.AR;
 using SafeTouch.UI;
+using SafeTouch.Voice;
 using UnityEngine;
 
 namespace SafeTouch.Lessons
 {
     /// <summary>
-    /// Lesson 3, the STOP framework (FR6): S - Say no, T - Tell a trusted
+    /// Lesson 3, the STOP framework (FR6): S - Say no (out loud, coached by
+    /// the microphone when available), T - Tell a trusted
     /// adult, O - Openly explain what happened, P - Protect yourself by going
     /// to a safe place. The child rehearses each step with Keza in the room.
     /// Ages 9 to 11 get "think deeper" notes and a fifth step: keep telling
@@ -32,7 +34,7 @@ namespace SafeTouch.Lessons
             Narrate("stop_intro");
             Prompt(T("stop.intro.title", "Something doesn't feel right"),
                 T("stop.intro.body", "Someone says to Keza: \"Let's play a secret touching game. Don't tell anyone.\" Secrets about touching are never okay. Let's learn STOP."),
-                new PromptOption(T("stop.intro.go", "Let's STOP it"), Theme.Primary, SayNo));
+                new PromptOption(T("stop.intro.go", "Let's STOP it"), Theme.Primary, StepSayNo));
         }
 
         /// <summary>Adds a "think deeper" note for ages 9-11; empty for 6-8.</summary>
@@ -41,20 +43,36 @@ namespace SafeTouch.Lessons
             return Older ? "\n\n" + T("deeper", "Think deeper:") + " " + T(key, english) : "";
         }
 
-        void SayNo()
+        /// <summary>
+        /// S is rehearsed out loud: the child says NO and hears how it
+        /// sounded (Behavioural Skills Training: rehearsal, then feedback).
+        /// A three-star NO sends the visitor further back.
+        /// </summary>
+        void StepSayNo()
         {
             Header(T("stop.s", "S - Say no"));
             Narrate("stop_s");
-            Prompt(T("stop.s.title", "S: Say NO"),
-                T("stop.s.body", "Say it loud and clear, with a strong voice. Tap the button and say \"NO!\" out loud too."),
-                new PromptOption(T("stop.s.button", "NO!"), Theme.Unsafe, () =>
+            SayNo(T("stop.s.title", "S: Say NO"),
+                T("stop.s.voice", "Say \"NO!\" out loud in a big, strong voice, so the person knows you mean it. Keza is listening!"),
+                T("stop.s.button", "NO!"),
+                rating =>
                 {
                     score++;
                     keza.Bounce();
-                    visitor.WalkTo(game.AR.PointAroundCharacter(1.5f, 160f), null);
-                    Feedback(true, T("stop.s.fb", "Great voice! Saying no is always allowed, even to an adult.")
+                    float away = rating != null && rating.stars == 3 ? 1.9f : 1.5f;
+                    visitor.WalkTo(game.AR.PointAroundCharacter(away, 160f), null);
+                    Feedback(true, SayNoFeedback(rating)
                         + Deeper("stop.s.deeper", "Keza can say no even to someone older, someone she loves, or someone who gave her a gift. Saying no is not rude when her body is involved."), TellAdult);
-                }));
+                });
+        }
+
+        static string SayNoFeedback(NoRating rating)
+        {
+            if (rating == null || !rating.Heard)
+                return T("stop.s.fb", "Great! Saying no is always allowed, even to an adult. Next time, try saying it out loud too.");
+            if (rating.Good)
+                return T("stop.s.fb.voice", "The person heard your strong NO and stepped back. Saying no is always allowed, even to an adult.");
+            return T("stop.s.fb.soft", "Good try! A loud, low, short NO works best. You can practise it more in the Bubble Guard game.");
         }
 
         void TellAdult()
