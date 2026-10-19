@@ -5,6 +5,7 @@ using SafeTouch.Lessons;
 using SafeTouch.Managers;
 using SafeTouch.Services;
 using SafeTouch.UI;
+using SafeTouch.Voice;
 using Unity.XR.CoreUtils;
 using UnityEditor;
 using UnityEditor.Build;
@@ -156,6 +157,10 @@ namespace SafeTouch.EditorTools
             var scenarios = app.AddComponent<ScenarioManager>();
             var progress = app.AddComponent<ProgressManager>();
             var cloud = app.AddComponent<CloudSyncService>();
+            // Unity adds the RECORD_AUDIO permission to the Android manifest because of the Microphone API.
+            var mic = app.AddComponent<MicrophoneInput>();
+            var voice = app.AddComponent<VoiceCoach>();
+            Set(voice, "microphone", mic);
 
             var lessonRoot = new GameObject("Lessons");
             lessonRoot.transform.SetParent(app.transform);
@@ -200,6 +205,7 @@ namespace SafeTouch.EditorTools
             Set(game, "scenarioManager", scenarios);
             Set(game, "progressManager", progress);
             Set(game, "cloudSync", cloud);
+            Set(game, "voiceCoach", voice);
             SetArray(game, "lessons", lessons);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
