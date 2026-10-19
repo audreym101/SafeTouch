@@ -128,7 +128,24 @@ namespace SafeTouch.AR
         /// <summary>A small hop, used for waving, saying "No!" and celebrating.</summary>
         public void Bounce()
         {
+            // Model characters with a greeting clip wave; the simple figures hop.
+            var animator = GetComponentInChildren<Animator>();
+            if (animator != null && animator.runtimeAnimatorController != null && HasTrigger(animator, GreetTrigger))
+            {
+                animator.SetTrigger(GreetTrigger);
+                return;
+            }
             StartCoroutine(Hop());
+        }
+
+        /// <summary>Animator trigger that plays the greeting wave (set up by SafeTouch > Build Character Prefabs).</summary>
+        public const string GreetTrigger = "Greet";
+
+        static bool HasTrigger(Animator animator, string trigger)
+        {
+            foreach (var p in animator.parameters)
+                if (p.name == trigger && p.type == AnimatorControllerParameterType.Trigger) return true;
+            return false;
         }
 
         IEnumerator Walk(Vector3 target, System.Action arrived)
