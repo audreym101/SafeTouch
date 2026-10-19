@@ -34,6 +34,19 @@ namespace SafeTouch.Managers
         void Awake()
         {
             badges = ContentLibrary.Badges;
+            Core.Localization.Changed += ReloadBadges;
+        }
+
+        void OnDestroy()
+        {
+            Core.Localization.Changed -= ReloadBadges;
+        }
+
+        /// <summary>The badge titles come in the new language; which badges are earned stays the same.</summary>
+        void ReloadBadges()
+        {
+            badges = ContentLibrary.Badges;
+            foreach (var badge in badges) badge.unlocked = progress.badgesEarned.Contains(badge.badgeId);
         }
 
         public void Save()
