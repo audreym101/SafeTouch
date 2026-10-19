@@ -19,8 +19,11 @@ namespace SafeTouch.AR
             disc.name = discName;
             Destroy(disc.GetComponent<Collider>());
             disc.transform.SetParent(transform, false);
-            disc.transform.localPosition = new Vector3(0f, heightOffset, 0f);
-            disc.transform.localScale = new Vector3(radius * 2f, 0.002f, radius * 2f);
+            // Sizes are in metres in the room: undo Keza's own scale, so the
+            // red, yellow and green discs match the distances ZoneOf checks.
+            float s = Mathf.Max(transform.lossyScale.y, 0.0001f);
+            disc.transform.localPosition = new Vector3(0f, heightOffset / s, 0f);
+            disc.transform.localScale = new Vector3(radius * 2f / s, 0.002f / s, radius * 2f / s);
             var r = disc.GetComponent<Renderer>();
             if (material != null) r.material = new Material(material);
             r.material.color = color;
