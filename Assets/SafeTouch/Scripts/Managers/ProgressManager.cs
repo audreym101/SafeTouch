@@ -115,6 +115,12 @@ namespace SafeTouch.Managers
             Save();
         }
 
+        public void SetSkinTone(string toneId)
+        {
+            progress.skinTone = SkinTones.Get(toneId).id;
+            Save();
+        }
+
         public void SetVoiceEnabled(bool on)
         {
             progress.voiceEnabled = on;
