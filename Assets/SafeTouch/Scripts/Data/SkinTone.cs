@@ -47,5 +47,21 @@ namespace SafeTouch.Data
             foreach (var tone in All) if (tone.id == id) return tone;
             return Get(DefaultId);
         }
+
+        /// <summary>
+        /// A tone for a visitor or helper, picked from their name so "Grandma"
+        /// looks the same every time she visits. Uses FNV-1a because
+        /// string.GetHashCode can change between app runs.
+        /// </summary>
+        public static SkinTone ForName(string name)
+        {
+            uint hash = 2166136261;
+            foreach (char c in name ?? "")
+            {
+                hash ^= c;
+                hash *= 16777619;
+            }
+            return All[hash % (uint)All.Length];
+        }
     }
 }
