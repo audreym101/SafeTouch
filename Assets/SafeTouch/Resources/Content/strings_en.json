@@ -251,6 +251,78 @@
     {
       "key": "move.keza",
       "value": "Use the arrows to walk Keza. Her bubble moves with her."
+    },
+    {
+      "key": "voice.ready",
+      "value": "Get ready..."
+    },
+    {
+      "key": "voice.now",
+      "value": "Say NO now!"
+    },
+    {
+      "key": "voice.hearing",
+      "value": "Listening..."
+    },
+    {
+      "key": "voice.again",
+      "value": "Try again"
+    },
+    {
+      "key": "voice.tap",
+      "value": "Tap NO instead"
+    },
+    {
+      "key": "voice.stars",
+      "value": "{0} of 3 stars"
+    },
+    {
+      "key": "voice.nothing",
+      "value": "I didn't hear you"
+    },
+    {
+      "key": "voice.check.loud",
+      "value": "Loud"
+    },
+    {
+      "key": "voice.check.steady",
+      "value": "Steady"
+    },
+    {
+      "key": "voice.check.short",
+      "value": "Short"
+    },
+    {
+      "key": "voice.check.yes",
+      "value": "yes"
+    },
+    {
+      "key": "voice.check.notyet",
+      "value": "not yet"
+    },
+    {
+      "key": "voice.warmup.title",
+      "value": "Warm up your voice"
+    },
+    {
+      "key": "voice.warmup.body",
+      "value": "Say \"Hello Keza!\" in your everyday voice, so Keza knows how you sound."
+    },
+    {
+      "key": "voice.warmup.skip",
+      "value": "Skip"
+    },
+    {
+      "key": "parent.voice.title",
+      "value": "Saying NO out loud"
+    },
+    {
+      "key": "parent.voice.on",
+      "value": "Voice practice is on"
+    },
+    {
+      "key": "parent.voice.off",
+      "value": "Voice practice is off"
     }
   ]
 }
