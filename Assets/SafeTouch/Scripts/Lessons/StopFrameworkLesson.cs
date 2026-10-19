@@ -34,7 +34,7 @@ namespace SafeTouch.Lessons
             Narrate("stop_intro");
             Prompt(T("stop.intro.title", "Something doesn't feel right"),
                 T("stop.intro.body", "Someone says to Keza: \"Let's play a secret touching game. Don't tell anyone.\" Secrets about touching are never okay. Let's learn STOP."),
-                new PromptOption(T("stop.intro.go", "Let's STOP it"), Theme.Primary, StepSayNo));
+                new PromptOption(T("stop.intro.go", "Let's STOP it"), Theme.Primary, () => WarmUpVoice(StepSayNo)));
         }
 
         /// <summary>Adds a "think deeper" note for ages 9-11; empty for 6-8.</summary>
