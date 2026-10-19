@@ -59,6 +59,42 @@ namespace SafeTouch.AR
             Current = color;
         }
 
+        [Tooltip("Seconds for the colour to blend to a newly picked tone.")]
+        [SerializeField] float blendSeconds = 0.6f;
+
+        Coroutine blending;
+
+        /// <summary>The palette id of the tone shown, e.g. "cocoa".</summary>
+        public string ToneId { get; private set; }
+
+        /// <summary>
+        /// Shows a palette tone. With animate, the colour blends over
+        /// blendSeconds with a soft glow at the midpoint, so the child sees
+        /// their choice "arrive" on Keza in the room.
+        /// </summary>
+        public void SetTone(Data.SkinTone tone, bool animate)
+        {
+            if (tone == null) return;
+            ToneId = tone.id;
+            if (blending != null) StopCoroutine(blending);
+            blending = null;
+            if (!animate || !isActiveAndEnabled) { Apply(tone.Color); return; }
+            blending = StartCoroutine(Blend(Current, tone.Color));
+        }
+
+        System.Collections.IEnumerator Blend(Color from, Color to)
+        {
+            for (float t = 0f; t < 1f; t += Time.deltaTime / Mathf.Max(0.01f, blendSeconds))
+            {
+                var c = Color.Lerp(from, to, Mathf.SmoothStep(0f, 1f, t));
+                float glow = Mathf.Sin(t * Mathf.PI) * 0.25f;   // brightens a little half way through
+                Apply(Color.Lerp(c, Color.white, glow));
+                yield return null;
+            }
+            Apply(to);
+            blending = null;
+        }
+
         /// <summary>How many material slots were recognised as skin (0 means this model can't be tinted).</summary>
         public int SkinSlotCount
         {
@@ -84,6 +120,12 @@ namespace SafeTouch.AR
                     bool skin = IsSkin(materialName) || (materials.Length == 1 && IsSkin(r.name.ToLowerInvariant()));
                     if (skin) slots.Add(new Slot { renderer = r, materialIndex = i });
                 }
+            }
+            // Start blends from the colour the model was made with.
+            if (slots.Count > 0 && Current == default(Color))
+            {
+                var m = slots[0].renderer.sharedMaterials[slots[0].materialIndex];
+                Current = m != null && m.HasProperty("_Color") ? m.color : Color.gray;
             }
         }
 
