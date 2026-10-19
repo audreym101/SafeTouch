@@ -26,6 +26,45 @@ namespace SafeTouch.Voice
         /// <summary>How far the voice stood out above the room, in dB.</summary>
         public float LoudnessAboveFloor { get { return MeanDb - noiseFloorDb; } }
 
+        /// <summary>Share of frames with a clear pitch. Low for a whisper.</summary>
+        public float VoicedFraction { get; private set; }
+
+        /// <summary>Typical pitch of the voiced frames in Hz (0 if none).</summary>
+        public float MedianPitch { get; private set; }
+
+        /// <summary>Pitch at the start and the end: the median of the first and last third of voiced frames.</summary>
+        public float StartPitch { get; private set; }
+        public float EndPitch { get; private set; }
+
+        /// <summary>
+        /// Rise (+) or fall (-) from start to end, in semitones. A firm "No."
+        /// is flat or falls; a rise of 2+ semitones sounds like a question ("No?").
+        /// </summary>
+        public float PitchSlopeSemitones { get { return VoiceMath.Semitones(EndPitch, StartPitch); } }
+
+        /// <summary>Pitches of the voiced frames in order, for the pitch line on screen.</summary>
+        public List<float> PitchContour()
+        {
+            var pitches = new List<float>();
+            foreach (var f in frames) if (f.Voiced) pitches.Add(f.pitchHz);
+            return pitches;
+        }
+
+        void SummarisePitch()
+        {
+            var pitches = PitchContour();
+            VoicedFraction = frames.Count > 0 ? (float)pitches.Count / frames.Count : 0f;
+            MedianPitch = VoiceMath.Median(pitches);
+            if (pitches.Count == 0)
+            {
+                StartPitch = EndPitch = 0f;
+                return;
+            }
+            int third = Mathf.Max(1, pitches.Count / 3);
+            StartPitch = VoiceMath.Median(pitches.GetRange(0, third));
+            EndPitch = VoiceMath.Median(pitches.GetRange(pitches.Count - third, third));
+        }
+
         public void Summarise()
         {
             Duration = frames.Count * hopSeconds;
@@ -40,6 +79,7 @@ namespace SafeTouch.Voice
             }
             MeanDb = frames.Count > 0 ? 10f * Mathf.Log10((float)(power / frames.Count)) : VoiceMath.SilenceDb;
             ClippedFraction = frames.Count > 0 ? (float)clipped / frames.Count : 0f;
+            SummarisePitch();
         }
     }
 }
