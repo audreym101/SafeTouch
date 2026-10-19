@@ -1,0 +1,19 @@
+{
+  "_note": "Bubble Guard game: what each visitor asks Keza. safe=false means the right answer is a strong NO. Level 1 is for everyone; level 2 is added for ages 9-11. Keep each line short so it fits the speech bubble. Draft for expert review in week 7.",
+  "items": [
+    { "requestId": "G01", "level": 1, "safe": true,  "text": "High five!",                          "explain": "A high five from a friend is a safe touch." },
+    { "requestId": "G02", "level": 1, "safe": true,  "text": "Want to play football?",              "explain": "Playing together in the open is safe and fun." },
+    { "requestId": "G03", "level": 1, "safe": true,  "text": "Let's wash hands before lunch.",      "explain": "Helping with healthy habits is safe." },
+    { "requestId": "G04", "level": 1, "safe": true,  "text": "Can I borrow a pencil?",              "explain": "Sharing at school is safe." },
+    { "requestId": "G05", "level": 1, "safe": true,  "text": "Time to go home with Mum!",           "explain": "Going home with a trusted adult is safe." },
+    { "requestId": "G06", "level": 1, "safe": false, "text": "Let's play a secret touching game.", "explain": "Touching games and secrets are never okay. Say NO and tell." },
+    { "requestId": "G07", "level": 1, "safe": false, "text": "Come with me. Don't tell Mum.",       "explain": "Never go with someone who says not to tell. Say NO and tell." },
+    { "requestId": "G08", "level": 1, "safe": false, "text": "Sit on my lap for sweets.",           "explain": "Gifts in return for touching are a warning sign. Say NO." },
+    { "requestId": "G09", "level": 1, "safe": false, "text": "Come inside, nobody will know.",      "explain": "\"Nobody will know\" is a warning sign. Say NO and go to people you trust." },
+    { "requestId": "G10", "level": 1, "safe": false, "text": "Let me see under your clothes.",      "explain": "Private parts are private. Say NO and tell a trusted adult." },
+    { "requestId": "G11", "level": 2, "safe": true,  "text": "Nurse: can I check your arm?",        "explain": "A nurse checking with a parent there, who explains why, is okay." },
+    { "requestId": "G12", "level": 2, "safe": false, "text": "Send me a photo of you.",             "explain": "Never send photos to someone you only know online. Show an adult." },
+    { "requestId": "G13", "level": 2, "safe": false, "text": "Get in my car, I'll drive you.",      "explain": "Only go with adults your family agreed on. Say NO." },
+    { "requestId": "G14", "level": 2, "safe": false, "text": "You'll get in trouble if you tell.",  "explain": "You never get in trouble for telling. Say NO and tell." }
+  ]
+}
