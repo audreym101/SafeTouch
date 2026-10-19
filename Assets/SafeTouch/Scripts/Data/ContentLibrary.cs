@@ -15,12 +15,14 @@ namespace SafeTouch.Data
         [Serializable] class BadgeList { public List<Badge> items; }
         [Serializable] class ResourceList { public List<ParentResource> items; }
         [Serializable] class ReviewList { public List<ReviewPair> items; }
+        [Serializable] class GuardList { public List<GuardRequest> items; }
 
         static List<Scenario> scenarios;
         static List<TrustedAdult> adults;
         static List<Badge> badges;
         static List<ParentResource> resources;
         static List<ReviewPair> reviewPairs;
+        static List<GuardRequest> guardRequests;
 
         public static List<Scenario> Scenarios
         {
@@ -45,6 +47,11 @@ namespace SafeTouch.Data
         public static List<ReviewPair> ReviewPairs
         {
             get { return reviewPairs ?? (reviewPairs = (Load<ReviewList>("review").items ?? new List<ReviewPair>())); }
+        }
+
+        public static List<GuardRequest> GuardRequests
+        {
+            get { return guardRequests ?? (guardRequests = (Load<GuardList>("guard_requests").items ?? new List<GuardRequest>())); }
         }
 
         static T Load<T>(string file) where T : new()
@@ -79,5 +86,16 @@ namespace SafeTouch.Data
         public string word;      // e.g. "Red zone"
         public string meaning;   // e.g. "My body: only with my OK"
         public string remember;  // shown when the pair is matched
+    }
+
+    /// <summary>What a visitor asks Keza in the Bubble Guard game.</summary>
+    [Serializable]
+    public class GuardRequest
+    {
+        public string requestId;
+        public int level;        // 1 = everyone, 2 = ages 9-11 only
+        public bool safe;        // false: the right answer is a strong NO
+        public string text;      // shown in the visitor's speech bubble
+        public string explain;   // shown after the child answers
     }
 }
