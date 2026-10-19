@@ -26,10 +26,15 @@ namespace SafeTouch.AR
             set { walkSpeed = value; }
         }
 
+        [Tooltip("Keep the model's own textured clothes instead of tinting them with the role colour (e.g. Mum and Dad).")]
+        [SerializeField] bool keepOwnColours;
+
         public void Setup(string label, Color color, Material baseMaterial)
         {
             Label = label;
             name = label;
+            if (nameLabel != null) nameLabel.text = label;
+            if (keepOwnColours) return;
             var parts = tintedParts.Length > 0 ? tintedParts : GetComponentsInChildren<Renderer>();
             foreach (var r in parts)
             {
