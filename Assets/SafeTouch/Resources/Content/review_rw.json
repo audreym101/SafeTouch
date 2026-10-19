@@ -1,0 +1,11 @@
+{
+  "_note": "Kinyarwanda version of review.json (same ids). First draft for review by a native speaker and the content experts.",
+  "items": [
+    { "pairId": "red",     "level": 1, "word": "Agace gatukura",        "meaning": "Umubiri wanjye: ni uko nabyemeye gusa",  "remember": "Nta muntu ukora ku mubiri wa Keza atabimwemereye, kandi nta muntu ukora ku myanya y'ibanga." },
+    { "pairId": "yellow",  "level": 1, "word": "Agace k'umuhondo",      "meaning": "Abantu nzi kandi nizeye",               "remember": "Umuryango n'inshuti bashobora kwegera, kandi Keza ashobora no kuvuga oya." },
+    { "pairId": "green",   "level": 1, "word": "Agace k'icyatsi",       "meaning": "Abandi bose",                           "remember": "Abantu Keza atazi baguma hanze mu gace k'icyatsi." },
+    { "pairId": "secret",  "level": 1, "word": "Ibanga ryo gukorwaho",  "meaning": "Rivugwa buri gihe",                     "remember": "Amabanga yerekeye gukorwaho ntabwo ari meza na rimwe. Keza arayavuga buri gihe." },
+    { "pairId": "surprise","level": 2, "word": "Igitunguranye",         "meaning": "Kirashimisha kandi kivugwa vuba",        "remember": "Igitunguranye, nk'impano y'isabukuru, kirashimisha kandi kivugwa vuba. Ibanga riguhangayikisha si igitunguranye." },
+    { "pairId": "online",  "level": 2, "word": "Utazi wo kuri interineti", "meaning": "Ntuzigere wohereza amafoto",        "remember": "Umuntu uzi kuri interineti gusa ari mu gace k'icyatsi. Nta mafoto, nta zina ry'ishuri, kandi ubyereke umuntu mukuru." }
+  ]
+}
