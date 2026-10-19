@@ -12,7 +12,10 @@ namespace SafeTouch.Voice
     public class VoiceCoach : MonoBehaviour
     {
         [SerializeField] MicrophoneInput microphone;
+        [Tooltip("Give up on a try after this many seconds of silence, so the lesson can offer help.")]
+        [SerializeField] float noAnswerSeconds = 7f;
 
+        float listenStart;
         FrameAnalyzer analyzer;
         UtteranceSegmenter segmenter;
         NoCoachSettings settings = new NoCoachSettings();
@@ -81,7 +84,15 @@ namespace SafeTouch.Voice
             }
             analyzer.Reset();
             segmenter.Reset();
+            listenStart = Time.unscaledTime;
             Listening = true;
+        }
+
+        void Update()
+        {
+            // Silence for too long: hand back "nothing heard" so the lesson can encourage the child.
+            if (Listening && !segmenter.InUtterance && Time.unscaledTime - listenStart > noAnswerSeconds)
+                Deliver(NoRating.NothingHeard());
         }
 
         void OnSamples(float[] samples, int count)
