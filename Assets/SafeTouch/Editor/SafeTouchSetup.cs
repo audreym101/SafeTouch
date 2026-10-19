@@ -218,7 +218,8 @@ namespace SafeTouch.EditorTools
 
             var opaque = MaterialAsset("SafeTouch Opaque", "Standard", Color.white);
             var transparent = MaterialAsset("SafeTouch Transparent", "Legacy Shaders/Transparent/Diffuse", new Color(1f, 1f, 1f, 0.4f));
-            var planeMat = MaterialAsset("AR Plane", "Legacy Shaders/Transparent/Diffuse", new Color(0.14f, 0.45f, 0.78f, 0.25f));
+            // Unlit see-through material for the surface rectangles and the reticle; they tint it themselves.
+            var planeMat = MaterialAsset("AR Surface", "Sprites/Default", Color.white);
 
             var keza = PersonPrefab("Keza", opaque, Theme.Hex("#F28C38"), 0.75f, true);
             var figure = PersonPrefab("Figure", opaque, Theme.Hex("#8C99AD"), 1f, false);
@@ -229,7 +230,7 @@ namespace SafeTouch.EditorTools
             var people = SafeTouchCharacters.AdultPrefabPaths
                 .Select(p => AssetDatabase.LoadAssetAtPath<GameObject>(p)).Where(p => p != null)
                 .Concat(new[] { figure }).ToArray();
-            var reticle = ReticlePrefab(transparent);
+            var reticle = ReticlePrefab(planeMat);
             var planePrefab = PlanePrefab(planeMat);
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -404,22 +405,22 @@ namespace SafeTouch.EditorTools
             return go;
         }
 
-        static GameObject ReticlePrefab(Material transparent)
+        /// <summary>The square that shows where Keza will stand (PlacementReticle draws it).</summary>
+        static GameObject ReticlePrefab(Material surface)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            go.name = "Placement Reticle";
-            Object.DestroyImmediate(go.GetComponent<Collider>());
-            go.transform.localScale = new Vector3(0.25f, 0.002f, 0.25f);
-            go.GetComponent<Renderer>().sharedMaterial = MaterialAsset("Reticle", transparent.shader.name, new Color(1f, 1f, 1f, 0.7f));
+            var go = new GameObject("Placement Reticle");
+            var square = go.AddComponent<PlacementReticle>();
+            Set(square, "material", surface);
             var prefab = PrefabUtility.SaveAsPrefabAsset(go, Root + "/Prefabs/Placement Reticle.prefab");
             Object.DestroyImmediate(go);
             return prefab;
         }
 
-        static GameObject PlanePrefab(Material planeMat)
+        /// <summary>Each detected floor or table, drawn as a smooth rectangle with a grid (PlaneVisual).</summary>
+        static GameObject PlanePrefab(Material surface)
         {
-            var go = new GameObject("AR Plane", typeof(ARPlane), typeof(ARPlaneMeshVisualizer), typeof(MeshFilter), typeof(MeshRenderer));
-            go.GetComponent<MeshRenderer>().sharedMaterial = planeMat;
+            var go = new GameObject("AR Plane", typeof(ARPlane), typeof(PlaneVisual));
+            Set(go.GetComponent<PlaneVisual>(), "material", surface);
             var prefab = PrefabUtility.SaveAsPrefabAsset(go, Root + "/Prefabs/AR Plane.prefab");
             Object.DestroyImmediate(go);
             return prefab;
