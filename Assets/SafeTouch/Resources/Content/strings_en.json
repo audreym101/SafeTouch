@@ -399,6 +399,18 @@
     {
       "key": "skin.ebony",
       "value": "Ebony"
-    }
+    },
+    { "key": "scan.camera.title", "value": "Keza needs your camera" },
+    { "key": "scan.camera.body", "value": "SafeTouch uses the camera to show Keza in your room. The picture stays on this phone: it is never saved or sent." },
+    { "key": "scan.camera.allow", "value": "Allow the camera" },
+    { "key": "scan.denied.title", "value": "The camera is switched off" },
+    { "key": "scan.denied.body", "value": "Without the camera, Keza can't appear in your room. Tap below and choose Allow." },
+    { "key": "scan.denied.again", "value": "Try again" },
+    { "key": "scan.settings.body", "value": "Ask a grown-up to open Settings and allow the camera for SafeTouch, then come back." },
+    { "key": "scan.settings.open", "value": "Open Settings" },
+    { "key": "scan.unsupported.title", "value": "This phone can't show AR" },
+    { "key": "scan.unsupported.body", "value": "SafeTouch needs a phone that works with Google Play Services for AR (ARCore). Ask a grown-up to try another phone." },
+    { "key": "scan.unsupported.back", "value": "Back to the lessons" },
+    { "key": "scan.preparing", "value": "Getting the camera ready..." }
   ]
 }

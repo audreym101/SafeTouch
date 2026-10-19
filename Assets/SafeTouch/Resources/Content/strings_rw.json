@@ -306,6 +306,18 @@
     { "key": "places.school.line", "value": "Keza ari ku ishuri mu kiruhuko." },
     { "key": "places.playground.line", "value": "Keza ari ku kibuga." },
     { "key": "scenario.step", "value": "Ikarita {0} kuri {1}" },
-    { "key": "scenario.answer", "value": "Igisubizo ni: {0}." }
+    { "key": "scenario.answer", "value": "Igisubizo ni: {0}." },
+    { "key": "scan.camera.title", "value": "Keza akeneye kamera yawe" },
+    { "key": "scan.camera.body", "value": "SafeTouch ikoresha kamera kugira ngo yerekane Keza mu cyumba cyawe. Ifoto iguma kuri iyi telefoni: ntibikwa kandi ntoherezwa." },
+    { "key": "scan.camera.allow", "value": "Emera kamera" },
+    { "key": "scan.denied.title", "value": "Kamera irafunze" },
+    { "key": "scan.denied.body", "value": "Hatari kamera, Keza ntashobora kugaragara mu cyumba cyawe. Kanda hasi uhitemo Emera." },
+    { "key": "scan.denied.again", "value": "Ongera ugerageze" },
+    { "key": "scan.settings.body", "value": "Saba umuntu mukuru gufungura Igenamiterere akemerera SafeTouch gukoresha kamera, hanyuma ugaruke." },
+    { "key": "scan.settings.open", "value": "Fungura Igenamiterere" },
+    { "key": "scan.unsupported.title", "value": "Iyi telefoni ntishobora kwerekana AR" },
+    { "key": "scan.unsupported.body", "value": "SafeTouch ikeneye telefoni ikorana na Google Play Services for AR (ARCore). Saba umuntu mukuru kugerageza indi telefoni." },
+    { "key": "scan.unsupported.back", "value": "Subira ku masomo" },
+    { "key": "scan.preparing", "value": "Kamera iri gutegurwa..." }
   ]
 }
