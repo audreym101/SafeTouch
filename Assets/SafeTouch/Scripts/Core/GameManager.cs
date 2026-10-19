@@ -5,6 +5,7 @@ using SafeTouch.Lessons;
 using SafeTouch.Managers;
 using SafeTouch.Services;
 using SafeTouch.UI;
+using SafeTouch.Voice;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -31,6 +32,7 @@ namespace SafeTouch.Core
         [SerializeField] ScenarioManager scenarioManager;
         [SerializeField] ProgressManager progressManager;
         [SerializeField] CloudSyncService cloudSync;
+        [SerializeField] VoiceCoach voiceCoach;
 
         [Header("Lessons (levels 1-4) and the Memory Quest (5)")]
         [SerializeField] LessonBase[] lessons = new LessonBase[0];
@@ -43,6 +45,7 @@ namespace SafeTouch.Core
         public AudioManager Audio { get { return audioManager; } }
         public ScenarioManager Scenarios { get { return scenarioManager; } }
         public ProgressManager Progress { get { return progressManager; } }
+        public VoiceCoach Voice { get { return voiceCoach; } }
         public int CurrentLevel { get { return currentLevel; } }
         public string SelectedMode { get { return selectedMode; } }
 
@@ -58,6 +61,7 @@ namespace SafeTouch.Core
             if (scenarioManager == null) scenarioManager = GetComponentInChildren<ScenarioManager>();
             if (progressManager == null) progressManager = GetComponentInChildren<ProgressManager>();
             if (cloudSync == null) cloudSync = GetComponentInChildren<CloudSyncService>();
+            if (voiceCoach == null) voiceCoach = GetComponentInChildren<VoiceCoach>();
             if (lessons.Length == 0) lessons = GetComponentsInChildren<LessonBase>();
         }
 
@@ -93,6 +97,7 @@ namespace SafeTouch.Core
         {
             ageGroup = age;
             progressManager.SetAgeGroup(age);
+            if (voiceCoach != null) voiceCoach.PrepareForAge(age);
             uiManager.ShowMenu("home");
         }
 
@@ -120,6 +125,11 @@ namespace SafeTouch.Core
         {
             progress = progressManager.Load();
             ageGroup = progress.ageGroup;
+            if (voiceCoach != null)
+            {
+                voiceCoach.Enabled = progress.voiceEnabled;
+                voiceCoach.PrepareForAge(ageGroup);
+            }
         }
 
         /// <summary>Opens the next lesson after the current one is completed.</summary>
@@ -134,6 +144,7 @@ namespace SafeTouch.Core
             EndActiveLesson();
             arManager.CancelPlacement();
             audioManager.StopAll();
+            if (voiceCoach != null) voiceCoach.Stop();
             currentLevel = 0;
             uiManager.ShowMenu("home");
         }
@@ -153,6 +164,15 @@ namespace SafeTouch.Core
         {
             progressManager.SetLanguage(language);
             Localization.SetLanguage(language);
+        }
+
+        /// <summary>Parent switched spoken NO practice on or off. Off closes the microphone straight away.</summary>
+        public void SetVoiceEnabled(bool on)
+        {
+            progressManager.SetVoiceEnabled(on);
+            if (voiceCoach == null) return;
+            voiceCoach.Enabled = on;
+            if (!on) voiceCoach.Stop();
         }
 
         public void SyncNow()
