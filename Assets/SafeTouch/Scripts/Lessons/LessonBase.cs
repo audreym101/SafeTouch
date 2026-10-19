@@ -95,6 +95,29 @@ namespace SafeTouch.Lessons
             Prompt(heading, body, new PromptOption(buttonLabel, Theme.Unsafe, () => done(null)));
         }
 
+        /// <summary>
+        /// Before the first spoken NO, the child says "Hello Keza!" in their
+        /// everyday voice so the coach can compare against it. Skipped when
+        /// voice is off, already done this session, or the child taps Skip.
+        /// </summary>
+        protected void WarmUpVoice(Action next)
+        {
+            var voice = game.Voice;
+            if (voice == null || !voice.Available || voice.Settings.calibrated) { next(); return; }
+
+            Prompt(T("voice.warmup.title", "Warm up your voice"),
+                T("voice.warmup.body", "Say \"Hello Keza!\" in your everyday voice, so Keza knows how you sound."),
+                new PromptOption(T("voice.warmup.skip", "Skip"), Theme.Card, () => { voice.Stop(); next(); }));
+            voice.ListenToTalkingVoice(heard =>
+            {
+                if (!Running) return;
+                if (heard) keza.Bounce();
+                Prompt(heard ? T("voice.warmup.thanks", "Hello to you too!") : T("voice.warmup.missed", "That's okay!"),
+                    T("voice.warmup.next", "Now let's practise a strong NO."),
+                    new PromptOption(T("continue", "Continue"), Theme.Primary, next));
+            });
+        }
+
         /// <summary>True for the 9 to 11 age group, who get the extra "think deeper" steps.</summary>
         protected bool Older
         {
