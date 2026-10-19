@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SafeTouch.AR;
 using SafeTouch.Core;
 using SafeTouch.UI;
+using SafeTouch.Voice;
 using UnityEngine;
 
 namespace SafeTouch.Lessons
@@ -40,6 +41,7 @@ namespace SafeTouch.Lessons
             if (!Running) return;
             Running = false;
             StopAllCoroutines();
+            game.UI.Lesson.HideVoice();   // also closes the microphone
             foreach (var f in figures) if (f != null) Destroy(f.gameObject);
             figures.Clear();
             game.AR.ClearMovable();
@@ -69,6 +71,27 @@ namespace SafeTouch.Lessons
         protected void Prompt(string heading, string body, params PromptOption[] options)
         {
             game.UI.Lesson.ShowPrompt(heading, body, options);
+        }
+
+        /// <summary>
+        /// Asks the child to say NO out loud and coaches how it sounded
+        /// (loud, steady pitch, short). Without a microphone, or with voice
+        /// switched off by a parent, it shows a NO button instead. done gets
+        /// the best try, or null when the child tapped.
+        /// </summary>
+        protected void SayNo(string heading, string body, string buttonLabel, Action<NoRating> done)
+        {
+            if (game.Voice != null && game.Voice.Available)
+            {
+                game.UI.Lesson.ShowVoice(heading, body, game.Voice, rating =>
+                {
+                    if (!Running) return;
+                    game.Progress.RecordNo(rating);
+                    done(rating);
+                });
+                return;
+            }
+            Prompt(heading, body, new PromptOption(buttonLabel, Theme.Unsafe, () => done(null)));
         }
 
         /// <summary>True for the 9 to 11 age group, who get the extra "think deeper" steps.</summary>
