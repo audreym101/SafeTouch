@@ -41,7 +41,8 @@ namespace SafeTouch.Lessons
             if (!Running) return;
             Running = false;
             StopAllCoroutines();
-            game.UI.Lesson.HideVoice();   // also closes the microphone
+            game.UI.Lesson.HideVoice();
+            if (game.Voice != null) game.Voice.Stop();   // the microphone is never left open after a lesson
             foreach (var f in figures) if (f != null) Destroy(f.gameObject);
             figures.Clear();
             game.AR.ClearMovable();
