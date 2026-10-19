@@ -187,6 +187,7 @@ namespace SafeTouch.EditorTools
             Set(ar, "characterPrefab", keza);
             Set(ar, "figurePrefab", figure);
             SetArray(ar, "figureVariants", people);
+            SetRoles(ar, new[] { "mum", "dad" }, new[] { SafeTouchCharacters.MumPrefabPath, SafeTouchCharacters.DadPrefabPath });
             Set(ar, "reticle", reticleInstance.transform);
             Set(ar, "raycastManager", raycasts);
             Set(ar, "planeManager", planes);
@@ -366,6 +367,24 @@ namespace SafeTouch.EditorTools
             if (prop == null) { Debug.LogError("[SafeTouch] No field " + field + " on " + target); return; }
             prop.arraySize = values.Length;
             for (int i = 0; i < values.Length; i++) prop.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>Fills ARManager's role list with the prefabs that have been built (missing ones are skipped).</summary>
+        static void SetRoles(ARManager ar, string[] roles, string[] prefabPaths)
+        {
+            var so = new SerializedObject(ar);
+            var prop = so.FindProperty("rolePrefabs");
+            prop.arraySize = 0;
+            for (int i = 0; i < roles.Length; i++)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPaths[i]);
+                if (prefab == null) continue;
+                prop.arraySize++;
+                var element = prop.GetArrayElementAtIndex(prop.arraySize - 1);
+                element.FindPropertyRelative("role").stringValue = roles[i];
+                element.FindPropertyRelative("prefab").objectReferenceValue = prefab;
+            }
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
