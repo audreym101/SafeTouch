@@ -18,6 +18,9 @@ Every asset below exists to serve one of the four learning goals: recognising pe
 | **Place scenery**: sofa (home), chalkboard (school), tree (playground) | School desk and playground in build (`Models/school-chair`, `Models/playground`, scaled into `Resources/Props`); the sofa is still a primitive | Final: Kenney "Furniture Kit" and "Nature Kit" (CC0) | Memory Quest round 4: shows which place the child chose, with the right helpers nearby, so the chase practice matches real places in their life. |
 | **The chaser figure** | Placeholder (grey figure prefab with a tap collider) | Final: the same neutral adult model, never scary | Memory Quest chase: a calm, non-threatening person to practise saying NO to, which keeps the game within NFR5 (not frightening). |
 
+| **Skin tone shader and skin mask** | In build (`Shaders/SkinTone.shader`; mask generated from Keza's texture) | Written for SafeTouch | Lets the child give Keza any of six skin tones while her clothes, hair and eyes stay the same (see `docs/skin-tones.md`). |
+| **Models not used** | Kept in `Models/` but left out of the app | `character (1).fbx` (a cigar-smoking caricature) and `the-mill` | Not suitable for a children's safety app, or not needed by any lesson. |
+
 ## 2D and interface assets
 
 | Asset | Status | Source and licence | Why SafeTouch needs it |
@@ -45,6 +48,7 @@ Every asset below exists to serve one of the four learning goals: recognising pe
 | **Memory Quest pairs** (6 word and meaning pairs) | In build, draft for expert review | `Resources/Content/review.json` | The end game's match round: recalling the ideas, rather than re-reading them, helps children remember them. |
 | **8 badges** (including Strong Voice and Bubble Guard) | In build | `Resources/Content/badges.json` | Progress and motivation (FR8). |
 | **Parent guides, warning signs, Rwandan helplines** | In build, numbers to re-confirm with NCDA and RIB before the pilot | `Resources/Content/parent_resources.json` | FR9. Connects the app to the existing child-protection system (Child Helpline 116, Isange One Stop Centre 3029, RIB 166, Police 112). |
+| **Bubble Guard requests** (14 safe and unsafe things visitors ask) | In build, draft for expert review | `Resources/Content/guard_requests.json` | The game's content, kept as data so experts can change it without code. |
 | **Interface text, English and Kinyarwanda** | English complete; Kinyarwanda started | `Resources/Content/strings_en.json`, `strings_rw.json` | FR10. Missing Kinyarwanda keys fall back to English. |
 
 ## Tools used to make assets
