@@ -62,7 +62,6 @@ namespace SafeTouch.UI.Screens
 
         void Pick(SkinTone tone)
         {
-            game.Audio.PlaySFX("tap");
             game.SetSkinTone(tone.id);   // saves, and plays the change on Keza if she is in the room
             Show(tone);
             if (game.AR.Character != null) game.AR.Character.Bounce();
