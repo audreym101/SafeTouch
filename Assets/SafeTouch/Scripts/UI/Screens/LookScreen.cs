@@ -33,13 +33,40 @@ namespace SafeTouch.UI.Screens
             UIFactory.Column(cardRt, 24f, 44);
             card.gameObject.AddComponent<LayoutElement>();
             toneName = UIFactory.Label(cardRt, "", Theme.Title, Theme.Ink, TextAnchor.MiddleCenter, true);
-            swatchRow = cardRt;
+            BuildSwatches(cardRt);
             hint = UIFactory.Label(cardRt, "", Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
             done = UIFactory.Button(cardRt, "", Theme.Primary, Color.white, () => ui.ShowMenu("home"));
         }
 
-        RectTransform swatchRow;
         Button done;
+        readonly Image[] swatches = new Image[SkinTones.All.Length];
+
+        /// <summary>One big round button per tone; the chosen one gets a dark ring.</summary>
+        void BuildSwatches(RectTransform parent)
+        {
+            var row = UIFactory.Row(parent, "Swatches", 16f, 140f);
+            for (int i = 0; i < SkinTones.All.Length; i++)
+            {
+                var tone = SkinTones.All[i];
+                var dot = UIFactory.Dot(row.transform, "Swatch " + tone.id, tone.Color, 120f);
+                var button = dot.gameObject.AddComponent<Button>();
+                button.targetGraphic = dot;
+                button.onClick.AddListener(() => Pick(tone));
+                var ring = dot.gameObject.AddComponent<Outline>();
+                ring.effectColor = Theme.Ink;
+                ring.effectDistance = new Vector2(7f, -7f);
+                ring.enabled = false;
+                swatches[i] = dot;
+            }
+        }
+
+        void Pick(SkinTone tone)
+        {
+            game.Audio.PlaySFX("tap");
+            game.SetSkinTone(tone.id);   // saves, and plays the change on Keza if she is in the room
+            Show(tone);
+            if (game.AR.Character != null) game.AR.Character.Bounce();
+        }
 
         /// <summary>A simple drawn Keza: round face with eyes and a smile, and her orange top.</summary>
         void BuildPreview(RectTransform col)
@@ -83,6 +110,8 @@ namespace SafeTouch.UI.Screens
         {
             face.color = tone.Color;
             toneName.text = Localization.T(tone.nameKey, tone.english);
+            for (int i = 0; i < swatches.Length; i++)
+                swatches[i].GetComponent<Outline>().enabled = SkinTones.All[i].id == tone.id;
         }
     }
 }
