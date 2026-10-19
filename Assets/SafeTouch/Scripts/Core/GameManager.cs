@@ -198,8 +198,16 @@ namespace SafeTouch.Core
             uiManager.ShowMenu("splash");
         }
 
+        /// <summary>The child picked a new look for Keza. If she is in the room, the change plays there too.</summary>
+        public void SetSkinTone(string toneId)
+        {
+            progressManager.SetSkinTone(toneId);
+            arManager.ApplySkinTone(SkinTones.Get(toneId), true);
+        }
+
         void OnCharacterPlaced(ARCharacter character)
         {
+            arManager.ApplySkinTone(SkinTones.Get(progress.skinTone), false);
             if (currentLevel > 0 && activeLesson == null) BeginCurrentLesson();
         }
 
