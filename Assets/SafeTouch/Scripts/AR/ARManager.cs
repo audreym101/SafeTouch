@@ -17,6 +17,8 @@ namespace SafeTouch.AR
         [Header("Placement")]
         [SerializeField] GameObject characterPrefab;
         [SerializeField] GameObject figurePrefab;
+        [Tooltip("Optional people built from the models; each name always gets the same one. Empty: figurePrefab for everyone.")]
+        [SerializeField] GameObject[] figureVariants = new GameObject[0];
         [SerializeField] Transform reticle;
 
         [Header("AR Foundation")]
@@ -178,10 +180,21 @@ namespace SafeTouch.AR
             GetOrAdd<SkinToneApplier>(character.gameObject).SetTone(tone, animate);
         }
 
-        /// <summary>Spawns a simple figure (visitor or trusted adult) at a point around Keza.</summary>
+        /// <summary>Which person model plays a named visitor or helper; the same name always gets the same one.</summary>
+        GameObject FigurePrefabFor(string label)
+        {
+            var choices = new List<GameObject>();
+            foreach (var v in figureVariants) if (v != null) choices.Add(v);
+            if (choices.Count == 0) return figurePrefab != null ? figurePrefab : characterPrefab;
+            uint hash = 2166136261;   // FNV-1a, stable between runs (like SkinTones.ForName)
+            foreach (char c in label ?? "") { hash ^= c; hash *= 16777619; }
+            return choices[(int)((hash >> 8) % (uint)choices.Count)];
+        }
+
+        /// <summary>Spawns a figure (visitor or trusted adult) at a point around Keza.</summary>
         public ARFigure SpawnFigure(string label, Color color, float radius, float angleDegrees)
         {
-            var go = Instantiate(figurePrefab != null ? figurePrefab : characterPrefab);
+            var go = Instantiate(FigurePrefabFor(label));
             var figure = GetOrAdd<ARFigure>(go);
             figure.Setup(label, color, opaqueMaterial);
             // A mix of skin tones in every lesson; the same name always gets the same tone.
