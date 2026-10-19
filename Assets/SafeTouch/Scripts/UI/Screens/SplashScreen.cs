@@ -26,7 +26,7 @@ namespace SafeTouch.UI.Screens
             });
             var langs = UIFactory.Row(col, "Languages", Theme.Gap, Theme.TouchTarget);
             english = UIFactory.Button(langs.transform, "English", Theme.Card, Theme.Ink, () => game.SetLanguage("en"));
-            kinyarwanda = UIFactory.Button(langs.transform, "Kinyarwanda", Theme.Card, Theme.Ink, () => game.SetLanguage("rw"));
+            kinyarwanda = UIFactory.Button(langs.transform, "Ikinyarwanda", Theme.Card, Theme.Ink, () => game.SetLanguage("rw"));
         }
 
         public override void OnShow()

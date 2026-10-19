@@ -71,7 +71,7 @@ namespace SafeTouch.UI.Screens
             UIFactory.Label(list, Localization.T("parent.language"), Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
             var langs = UIFactory.Row(list, "Languages", Theme.Gap, Theme.TouchTarget);
             UIFactory.Button(langs.transform, "English", Localization.Language == "en" ? Theme.Sun : Theme.Card, Theme.Ink, () => game.SetLanguage("en"));
-            UIFactory.Button(langs.transform, "Kinyarwanda", Localization.Language == "rw" ? Theme.Sun : Theme.Card, Theme.Ink, () => game.SetLanguage("rw"));
+            UIFactory.Button(langs.transform, "Ikinyarwanda", Localization.Language == "rw" ? Theme.Sun : Theme.Card, Theme.Ink, () => game.SetLanguage("rw"));
 
             UIFactory.Label(list, Localization.T("parent.sync.title"), Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
             UIFactory.Label(list, Localization.T("parent.sync.body"), Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
