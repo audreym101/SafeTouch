@@ -33,6 +33,17 @@ namespace SafeTouch.Voice
         /// <summary>Returns the pitch in Hz, or 0 when the frame has no clear period.</summary>
         public float Detect(float[] frame, int offset, int length)
         {
+            float confidence;
+            return Detect(frame, offset, length, out confidence);
+        }
+
+        /// <summary>
+        /// Returns the pitch in Hz (0 when unvoiced) and a confidence from 0
+        /// to 1: how cleanly the frame repeats at that period.
+        /// </summary>
+        public float Detect(float[] frame, int offset, int length, out float confidence)
+        {
+            confidence = 0f;
             int top = Mathf.Min(maxLag + 1, length / 2);   // the window must be at least as long as the lag
             if (top <= minLag) return 0f;
             int window = length - top;
@@ -65,7 +76,8 @@ namespace SafeTouch.Voice
             {
                 if (diff[lag] >= Threshold) continue;
                 while (lag + 1 < top && diff[lag + 1] < diff[lag]) lag++;
-                return (float)sampleRate / lag;
+                confidence = Mathf.Clamp01(1f - diff[lag]);
+                return sampleRate / Refine(lag, top);
             }
             return 0f;   // no clear period: breath, "sss", noise or silence
         }
@@ -75,5 +87,19 @@ namespace SafeTouch.Voice
         /// periodic). 0.15 is the value recommended in the YIN paper.
         /// </summary>
         public float Threshold { get; set; } = 0.15f;
+
+        /// <summary>
+        /// Step 4, parabolic interpolation: fits a parabola through the dip
+        /// and its neighbours so the period is not limited to whole samples.
+        /// At 16 kHz that turns a 1-2% pitch error into well under 0.5%.
+        /// </summary>
+        float Refine(int lag, int top)
+        {
+            if (lag < 1 || lag >= top) return lag;
+            float a = diff[lag - 1], b = diff[lag], c = diff[lag + 1];
+            float denominator = a - 2f * b + c;
+            if (Mathf.Abs(denominator) < 1e-6f) return lag;
+            return lag + 0.5f * (a - c) / denominator;
+        }
     }
 }
