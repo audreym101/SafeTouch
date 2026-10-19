@@ -234,6 +234,16 @@ namespace SafeTouch.Core
         {
             int level = currentLevel;
             activeLesson = null;
+            if (level == ProgressManager.GameLevel)
+            {
+                // Bubble Guard is replayable and outside the lesson order: record the score only.
+                int best = progress.bestGuardScore;
+                progressManager.RecordGuard(score);
+                string summary = string.Format(Localization.T("game.end.body", "You scored {0} out of {1}."), score, max);
+                if (score > best && best > 0) summary += " " + Localization.T("game.end.best", "That's your best score yet!");
+                uiManager.ShowFeedback(Localization.T("game.end.title", "Bubble Guard complete!"), summary, FeedbackTone.Badge, ReturnToMenu);
+                return;
+            }
             progressManager.CompleteLevel(level, score);
             UnlockNextLevel();
             SaveProgress();
