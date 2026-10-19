@@ -206,11 +206,13 @@ namespace SafeTouch.Lessons
                 case "school":
                     names = new[] { T("places.teacher", "Teacher"), T("places.head", "Head teacher") };
                     colors = new[] { Theme.Primary, Theme.Hex("#5A8FD6") };
-                    if (!AddModelProp("school", 1.2f, 180f)) AddProp(PrimitiveType.Cube, 1.3f, 180f, new Vector3(0.6f, 0.4f, 0.04f), 0.5f, Theme.Hex("#2F5D4A"));   // chalkboard
+                    AddModelProp("school", 1.2f, 205f);
+                    if (!AddModelProp("chalkboard", 1.35f, 165f)) AddProp(PrimitiveType.Cube, 1.3f, 180f, new Vector3(0.6f, 0.4f, 0.04f), 0.5f, Theme.Hex("#2F5D4A"));   // chalkboard
                     break;
                 case "playground":
                     names = new[] { T("places.izu", "IZU volunteer"), T("places.friendmum", "Friend's mum") };
                     colors = new[] { Theme.Safe, Theme.Hex("#2BA3A0") };
+                    AddModelProp("grass", 0.9f, 150f);
                     if (!AddModelProp("playground", 1.4f, 190f))
                     {
                         AddProp(PrimitiveType.Cylinder, 1.3f, 200f, new Vector3(0.06f, 0.3f, 0.06f), 0.3f, Theme.Hex("#8A6A4E")); // tree trunk
@@ -221,6 +223,7 @@ namespace SafeTouch.Lessons
                     names = new[] { T("places.parent", "Mum or Dad"), T("places.grandparent", "Grandparent") };
                     colors = new[] { Theme.Hex("#F28C38"), Theme.Sun };
                     AddProp(PrimitiveType.Cube, 1.3f, 200f, new Vector3(0.6f, 0.2f, 0.25f), 0.1f, Theme.Hex("#C9725A"));    // sofa
+                    AddModelProp("dog", 0.75f, -150f);   // the family dog, near Mum or Dad
                     break;
             }
             placeHelpers.Add(Spawn(names[0], colors[0], 0.8f, -115f, place == "home" ? "parent" : null));
