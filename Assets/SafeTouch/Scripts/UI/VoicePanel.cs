@@ -26,6 +26,10 @@ namespace SafeTouch.UI
         RectTransform pitchArea;
         Image[] pitchDots;
         readonly System.Collections.Generic.List<float> pitchHistory = new System.Collections.Generic.List<float>();
+        GameObject resultRow;
+        Image[] stars, checks;
+        Text[] checkLabels;
+        Text tip;
 
         VoiceCoach coach;
         Action<NoRating> done;
@@ -46,6 +50,7 @@ namespace SafeTouch.UI
             status = UIFactory.Label(root, "", Theme.Title, Theme.Primary, TextAnchor.MiddleCenter, true);
             BuildMeter();
             BuildPitchLine();
+            BuildResult();
 
             var row = UIFactory.Row(root, "Voice buttons", 20f, Theme.TouchTarget);
             primary = UIFactory.Button(row.transform, "", Theme.Unsafe, Color.white, () => { if (primaryAction != null) primaryAction(); });
@@ -80,6 +85,53 @@ namespace SafeTouch.UI
             meterFill.color = meterShown >= strong ? Theme.Safe : Theme.Primary;
             meterTarget.anchorMin = new Vector2(strong, 0f);
             meterTarget.anchorMax = new Vector2(strong, 1f);
+        }
+
+        // ---- Result: stars, the three checks, one tip ----
+
+        void BuildResult()
+        {
+            var row = UIFactory.Row(root, "Result", 16f, 90f);
+            row.childForceExpandWidth = false;
+            stars = new Image[3];
+            for (int i = 0; i < stars.Length; i++) stars[i] = UIFactory.Dot(row.transform, "Star", Theme.Sun, 64f);
+            checks = new Image[3];
+            checkLabels = new Text[3];
+            for (int i = 0; i < checks.Length; i++)
+            {
+                checks[i] = UIFactory.Panel(row.transform, "Check", Theme.Safe, true);
+                var le = checks[i].gameObject.AddComponent<LayoutElement>();
+                le.flexibleWidth = 1f;
+                le.minHeight = 72f;
+                checkLabels[i] = UIFactory.Label(checks[i].transform, "", Theme.Small, Color.white, TextAnchor.MiddleCenter, true);
+                UIFactory.Stretch((RectTransform)checkLabels[i].transform);
+            }
+            resultRow = row.gameObject;
+            tip = UIFactory.Label(root, "", Theme.Body, Theme.Ink, TextAnchor.UpperLeft, false);
+            ShowResultRow(false);
+        }
+
+        void ShowResultRow(bool show)
+        {
+            resultRow.SetActive(show);
+            tip.gameObject.SetActive(show);
+        }
+
+        void FillResult(NoRating rating)
+        {
+            for (int i = 0; i < stars.Length; i++) stars[i].color = i < rating.stars ? Theme.Sun : Theme.WithAlpha(Theme.Muted, 0.25f);
+            SetCheck(0, T("voice.check.loud", "Loud"), rating.loud);
+            SetCheck(1, T("voice.check.steady", "Steady"), rating.steady);
+            SetCheck(2, T("voice.check.short", "Short"), rating.brief);
+            tip.text = VoiceTips.For(rating.tip);
+            resultRow.SetActive(rating.Heard);
+            tip.gameObject.SetActive(true);
+        }
+
+        void SetCheck(int index, string label, bool passed)
+        {
+            checks[index].color = passed ? Theme.Safe : Theme.Caution;
+            checkLabels[index].text = (passed ? "✓ " : "") + label;   // tick mark when passed
         }
 
         // ---- Pitch line ----
@@ -198,6 +250,7 @@ namespace SafeTouch.UI
             UpdateMeter(0f, coach.StrongLevel01);
             pitchHistory.Clear();
             DrawPitch();
+            ShowResultRow(false);
             SetStatus(T("voice.ready", "Get ready..."), Theme.Muted);
             SetButtons(null, null, T("voice.tap", "Tap NO instead"), () => Finish(null));
             coach.ListenForNo(OnResult);
@@ -223,6 +276,7 @@ namespace SafeTouch.UI
         {
             SetStatus(rating.Heard ? string.Format(T("voice.stars", "{0} of 3 stars"), rating.stars) : T("voice.nothing", "I didn't hear you"),
                 rating.Good ? Theme.Safe : Theme.Caution);
+            FillResult(rating);
         }
 
         void Finish(NoRating rating)
