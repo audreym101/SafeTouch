@@ -11,7 +11,7 @@ namespace SafeTouch.Data
         public string title;
         public string description;
         public string iconName;
-        public string requirement;  // e.g. "complete:1", "adults:2", "fast:3" (chase time in seconds), "all"
+        public string requirement;  // e.g. "complete:1", "adults:2", "fast:3" (chase time in seconds), "voice:3" (three-star NOs), "all"
 
         [NonSerialized] public Sprite icon;
         [NonSerialized] public bool unlocked;
