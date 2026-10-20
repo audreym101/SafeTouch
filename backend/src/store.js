@@ -2,11 +2,17 @@
 // otherwise an in-memory map (local development and tests).
 
 class MemoryStore {
-  constructor() { this.docs = new Map(); }
+  constructor() { this.docs = new Map(); this.consents = new Map(); }
   async upsert(doc) { this.docs.set(doc.deviceId, { ...doc }); return doc; }
   async get(deviceId) { return this.docs.get(deviceId) || null; }
   async summary() { return summarise([...this.docs.values()]); }
   async remove(deviceId) { return this.docs.delete(deviceId); }
+
+  // Parental consent records (kept apart from the anonymous progress).
+  async saveConsent(record) { this.consents.set(record.consentId, { ...record }); return record; }
+  async getConsent(consentId) { const r = this.consents.get(consentId); return r ? { ...r } : null; }
+  async removeConsent(consentId) { return this.consents.delete(consentId); }
+  async consentCounts() { const all = [...this.consents.values()]; return { total: all.length, verified: all.filter((r) => r.verified).length }; }
 }
 
 class MongoStore {
@@ -17,7 +23,11 @@ class MongoStore {
   }
   async connect() {
     await this.client.connect();
-    this.col = this.client.db(this.dbName).collection('progress');
+    const db = this.client.db(this.dbName);
+    this.col = db.collection('progress');
+    // Parent details live in their own collection, never inside the anonymous progress.
+    this.consentCol = db.collection('consents');
+    await this.consentCol.createIndex({ consentId: 1 }, { unique: true });
     await this.col.createIndex({ deviceId: 1 }, { unique: true });
     return this;
   }
@@ -28,6 +38,13 @@ class MongoStore {
   async get(deviceId) { return this.col.findOne({ deviceId }, { projection: { _id: 0 } }); }
   async summary() { return summarise(await this.col.find({}, { projection: { _id: 0 } }).toArray()); }
   async remove(deviceId) { return (await this.col.deleteOne({ deviceId })).deletedCount === 1; }
+
+  async saveConsent(record) { await this.consentCol.replaceOne({ consentId: record.consentId }, record, { upsert: true }); return record; }
+  async getConsent(consentId) { return this.consentCol.findOne({ consentId }, { projection: { _id: 0 } }); }
+  async removeConsent(consentId) { return (await this.consentCol.deleteOne({ consentId })).deletedCount === 1; }
+  async consentCounts() {
+    return { total: await this.consentCol.countDocuments(), verified: await this.consentCol.countDocuments({ verified: true }) };
+  }
 }
 
 // Aggregate numbers for the evaluation chapter: no per-device data leaves the API.
