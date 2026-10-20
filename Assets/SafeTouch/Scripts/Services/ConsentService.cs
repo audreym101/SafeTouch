@@ -99,7 +99,7 @@ namespace SafeTouch.Services
             if (!HasConsent) { done(Result.Invalid); return; }
             if (!Record.sentToServer) { StartCoroutine(SendConsent(done)); return; }
             StartCoroutine(Request("POST", "/api/consent/" + Record.consentId + "/resend", "{}", (status, reply) =>
-                done(status == 200 ? (reply.emailSent ? Result.Sent : Result.EmailFailed) : Classify(status))));
+                done(status == 200 ? (reply.emailSent ? Result.Sent : Result.EmailFailed) : status == 429 ? Result.Wait : Classify(status))));
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace SafeTouch.Services
                     Notify();
                     if (done != null) done(reply.emailSent || status == 200 ? Result.Sent : Result.EmailFailed);
                 }
-                else if (done != null) done(Classify(status));
+                else if (done != null) done(status == 400 ? Result.Invalid : Classify(status));
             });
         }
 
