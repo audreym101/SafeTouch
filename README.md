@@ -53,6 +53,7 @@ The child places Keza, a friendly guide character, on the real floor through the
 | **NFR2** Android 8.0+ with ARCore | Player settings applied by the setup menu | `Editor/SafeTouchSetup.cs` |
 | **NFR4 / NFR5** Child-friendly, not frightening | Large targets, calm colours, no buzzers. The only timer is in the final chase game; being "caught" just explains what to do and replays the chase | `UI/Theme.cs` |
 | **NFR6** Easy exit from any screen | Back button top-left on every screen, Android back button returns to the lesson map | `UIScreen.StandardColumn()`, `GameManager.Update()` |
+| **Any phone or tablet** | Designed on 1080 x 1920 and never laid out smaller: phones keep the full width (taller ones such as the Samsung A70, 20:9, get more height), tablets keep the full height with the content in a centred column. Notches and margins show the app colour. The lesson map scrolls if a screen is too short. Checked on five sizes with 0 layout problems ([A70](docs/designs/devices/samsung-a70.png), [16:9 phone](docs/designs/devices/phone-16x9.png), [720p phone](docs/designs/devices/small-phone.png), [4:3 tablet](docs/designs/devices/tablet-4x3.png), [16:10 tablet](docs/designs/devices/tablet-16x10.png)) | `UI/ResponsiveCanvas.cs`, `UIManager.cs` (SafeArea), `Editor/SafeTouchScreenshots.cs` |
 
 **Models:** Keza (the Mixamo child, with her greeting wave), **Mum and Dad** (they share the skin tone the child picks for Keza), two more adult visitors, and the scenery (school desk, chalkboard, playground, grass and the family dog) come from `Assets/SafeTouch/Models` once **SafeTouch > 4. Build Character Prefabs From Models** has run; until then the simple shapes are used. Previews are in [docs/designs/models](docs/designs/models).
 
@@ -113,6 +114,7 @@ git clone https://github.com/audreym101/SafeTouch.git
 ### 4.3 Run it
 
 * **On the laptop:** press **Play**. XR Simulation shows a virtual room; hold the right mouse button and use WASD to look around until the floor is found. The UI appears at phone size in the Game view (set the Game view to a 1080 × 1920 portrait resolution).
+* **On a simulated Samsung Galaxy A70 (or any phone or tablet):** open **Window > General > Device Simulator** and pick **Samsung Galaxy A70** (included in `Assets/SafeTouch/Devices`) or one of Unity's tablets, then press **Play**. To check every screen at once without Play mode, run **SafeTouch > 7. Render Screens On Phones And Tablets**: it saves each screen for an A70, a 16:9 phone, a 720p phone and two tablets to `Screenshots/`, and overview sheets to `docs/designs/devices/`.
 * **On the phone:** connect it by USB, **File > Build Profiles > Android > Build And Run**. Choose a file name such as `Builds/SafeTouch.apk`.
 * **The phone asks for the camera** the first time Keza is placed: tap **Allow the camera**, then **Allow**. If the AR view is black and no camera question appears, ARCore is switched off: run **SafeTouch > 1. Configure Android AR Settings** (or tick **Google ARCore** under Project Settings > XR Plug-in Management > Android) and build again. The build now stops with this message instead of producing a black-screen APK.
 
