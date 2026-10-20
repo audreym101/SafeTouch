@@ -21,7 +21,7 @@ namespace SafeTouch.Tests
         [Serializable] class Strings { public List<Entry> items; }
         [Serializable] class Item
         {
-            public string scenarioId, adultId, badgeId, resourceId, pairId, requestId;
+            public string scenarioId, adultId, badgeId, resourceId, pairId, requestId, termId;
             public string correctAnswer, requirement, section, phone;
             public bool safe;
             public int level;
@@ -36,7 +36,7 @@ namespace SafeTouch.Tests
         /// <summary>JsonUtility leaves missing strings empty rather than null, so take the first one that is set.</summary>
         static string Id(Item item)
         {
-            return new[] { item.scenarioId, item.adultId, item.badgeId, item.resourceId, item.pairId, item.requestId }
+            return new[] { item.scenarioId, item.adultId, item.badgeId, item.resourceId, item.pairId, item.requestId, item.termId }
                 .FirstOrDefault(s => !string.IsNullOrEmpty(s)) ?? "";
         }
 
@@ -53,6 +53,7 @@ namespace SafeTouch.Tests
         [TestCase("parent_resources")]
         [TestCase("review")]
         [TestCase("guard_requests")]
+        [TestCase("terms")]
         public void KinyarwandaContentMatchesTheEnglish(string file)
         {
             var en = Read<Items>(file + ".json").items;
