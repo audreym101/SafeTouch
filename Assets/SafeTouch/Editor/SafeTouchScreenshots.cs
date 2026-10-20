@@ -122,6 +122,12 @@ namespace SafeTouch.EditorTools
             Func<string, Action, KeyValuePair<string, Action>> shot = (n, a) => new KeyValuePair<string, Action>(n, a);
             yield return shot("01-splash", () => ui.ShowMenu("splash"));
             yield return shot("01a-consent", () => ui.ShowMenu("consent"));
+            yield return shot("01a-consent-form", () =>
+            {
+                ui.ShowMenu("consent");
+                var scroll = ui.GetComponentsInChildren<ScrollRect>(false).FirstOrDefault();
+                if (scroll != null) { Canvas.ForceUpdateCanvases(); scroll.verticalNormalizedPosition = 0f; }   // the details and tick boxes
+            });
             yield return shot("01b-verify", () =>
             {
                 // A sample consent waiting for its code (in memory only; nothing is saved or sent).
