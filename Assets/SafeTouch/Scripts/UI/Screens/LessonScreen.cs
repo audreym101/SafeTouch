@@ -32,15 +32,17 @@ namespace SafeTouch.UI.Screens
             shadeRt.anchorMin = new Vector2(0f, 1f);
             shadeRt.anchorMax = new Vector2(1f, 1f);
             shadeRt.pivot = new Vector2(0.5f, 1f);
-            shadeRt.sizeDelta = new Vector2(0f, 420f);
+            shadeRt.sizeDelta = new Vector2(0f, 480f);
             shade.raycastTarget = false;
 
             var col = StandardColumn(root, "", () => game.ReturnToMenu());
             title = TitleText;
             title.color = Color.white;
 
+            // The step gets its own line, so the two buttons below always have room for
+            // their words, even in Kinyarwanda and on the narrowest phones.
+            step = UIFactory.Label(col, "", Theme.Label, Color.white, TextAnchor.MiddleLeft, true);
             var tools = UIFactory.Row(col, "Tools", Theme.Gap, 110f);
-            step = UIFactory.Label(tools.transform, "", Theme.Label, Color.white, TextAnchor.MiddleLeft, true);
             replay = UIFactory.Button(tools.transform, "Listen again", Theme.WithAlpha(Theme.Card, 0.9f), Theme.Ink, () =>
             {
                 if (ReplayNarration != null) ReplayNarration();
@@ -48,6 +50,8 @@ namespace SafeTouch.UI.Screens
             movePlace = UIFactory.Button(tools.transform, "Move Keza", Theme.WithAlpha(Theme.Card, 0.9f), Theme.Ink, () => game.MoveCharacter());
             UIFactory.FixedHeight(replay, 110f);
             UIFactory.FixedHeight(movePlace, 110f);
+            replay.GetComponentInChildren<Text>().fontSize = Theme.Label;
+            movePlace.GetComponentInChildren<Text>().fontSize = Theme.Label;
 
             UIFactory.Spacer(col, 1f);
             BuildMovePad(col);
