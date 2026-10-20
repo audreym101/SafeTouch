@@ -44,6 +44,7 @@ namespace SafeTouch.UI
         Button feedbackButton;
         Action feedbackContinue;
         GameObject toast;
+        Image backdrop;
         Text toastText;
         Coroutine toastRoutine;
 
@@ -58,6 +59,14 @@ namespace SafeTouch.UI
         {
             game = gameManager;
             if (canvas == null) canvas = GetComponentInChildren<Canvas>();
+            if (canvas.GetComponent<ResponsiveCanvas>() == null) canvas.gameObject.AddComponent<ResponsiveCanvas>();
+
+            // Fills the whole screen behind the safe area: notches, rounded corners and
+            // tablet margins show the app's colour instead of black. Hidden on AR screens.
+            backdrop = UIFactory.Panel(canvas.transform, "Backdrop", Theme.Sky, false);
+            UIFactory.Stretch((RectTransform)backdrop.transform);
+            backdrop.raycastTarget = false;
+
             var safeArea = UIFactory.Rect(canvas.transform, "Safe area");
             UIFactory.Stretch(safeArea);
             safeArea.gameObject.AddComponent<SafeArea>();
@@ -116,6 +125,7 @@ namespace SafeTouch.UI
                 s.Root.gameObject.SetActive(show);
                 if (show) active = s;
             }
+            if (backdrop != null) backdrop.enabled = active == null || !active.ShowsCamera;
             HideFeedback();
             UpdateHUD();
         }
