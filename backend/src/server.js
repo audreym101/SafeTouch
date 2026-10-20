@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { createApp } = require('./app');
 const { createStore } = require('./store');
+const { createMailer } = require('./mailer');
 
 // Minimal .env loader so the API has no extra dependency.
 const envFile = path.join(__dirname, '..', '.env');
@@ -15,7 +16,8 @@ if (fs.existsSync(envFile)) {
 (async () => {
   const store = await createStore();
   const port = Number(process.env.PORT) || 3000;
-  createApp(store).listen(port, () => {
-    console.log(`SafeTouch API on http://localhost:${port} (${process.env.MONGODB_URI ? 'MongoDB Atlas' : 'in-memory store'})`);
+  const mailer = createMailer();
+  createApp(store, { mailer }).listen(port, () => {
+    console.log(`SafeTouch API on http://localhost:${port} (${process.env.MONGODB_URI ? 'MongoDB Atlas' : 'in-memory store'}, consent emails: ${mailer.provider})`);
   });
 })();
