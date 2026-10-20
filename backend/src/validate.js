@@ -45,3 +45,44 @@ function validateProgress(body) {
 }
 
 module.exports = { validateProgress };
+
+// ---- Parental consent (ConsentService.cs) ----
+// The parent's own contact details, given with their agreement, to verify the
+// consent by email (Law N° 058/2021, Article 9). Nothing about the child.
+
+const CONSENT_KEYS = new Set([
+  'consentId', 'deviceId', 'parentName', 'phone', 'email', 'country', 'language', 'termsVersion', 'agreements',
+]);
+const AGREEMENTS = ['guardian', 'terms', 'childUse', 'dataUse'];
+const NAME = /^[\p{L}][\p{L}\p{M} .'-]{1,79}$/u;
+const PHONE = /^\+?[0-9][0-9 ()-]{6,19}$/;
+const EMAIL = /^[^\s@<>()[\]\,;:"]+@[^\s@<>()[\]\,;:"]+\.[A-Za-z]{2,}$/;
+const COUNTRY = /^[\p{L}][\p{L}\p{M} .'()-]{1,55}$/u;
+const VERSION = /^[0-9A-Za-z.-]{1,20}$/;
+
+function validateConsent(body) {
+  const errors = [];
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return ['Body must be a JSON object.'];
+  for (const key of Object.keys(body)) {
+    if (!CONSENT_KEYS.has(key)) errors.push(`Field "${key}" is not accepted.`);
+  }
+  if (typeof body.consentId !== 'string' || !UUID.test(body.consentId)) errors.push('consentId must be a random UUID.');
+  if (typeof body.deviceId !== 'string' || !UUID.test(body.deviceId)) errors.push('deviceId must be a random UUID.');
+  if (typeof body.parentName !== 'string' || !NAME.test(body.parentName.trim())) errors.push('parentName must be the parent\'s name (2-80 letters).');
+  const digits = typeof body.phone === 'string' ? body.phone.replace(/\D/g, '') : '';
+  if (typeof body.phone !== 'string' || !PHONE.test(body.phone.trim()) || digits.length < 8 || digits.length > 15) {
+    errors.push('phone must be a phone number with its country code, e.g. +250 788 123 456.');
+  }
+  if (typeof body.email !== 'string' || body.email.length > 254 || !EMAIL.test(body.email.trim())) errors.push('email must be a valid email address.');
+  if (typeof body.country !== 'string' || !COUNTRY.test(body.country.trim())) errors.push('country must be a country name.');
+  if (body.language !== undefined && !LANGUAGES.includes(body.language)) errors.push('language must be "en" or "rw".');
+  if (typeof body.termsVersion !== 'string' || !VERSION.test(body.termsVersion)) errors.push('termsVersion must be the version of the terms shown.');
+  const a = body.agreements;
+  if (!a || typeof a !== 'object' || Array.isArray(a) || !AGREEMENTS.every((k) => a[k] === true) || Object.keys(a).some((k) => !AGREEMENTS.includes(k))) {
+    errors.push(`agreements must confirm ${AGREEMENTS.join(', ')} (all true).`);
+  }
+  return errors;
+}
+
+module.exports.validateConsent = validateConsent;
+module.exports.AGREEMENTS = AGREEMENTS;
