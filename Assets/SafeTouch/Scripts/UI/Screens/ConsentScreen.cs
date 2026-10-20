@@ -51,6 +51,15 @@ namespace SafeTouch.UI.Screens
             error = UIFactory.Label(list, "", Theme.Label, Theme.Unsafe, TextAnchor.UpperLeft, true);
             agree = UIFactory.Button(list, "", Theme.Primary, Color.white, Submit);
             footnote = UIFactory.Label(list, "", Theme.Small, Theme.Muted, TextAnchor.UpperLeft, false);
+
+            // After a withdrawal the next person must not see the previous parent's details.
+            if (game.Consent != null) game.Consent.Changed += () => { if (game.Consent.Record == null) ClearForm(); };
+        }
+
+        void ClearForm()
+        {
+            foreach (var f in new[] { nameField, phoneField, emailField, countryField }) f.text = "";
+            foreach (var t in new[] { guardian, terms, childUse, dataUse }) t.isOn = false;
         }
 
         RectTransform termsAnchor;
