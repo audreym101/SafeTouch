@@ -23,6 +23,15 @@ namespace SafeTouch.UI.Screens
         public override string Name { get { return "scan"; } }
         public override bool ShowsCamera { get { return true; } }
 
+        public override bool CameraVisibleNow
+        {
+            get
+            {
+                var s = game.AR.Status;
+                return s == ARManager.ARStatus.Searching || s == ARManager.ARStatus.TooSmall || s == ARManager.ARStatus.Ready;
+            }
+        }
+
         protected override void BuildContent(RectTransform root)
         {
             var col = StandardColumn(root, "", () => game.ReturnToMenu());

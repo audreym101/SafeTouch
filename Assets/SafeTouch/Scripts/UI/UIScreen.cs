@@ -21,6 +21,13 @@ namespace SafeTouch.UI
         /// <summary>AR screens are see-through so the camera feed shows.</summary>
         public virtual bool ShowsCamera { get { return false; } }
 
+        /// <summary>
+        /// True while the camera picture is really showing behind this screen. A see-through
+        /// screen whose camera is not on yet (Keza not placed, camera not allowed) says false,
+        /// so the full-screen background fills the notch and tablet margins instead of black.
+        /// </summary>
+        public virtual bool CameraVisibleNow { get { return ShowsCamera; } }
+
         public void Build(UIManager owner, GameManager gameManager, RectTransform parent)
         {
             ui = owner;

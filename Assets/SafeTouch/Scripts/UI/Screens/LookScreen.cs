@@ -20,6 +20,7 @@ namespace SafeTouch.UI.Screens
 
         public override string Name { get { return "look"; } }
         public override bool ShowsCamera { get { return true; } }
+        public override bool CameraVisibleNow { get { return game.AR.HasCharacter; } }
 
         protected override void BuildContent(RectTransform root)
         {

@@ -114,6 +114,12 @@ namespace SafeTouch.UI
         {
             var tickable = active as ITickable;
             if (tickable != null) tickable.Tick();
+            UpdateBackdrop();   // the scan screen's camera turns on while it is showing
+        }
+
+        void UpdateBackdrop()
+        {
+            if (backdrop != null) backdrop.enabled = active == null || !active.CameraVisibleNow;
         }
 
         /// <summary>Shows one screen by name and hides the others.</summary>
@@ -125,7 +131,7 @@ namespace SafeTouch.UI
                 s.Root.gameObject.SetActive(show);
                 if (show) active = s;
             }
-            if (backdrop != null) backdrop.enabled = active == null || !active.ShowsCamera;
+            UpdateBackdrop();
             HideFeedback();
             UpdateHUD();
         }
