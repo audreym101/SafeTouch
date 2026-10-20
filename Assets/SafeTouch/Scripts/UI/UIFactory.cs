@@ -160,6 +160,84 @@ namespace SafeTouch.UI
             return button;
         }
 
+        /// <summary>
+        /// A large single-line text box with a placeholder. On a phone, tapping it opens
+        /// the keyboard that suits the content (email, phone pad or numbers).
+        /// </summary>
+        public static InputField Input(Transform parent, string placeholder, InputField.ContentType content, TouchScreenKeyboardType keyboard, int maxLength)
+        {
+            var box = Panel(parent, "Input " + placeholder, Theme.Card, true);
+            var le = box.gameObject.AddComponent<LayoutElement>();
+            le.minHeight = le.preferredHeight = Theme.TouchTarget;
+            le.flexibleWidth = 1f;
+            var outline = box.gameObject.AddComponent<Outline>();
+            outline.effectColor = Theme.WithAlpha(Theme.Muted, 0.5f);
+            outline.effectDistance = new Vector2(3f, -3f);
+
+            var text = Label(box.transform, "", Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, false);
+            text.supportRichText = false;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var hint = Label(box.transform, placeholder, Theme.Body, Theme.WithAlpha(Theme.Muted, 0.8f), TextAnchor.MiddleLeft, false);
+            hint.fontStyle = FontStyle.Italic;
+            foreach (var t in new[] { text, hint })
+            {
+                var rt = (RectTransform)t.transform;
+                Stretch(rt);
+                rt.offsetMin = new Vector2(32f, 0f);
+                rt.offsetMax = new Vector2(-32f, 0f);
+            }
+
+            var field = box.gameObject.AddComponent<InputField>();
+            field.targetGraphic = box;
+            field.textComponent = text;
+            field.placeholder = hint;
+            field.lineType = InputField.LineType.SingleLine;
+            field.contentType = content;
+            field.keyboardType = keyboard;
+            field.characterLimit = maxLength;
+            return field;
+        }
+
+        /// <summary>
+        /// A tick box with a label that wraps; the whole row is tappable. The box
+        /// fills with colour when ticked (no tick glyph: the built-in font has none).
+        /// </summary>
+        public static Toggle Checkbox(Transform parent, string label, Action<bool> changed)
+        {
+            var row = Rect(parent, "Checkbox");
+            var h = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            h.spacing = 28f;
+            h.childAlignment = TextAnchor.UpperLeft;
+            h.childControlWidth = h.childControlHeight = true;
+            h.childForceExpandWidth = false;
+            h.childForceExpandHeight = false;
+            var hit = row.gameObject.AddComponent<Image>();
+            hit.color = Theme.Clear;   // makes the whole row tappable
+
+            var box = Panel(row, "Box", Theme.Card, true);
+            var boxSize = box.gameObject.AddComponent<LayoutElement>();
+            boxSize.minWidth = boxSize.preferredWidth = 84f;
+            boxSize.minHeight = boxSize.preferredHeight = 84f;
+            var ring = box.gameObject.AddComponent<Outline>();
+            ring.effectColor = Theme.Primary;
+            ring.effectDistance = new Vector2(4f, -4f);
+            var fill = Panel(box.transform, "Ticked", Theme.Primary, true);
+            var frt = (RectTransform)fill.transform;
+            Stretch(frt);
+            frt.offsetMin = new Vector2(14f, 14f);
+            frt.offsetMax = new Vector2(-14f, -14f);
+
+            var text = Label(row, label, Theme.Label, Theme.Ink, TextAnchor.UpperLeft, false);
+            text.GetComponent<LayoutElement>().flexibleWidth = 1f;
+
+            var toggle = row.gameObject.AddComponent<Toggle>();
+            toggle.targetGraphic = box;
+            toggle.graphic = fill;
+            toggle.isOn = false;
+            if (changed != null) toggle.onValueChanged.AddListener(v => changed(v));
+            return toggle;
+        }
+
         public static void SetButtonLabel(Button button, string label)
         {
             var t = button.GetComponentInChildren<Text>();
