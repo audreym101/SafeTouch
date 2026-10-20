@@ -99,6 +99,7 @@ namespace SafeTouch.UI.Screens
             UIFactory.SetButtonLabel(done, Localization.T("look.done", "Done"));
             bool inRoom = game.AR.HasCharacter;
             preview.gameObject.SetActive(!inRoom);
+            Root.GetComponent<Image>().color = inRoom ? Theme.Clear : Theme.Sky;   // no camera picture yet: not a black screen
             hint.text = inRoom
                 ? Localization.T("look.hint.room", "Keza can look like you, or like a friend. Watch her change in your room!")
                 : Localization.T("look.hint", "Keza can look like you, or like a friend. Pick any colour.");
