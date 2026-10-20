@@ -29,7 +29,7 @@ namespace SafeTouch.UI.Screens
             for (int i = 0; i < Tabs.Length; i++)
             {
                 string t = Tabs[i];
-                tabButtons[i] = UIFactory.Button(row.transform, t, Theme.Card, Theme.Ink, () => { tab = t; confirmReset = false; OnShow(); });
+                tabButtons[i] = UIFactory.Button(row.transform, t, Theme.Card, Theme.Ink, () => { tab = t; confirmReset = false; confirmWithdraw = false; OnShow(); });
                 UIFactory.FixedHeight(tabButtons[i], 120f);
             }
             list = UIFactory.ScrollList(col, Theme.Gap);
@@ -96,6 +96,8 @@ namespace SafeTouch.UI.Screens
                     OnShow();
                 });
 
+            BuildConsent();
+
             UIFactory.Label(list, Localization.T("parent.reset.title"), Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
             UIFactory.Button(list, Localization.T(confirmReset ? "parent.reset.confirm" : "parent.reset"),
                 confirmReset ? Theme.Unsafe : Theme.Card, confirmReset ? Color.white : Theme.Ink, () =>
@@ -104,6 +106,38 @@ namespace SafeTouch.UI.Screens
                     confirmReset = false;
                     game.ResetProgress();
                 });
+        }
+
+        bool confirmWithdraw;
+
+        /// <summary>The parent's consent: its status, confirming the emailed code, and withdrawing it.</summary>
+        void BuildConsent()
+        {
+            var record = game.Consent != null ? game.Consent.Record : null;
+            UIFactory.Label(list, Localization.T("parent.consent.title", "Your consent"), Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
+            string state = record == null ? Localization.T("parent.consent.none", "No consent on this phone yet.")
+                : record.verified ? string.Format(Localization.T("parent.consent.verified", "Confirmed by email ({0})."), Short(record.verifiedAt))
+                : !record.sentToServer ? Localization.T("parent.consent.unsent", "Saved on this phone; it will be sent and the code emailed when the phone has internet.")
+                : string.Format(Localization.T("parent.consent.pending", "Waiting for the code from the email: {0} days left to confirm."), record.DaysLeft);
+            if (record != null) state += "\n" + string.Format(Localization.T("parent.consent.who", "Given by {0}, {1}."), record.parentName, record.email);
+            UIFactory.Label(list, state, Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
+            if (record == null) return;
+
+            if (!record.verified)
+                UIFactory.Button(list, Localization.T("parent.consent.confirm", "Confirm the code now"), Theme.Primary, Color.white, () => ui.ShowMenu("verify"));
+            UIFactory.Button(list, Localization.T(confirmWithdraw ? "parent.consent.withdraw.confirm" : "parent.consent.withdraw",
+                    confirmWithdraw ? "Tap again: delete my details and my child's progress" : "Withdraw consent and delete data"),
+                confirmWithdraw ? Theme.Unsafe : Theme.Card, confirmWithdraw ? Color.white : Theme.Ink, () =>
+                {
+                    if (!confirmWithdraw) { confirmWithdraw = true; OnShow(); return; }
+                    confirmWithdraw = false;
+                    game.WithdrawConsent();
+                });
+        }
+
+        static string Short(string iso)
+        {
+            return !string.IsNullOrEmpty(iso) && iso.Length >= 10 ? iso.Substring(0, 10) : iso;
         }
     }
 }
