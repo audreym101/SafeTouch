@@ -77,6 +77,8 @@ namespace SafeTouch.UI
             Certificate = new CertificateScreen();
             Places = new PlacesScreen();
             screens.Add(new SplashScreen());
+            screens.Add(new ConsentScreen());
+            screens.Add(new VerifyScreen());
             screens.Add(new AgeScreen());
             screens.Add(new HomeScreen());
             screens.Add(new ScanScreen());
