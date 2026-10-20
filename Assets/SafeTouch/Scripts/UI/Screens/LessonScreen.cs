@@ -181,7 +181,7 @@ namespace SafeTouch.UI.Screens
             heading.text = promptHeading;
             heading.gameObject.SetActive(!string.IsNullOrEmpty(promptHeading));
             body.text = promptBody;
-            foreach (var b in optionButtons) Object.Destroy(b.gameObject);
+            foreach (var b in optionButtons) UIFactory.Remove(b.gameObject);
             optionButtons.Clear();
             RefreshMovePad();
             foreach (var choice in choices)

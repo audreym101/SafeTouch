@@ -239,7 +239,22 @@ namespace SafeTouch.UI
 
         public static void Clear(Transform t)
         {
-            for (int i = t.childCount - 1; i >= 0; i--) UnityEngine.Object.Destroy(t.GetChild(i).gameObject);
+            for (int i = t.childCount - 1; i >= 0; i--) Remove(t.GetChild(i).gameObject);
+        }
+
+        /// <summary>
+        /// Removes a UI element at once. Destroy only happens at the end of the
+        /// frame, so the element is first hidden and detached, letting layouts
+        /// rebuilt in the same frame ignore it; in edit mode (the screenshot
+        /// tool) DestroyImmediate is used, because Destroy does nothing there.
+        /// </summary>
+        public static void Remove(GameObject go)
+        {
+            if (go == null) return;
+            if (!Application.isPlaying) { UnityEngine.Object.DestroyImmediate(go); return; }
+            go.SetActive(false);
+            go.transform.SetParent(null, false);
+            UnityEngine.Object.Destroy(go);
         }
     }
 }

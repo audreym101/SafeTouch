@@ -39,7 +39,7 @@ namespace SafeTouch.UI.Screens
                 var card = new Card { info = info };
                 card.button = UIFactory.Button(col, "", Theme.Card, Theme.Ink, () => game.StartLesson(lesson.level));
                 UIFactory.FixedHeight(card.button, 168f);   // six cards fit a 1920 px tall phone
-                Object.Destroy(card.button.GetComponentInChildren<Text>().gameObject);
+                UIFactory.Remove(card.button.GetComponentInChildren<Text>().gameObject);
 
                 var inner = UIFactory.Rect(card.button.transform, "Inner");
                 UIFactory.Stretch(inner);
