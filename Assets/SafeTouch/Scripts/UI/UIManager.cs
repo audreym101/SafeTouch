@@ -232,21 +232,44 @@ namespace SafeTouch.UI
         void Tick();
     }
 
-    /// <summary>Keeps the UI inside the phone's safe area (notches, rounded corners).</summary>
+    /// <summary>
+    /// Keeps the UI inside the phone's safe area (notches such as the
+    /// Samsung A70's, status bars, rounded corners) and, on tablets, centres
+    /// it in a column no wider than ResponsiveCanvas.MaxContentWidth.
+    /// </summary>
     public class SafeArea : MonoBehaviour
     {
         Rect applied;
+        Vector2 appliedScreen;
 
         void Update()
         {
             var area = Screen.safeArea;
-            if (area == applied || Screen.width == 0 || Screen.height == 0) return;
+            var screen = new Vector2(Screen.width, Screen.height);
+            if (area == applied && screen == appliedScreen) return;
+            Apply(area, screen);
+        }
+
+        /// <summary>Fits the UI to a safe area of a screen (both in pixels). Also used to preview other devices.</summary>
+        public void Apply(Rect area, Vector2 screen)
+        {
+            if (screen.x <= 0f || screen.y <= 0f) return;
             applied = area;
+            appliedScreen = screen;
             var rt = (RectTransform)transform;
-            rt.anchorMin = new Vector2(area.xMin / Screen.width, area.yMin / Screen.height);
-            rt.anchorMax = new Vector2(area.xMax / Screen.width, area.yMax / Screen.height);
+            rt.anchorMin = new Vector2(area.xMin / screen.x, area.yMin / screen.y);
+            rt.anchorMax = new Vector2(area.xMax / screen.x, area.yMax / screen.y);
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
+
+            // Tablets: keep a phone-shaped column in the middle rather than stretching every button.
+            var parent = rt.parent as RectTransform;
+            if (parent == null) return;
+            float width = parent.rect.width * (rt.anchorMax.x - rt.anchorMin.x);
+            float extra = width - ResponsiveCanvas.MaxContentWidth;
+            if (extra <= 0f) return;
+            rt.offsetMin = new Vector2(extra * 0.5f, 0f);
+            rt.offsetMax = new Vector2(-extra * 0.5f, 0f);
         }
     }
 }
