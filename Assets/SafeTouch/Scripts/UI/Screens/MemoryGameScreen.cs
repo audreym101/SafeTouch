@@ -80,10 +80,8 @@ namespace SafeTouch.UI.Screens
 
             int columns = cards.Count > 8 ? 3 : 2;
             int rows = Mathf.CeilToInt(cards.Count / (float)columns);
-            float width = (1080f - 2f * Theme.Gutter - (columns - 1) * layout.spacing.x) / columns;
-            float height = Mathf.Min(300f, (1180f - (rows - 1) * layout.spacing.y) / rows);
             layout.constraintCount = columns;
-            layout.cellSize = new Vector2(width, height);
+            FitCards(columns, rows);
 
             foreach (var card in cards)
             {
@@ -95,6 +93,22 @@ namespace SafeTouch.UI.Screens
             }
             hint.text = Localization.T("review.memory.hint", "Turn over two cards. Find each word and what it means.");
             UpdateCounter();
+        }
+
+        /// <summary>
+        /// Sizes the cards to the space the grid really has on this phone or
+        /// tablet (taller phones get taller cards, up to 300 units), instead of
+        /// assuming a 1080 x 1920 screen.
+        /// </summary>
+        void FitCards(int columns, int rows)
+        {
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)grid.parent);
+            var area = grid.rect.size;
+            if (area.x <= 0f || area.y <= 0f) area = new Vector2(1080f - 2f * Theme.Gutter, 1180f);   // not laid out yet
+            float width = (area.x - (columns - 1) * layout.spacing.x) / columns;
+            float height = Mathf.Min(300f, (area.y - (rows - 1) * layout.spacing.y) / rows);
+            layout.cellSize = new Vector2(width, height);
         }
 
         void Flip(Card card)
