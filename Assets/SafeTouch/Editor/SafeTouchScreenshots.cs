@@ -121,6 +121,17 @@ namespace SafeTouch.EditorTools
             var ui = game.UI;
             Func<string, Action, KeyValuePair<string, Action>> shot = (n, a) => new KeyValuePair<string, Action>(n, a);
             yield return shot("01-splash", () => ui.ShowMenu("splash"));
+            yield return shot("01a-consent", () => ui.ShowMenu("consent"));
+            yield return shot("01b-verify", () =>
+            {
+                // A sample consent waiting for its code (in memory only; nothing is saved or sent).
+                var sample = ConsentRecord.Create(Guid.NewGuid().ToString(), "en");
+                sample.parentName = "Uwase Marie"; sample.email = "uwase.marie@example.com"; sample.emailMasked = "u***e@example.com";
+                sample.phone = "+250 788 123 456"; sample.country = "Rwanda"; sample.sentToServer = true;
+                sample.agreements = new ConsentAgreements { guardian = true, terms = true, childUse = true, dataUse = true };
+                typeof(SafeTouch.Services.ConsentService).GetProperty("Record").SetValue(game.Consent, sample);
+                ui.ShowMenu("verify");
+            });
             yield return shot("02-age", () => ui.ShowMenu("age"));
             yield return shot("03-home", () => ui.ShowMenu("home"));
             yield return shot("04-scan", () => ui.ShowMenu("scan"));
