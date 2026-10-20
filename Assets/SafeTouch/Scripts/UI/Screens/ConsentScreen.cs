@@ -138,8 +138,9 @@ namespace SafeTouch.UI.Screens
                 record.consentId = previous.consentId;
                 record.submittedAt = previous.submittedAt;
             }
-            ui.ShowMenu("verify");
+            // Save first: the verify screen reads the new consent as soon as it opens.
             game.Consent.Submit(record, result => ui.UpdateHUD());
+            ui.ShowMenu("verify");
         }
 
         /// <summary>The same rules the API applies, so most mistakes are caught before sending.</summary>
