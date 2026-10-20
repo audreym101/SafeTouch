@@ -192,6 +192,10 @@ namespace SafeTouch.UI
             var le = rt.gameObject.AddComponent<LayoutElement>();
             le.minHeight = height;
             le.preferredHeight = height;
+            // childForceExpandHeight makes a layout group report itself as stretchable, so on
+            // tall phones (Samsung A70) rows used to soak up the spare height and grow huge.
+            // Rows keep their height; spare height goes to the screen's spacers instead.
+            le.flexibleHeight = 0f;
             return h;
         }
 
