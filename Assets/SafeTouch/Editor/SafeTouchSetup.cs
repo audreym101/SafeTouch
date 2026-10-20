@@ -48,6 +48,9 @@ namespace SafeTouch.EditorTools
             PlayerSettings.productName = "SafeTouch";
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.alu.safetouch");
             PlayerSettings.bundleVersion = "0.1.0";
+            // Development builds may reach the API on a laptop over plain http (http://192.168.x.x:3000);
+            // release builds need https, as Android requires.
+            PlayerSettings.insecureHttpOption = InsecureHttpOption.DevelopmentOnly;
             ApplyAndroidBuildSettings();
             AssetDatabase.SaveAssets();
 
@@ -260,6 +263,7 @@ namespace SafeTouch.EditorTools
             var scenarios = app.AddComponent<ScenarioManager>();
             var progress = app.AddComponent<ProgressManager>();
             var cloud = app.AddComponent<CloudSyncService>();
+            var consent = app.AddComponent<ConsentService>();
             // Unity adds the RECORD_AUDIO permission to the Android manifest because of the Microphone API.
             var mic = app.AddComponent<MicrophoneInput>();
             var voice = app.AddComponent<VoiceCoach>();
@@ -313,6 +317,7 @@ namespace SafeTouch.EditorTools
             Set(game, "progressManager", progress);
             Set(game, "cloudSync", cloud);
             Set(game, "voiceCoach", voice);
+            Set(game, "consent", consent);
             SetArray(game, "lessons", lessons);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
