@@ -29,3 +29,6 @@ Thumbs.db
 # Backend
 backend/node_modules/
 backend/.env
+
+# SafeTouch > 7. Render Screens On Phones And Tablets (overview sheets go to docs/designs/devices)
+/Screenshots/
