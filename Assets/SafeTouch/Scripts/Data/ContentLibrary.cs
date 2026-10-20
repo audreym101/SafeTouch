@@ -18,6 +18,7 @@ namespace SafeTouch.Data
         [Serializable] class ResourceList { public List<ParentResource> items; }
         [Serializable] class ReviewList { public List<ReviewPair> items; }
         [Serializable] class GuardList { public List<GuardRequest> items; }
+        [Serializable] class TermsList { public List<TermsSection> items; }
 
         static List<Scenario> scenarios;
         static List<TrustedAdult> adults;
@@ -25,6 +26,7 @@ namespace SafeTouch.Data
         static List<ParentResource> resources;
         static List<ReviewPair> reviewPairs;
         static List<GuardRequest> guardRequests;
+        static List<TermsSection> terms;
 
         public static List<Scenario> Scenarios
         {
@@ -56,6 +58,12 @@ namespace SafeTouch.Data
             get { CheckLanguage(); return guardRequests ?? (guardRequests = (Load<GuardList>("guard_requests").items ?? new List<GuardRequest>())); }
         }
 
+        /// <summary>The terms and privacy notice shown on the parental consent page.</summary>
+        public static List<TermsSection> Terms
+        {
+            get { CheckLanguage(); return terms ?? (terms = (Load<TermsList>("terms").items ?? new List<TermsSection>())); }
+        }
+
         static string loadedLanguage;
 
         /// <summary>
@@ -73,6 +81,7 @@ namespace SafeTouch.Data
             resources = null;
             reviewPairs = null;
             guardRequests = null;
+            terms = null;
         }
 
         /// <summary>
@@ -126,5 +135,14 @@ namespace SafeTouch.Data
         public bool safe;        // false: the right answer is a strong NO
         public string text;      // shown in the visitor's speech bubble
         public string explain;   // shown after the child answers
+    }
+
+    /// <summary>One part of the terms and privacy notice on the consent page.</summary>
+    [Serializable]
+    public class TermsSection
+    {
+        public string termId;
+        public string title;
+        public string body;
     }
 }
