@@ -1,0 +1,17 @@
+{
+  "_note": "Kinyarwanda version of terms.json (same ids, version 1.0). FIRST DRAFT: to be checked by a native Kinyarwanda speaker, the supervisor and the ethics committee before use.",
+  "items": [
+    { "termId": "what",    "title": "SafeTouch ni iki",
+      "body": "SafeTouch ni porogaramu y'uburezi yigisha abana bafite imyaka 6 kugeza kuri 11 uko barinda umubiri wabo: umwanya bwite, gukorwaho gutekanye n'udatekanye, kuvuga OYA, n'abantu bakuru bizeye. Ntisuzuma, ntikora iperereza kandi ntisimbura inzego zirengera abana. Niba hari umwana uhangayikishijwe na we, hamagara umurongo w'ubuntu ufasha abana 116 cyangwa ujye kuri Isange One Stop Centre." },
+    { "termId": "use",     "title": "Uko umwana wawe ayikoresha",
+      "body": "Umwana wawe akoresha SafeTouch ari kumwe n'umuntu mukuru. Porogaramu ikoresha kamera kugira ngo yerekane Keza mu cyumba cyanyu, na mikoro igihe umwana yitoza kuvuga OYA. Ifoto ya kamera n'amajwi ntibifatwa, ntibibikwa kandi ntiboherezwa." },
+    { "termId": "child",   "title": "Ibyo SafeTouch ibika ku mwana wawe",
+      "body": "Itsinda ry'imyaka gusa (6-8 cyangwa 9-11), iterambere mu masomo n'imidari, kuri iyi telefoni. Ntizigera ibika izina ry'umwana wawe, ifoto ye, aho aherereye cyangwa ijwi rye. Niba umuntu mukuru afunguye kohereza amakuru atagaragaza umwana mu Igenamiterere, ibisubizo by'amasomo byoherezwa n'inomero idasanzwe ya telefoni." },
+    { "termId": "parent",  "title": "Ibyo SafeTouch ibika kuri wowe",
+      "body": "Izina ryawe, nimero ya telefoni, aderesi ya imeyili n'igihugu, n'itariki wemereyeho. Bikoreshwa gusa mu kwemeza uru ruhushya (tukoherereza kode y'imibare 6 n'ingero y'ibyo wemeye kuri imeyili) no kukuvugisha kuri rwo. Bibikwa kuri seriveri ya SafeTouch, bitandukanye n'iterambere ry'umwana wawe, kandi ntibigurishwa cyangwa ngo bihabwe abandi." },
+    { "termId": "rights",  "title": "Uburenganzira bwawe",
+      "body": "Ushobora gukuraho uruhushya rwawe igihe icyo ari cyo cyose muri Ababyeyi > Igenamiterere > Kuraho uruhushya. Ibi bisiba amakuru yawe kuri seriveri n'iterambere ry'umwana wawe kuri iyi telefoni no kuri seriveri. Ushobora gusaba kureba cyangwa gukosora amakuru yawe. Hakurikijwe Itegeko N° 058/2021 ryerekeye kurinda amakuru bwite n'ibanga ryayo mu Rwanda, umubyeyi cyangwa umurera wemewe n'amategeko ni we utanga uruhushya ku mwana uri munsi y'imyaka 16." },
+    { "termId": "study",   "title": "Ubushakashatsi bwa SafeTouch",
+      "body": "SafeTouch ni igice cy'umushinga w'ubushakashatsi wo gusoza amasomo muri African Leadership University (umushakashatsi: Audrey MUNEZERO, umuyobozi: Tunde Isiaq Gbadamosi). Kwitabira ni ubushake, kandi kwanga cyangwa guhagarara nyuma nta ngaruka bigira kuri wowe cyangwa ku mwana wawe." }
+  ]
+}
