@@ -300,7 +300,8 @@ namespace SafeTouch.EditorTools
             var scaler = canvasGo.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1080f, 1920f);
-            scaler.matchWidthOrHeight = 0.5f;
+            scaler.matchWidthOrHeight = 0f;   // ResponsiveCanvas switches to height on tablets
+            canvasGo.AddComponent<ResponsiveCanvas>();
             var ui = canvasGo.AddComponent<UIManager>();
             Set(ui, "canvas", canvas);
             new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
