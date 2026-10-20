@@ -1,0 +1,120 @@
+{
+    "friendlyName": "Samsung Galaxy A70",
+    "version": 1,
+    "screens": [
+        {
+            "width": 1080,
+            "height": 2400,
+            "navigationBarHeight": 0,
+            "dpi": 393.0,
+            "orientations": [
+                {
+                    "orientation": 1,
+                    "safeArea": { "serializedVersion": "2", "x": 0.0, "y": 0.0, "width": 1080.0, "height": 2320.0 },
+                    "cutouts": [
+                        { "serializedVersion": "2", "x": 470.0, "y": 2330.0, "width": 140.0, "height": 70.0 }
+                    ]
+                },
+                {
+                    "orientation": 3,
+                    "safeArea": { "serializedVersion": "2", "x": 80.0, "y": 0.0, "width": 2320.0, "height": 1080.0 },
+                    "cutouts": [
+                        { "serializedVersion": "2", "x": 0.0, "y": 470.0, "width": 70.0, "height": 140.0 }
+                    ]
+                },
+                {
+                    "orientation": 4,
+                    "safeArea": { "serializedVersion": "2", "x": 0.0, "y": 0.0, "width": 2320.0, "height": 1080.0 },
+                    "cutouts": [
+                        { "serializedVersion": "2", "x": 2330.0, "y": 470.0, "width": 70.0, "height": 140.0 }
+                    ]
+                }
+            ],
+            "presentation": {
+                "overlayPath": "",
+                "borderSize": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 0.0 }
+            }
+        }
+    ],
+    "systemInfo": {
+        "deviceModel": "samsung SM-A705F",
+        "deviceType": 1,
+        "operatingSystem": "Android OS 11 / API-30",
+        "operatingSystemFamily": 0,
+        "processorCount": 8,
+        "processorFrequency": 2000,
+        "processorType": "ARM64 FP ASIMD AES",
+        "supportsAccelerometer": true,
+        "supportsAudio": true,
+        "supportsGyroscope": true,
+        "supportsLocationService": true,
+        "supportsVibration": true,
+        "systemMemorySize": 5632,
+        "unsupportedIdentifier": "n/a",
+        "graphicsDependentData": [
+            {
+                "graphicsDeviceType": 11,
+                "graphicsMemorySize": 2048,
+                "graphicsDeviceName": "Adreno (TM) 612",
+                "graphicsDeviceVendor": "Qualcomm",
+                "graphicsDeviceID": 0,
+                "graphicsDeviceVendorID": 0,
+                "graphicsUVStartsAtTop": false,
+                "graphicsDeviceVersion": "OpenGL ES 3.2",
+                "graphicsShaderLevel": 50,
+                "graphicsMultiThreaded": true,
+                "renderingThreadingMode": 1,
+                "hasHiddenSurfaceRemovalOnGPU": false,
+                "hasDynamicUniformArrayIndexingInFragmentShaders": true,
+                "supportsShadows": true,
+                "supportsRawShadowDepthSampling": true,
+                "supportsMotionVectors": true,
+                "supports3DTextures": true,
+                "supports2DArrayTextures": true,
+                "supports3DRenderTextures": true,
+                "supportsCubemapArrayTextures": true,
+                "copyTextureSupport": 31,
+                "supportsComputeShaders": true,
+                "supportsGeometryShaders": true,
+                "supportsTessellationShaders": true,
+                "supportsInstancing": true,
+                "supportsHardwareQuadTopology": false,
+                "supports32bitsIndexBuffer": true,
+                "supportsSparseTextures": false,
+                "supportedRenderTargetCount": 8,
+                "supportsSeparatedRenderTargetsBlend": true,
+                "supportedRandomWriteTargetCount": 8,
+                "supportsMultisampledTextures": 1,
+                "supportsMultisampleAutoResolve": true,
+                "supportsTextureWrapMirrorOnce": 1,
+                "usesReversedZBuffer": false,
+                "npotSupport": 2,
+                "maxTextureSize": 16384,
+                "maxCubemapSize": 16384,
+                "maxComputeBufferInputsVertex": 4,
+                "maxComputeBufferInputsFragment": 4,
+                "maxComputeBufferInputsGeometry": 4,
+                "maxComputeBufferInputsDomain": 4,
+                "maxComputeBufferInputsHull": 4,
+                "maxComputeBufferInputsCompute": 24,
+                "maxComputeWorkGroupSize": 1024,
+                "maxComputeWorkGroupSizeX": 1024,
+                "maxComputeWorkGroupSizeY": 1024,
+                "maxComputeWorkGroupSizeZ": 64,
+                "supportsAsyncCompute": false,
+                "supportsGraphicsFence": true,
+                "supportsAsyncGPUReadback": true,
+                "supportsParallelPSOCreation": false,
+                "supportsRayTracing": false,
+                "supportsSetConstantBuffer": true,
+                "hasMipMaxLevel": true,
+                "supportsMipStreaming": true,
+                "usesLoadStoreActions": true,
+                "supportedTextureFormats": [],
+                "supportedRenderTextureFormats": [],
+                "ldrGraphicsFormat": 8,
+                "hdrGraphicsFormat": 48
+            }
+        ]
+    }
+}
