@@ -33,6 +33,7 @@ namespace SafeTouch.Core
         [SerializeField] ProgressManager progressManager;
         [SerializeField] CloudSyncService cloudSync;
         [SerializeField] VoiceCoach voiceCoach;
+        [SerializeField] ConsentService consent;
 
         [Header("Lessons (levels 1-4) and the Memory Quest (5)")]
         [SerializeField] LessonBase[] lessons = new LessonBase[0];
@@ -46,6 +47,7 @@ namespace SafeTouch.Core
         public ScenarioManager Scenarios { get { return scenarioManager; } }
         public ProgressManager Progress { get { return progressManager; } }
         public VoiceCoach Voice { get { return voiceCoach; } }
+        public ConsentService Consent { get { return consent; } }
         public int CurrentLevel { get { return currentLevel; } }
         public string SelectedMode { get { return selectedMode; } }
 
@@ -62,6 +64,8 @@ namespace SafeTouch.Core
             if (progressManager == null) progressManager = GetComponentInChildren<ProgressManager>();
             if (cloudSync == null) cloudSync = GetComponentInChildren<CloudSyncService>();
             if (voiceCoach == null) voiceCoach = GetComponentInChildren<VoiceCoach>();
+            if (consent == null) consent = GetComponentInChildren<ConsentService>();
+            if (consent == null) consent = gameObject.AddComponent<ConsentService>();
             if (lessons.Length == 0) lessons = GetComponentsInChildren<LessonBase>();
         }
 
@@ -164,6 +168,35 @@ namespace SafeTouch.Core
         {
             progressManager.SetLanguage(language);
             Localization.SetLanguage(language);
+        }
+
+        /// <summary>
+        /// Where "Start" leads. A parent must agree first (the consent page);
+        /// after 7 days without confirming the emailed code, the code is asked
+        /// for again; then the child chooses an age group or goes to the lessons.
+        /// </summary>
+        public void ContinueFromSplash()
+        {
+            if (consent != null && !consent.HasConsent) { uiManager.ShowMenu("consent"); return; }
+            if (consent != null && consent.MustVerifyNow) { uiManager.ShowMenu("verify"); return; }
+            ContinueToLessons();
+        }
+
+        /// <summary>After consent (or "verify later"): the age question the first time, then the lesson map.</summary>
+        public void ContinueToLessons()
+        {
+            uiManager.ShowMenu(string.IsNullOrEmpty(progressManager.GetData().ageGroup) ? "age" : "home");
+        }
+
+        /// <summary>
+        /// A parent withdraws consent: their details are deleted from the server
+        /// (now, or when online), the child's progress is deleted from this phone,
+        /// and the app returns to the start for a new consent.
+        /// </summary>
+        public void WithdrawConsent()
+        {
+            if (consent != null) consent.Withdraw(null);
+            ResetProgress();
         }
 
         /// <summary>Parent switched spoken NO practice on or off. Off closes the microphone straight away.</summary>

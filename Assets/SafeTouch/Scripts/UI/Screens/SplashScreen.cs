@@ -21,8 +21,7 @@ namespace SafeTouch.UI.Screens
             UIFactory.Spacer(col, 1f);
             start = UIFactory.Button(col, "Start", Theme.Primary, Color.white, () =>
             {
-                var hasAge = !string.IsNullOrEmpty(game.Progress.GetData().ageGroup);
-                ui.ShowMenu(hasAge ? "home" : "age");
+                game.ContinueFromSplash();   // the consent page first, until a parent has agreed
             });
             var langs = UIFactory.Row(col, "Languages", Theme.Gap, Theme.TouchTarget);
             english = UIFactory.Button(langs.transform, "English", Theme.Card, Theme.Ink, () => game.SetLanguage("en"));
