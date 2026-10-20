@@ -119,16 +119,18 @@ git clone https://github.com/audreym101/SafeTouch.git
 * **On the phone:** connect it by USB, **File > Build Profiles > Android > Build And Run**. Choose a file name such as `Builds/SafeTouch.apk`.
 * **The phone asks for the camera** the first time Keza is placed: tap **Allow the camera**, then **Allow**. If the AR view is black and no camera question appears, ARCore is switched off: run **SafeTouch > 1. Configure Android AR Settings** (or tick **Google ARCore** under Project Settings > XR Plug-in Management > Android) and build again. The build now stops with this message instead of producing a black-screen APK.
 
-### 4.4 Optional: the anonymous progress API
+### 4.4 The API: parental consent and optional anonymous progress
 
 ```bash
 cd backend
 npm install
-npm test          # 5 tests: save, reject a child name, reject a phone-number id, totals only, withdraw
-npm start         # http://localhost:3000, in-memory store unless MONGODB_URI is set
+npm test          # 19 tests: progress sync, and the consent flow (codes, limits, withdrawal)
+npm start         # http://localhost:3000, in-memory store unless MONGODB_URI is set; consent emails print here
 ```
 
 Copy `.env.example` to `.env` and add a MongoDB Atlas connection string to use a real database. In Unity, select **SafeTouch App**, and on **Cloud Sync Service** set **Base Url** and tick **Enabled In Build**. Sync still only runs after a parent switches it on in the grown-ups section.
+
+The consent page needs the API: set **Base Url** on **Consent Service** too (an `https://` address on phones), and an email provider in `.env` (`MAIL_PROVIDER`, `MAIL_API_KEY`, `MAIL_FROM`, see [docs/consent.md](docs/consent.md)). Until then the app keeps the consent on the phone and sends it when the API can be reached.
 
 ### 4.5 Before recording the demo, check
 
