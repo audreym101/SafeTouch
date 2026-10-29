@@ -158,3 +158,53 @@ test('Brevo gets the number without a plus, the sender name and the text', async
   assert.strictEqual(calls[0].init.headers['api-key'], 'k');
   assert.deepStrictEqual(JSON.parse(calls[0].init.body), { sender: 'SafeTouch', recipient: '250788123456', content: 'hello', type: 'transactional' });
 });
+
+function fakeFetch(reply) {
+  const calls = [];
+  const real = global.fetch;
+  global.fetch = async (url, init) => { calls.push({ url, init }); return { ok: reply.ok !== false, status: reply.status || 201, json: async () => reply.body }; };
+  return { calls, restore: () => { global.fetch = real; } };
+}
+const atReply = (statusCode, status) => ({ body: { SMSMessageData: { Message: 'Sent to 1/1', Recipients: [{ statusCode, status, number: '+250788123456' }] } } });
+
+test("Africa's Talking gets a form with the username, +number and message, and no unregistered sender", async () => {
+  const f = fakeFetch(atReply(101, 'Success'));
+  try {
+    const sms = createSmsSender({ SMS_PROVIDER: 'africastalking', AT_USERNAME: 'safetouch', AT_API_KEY: 'secret' });
+    assert.strictEqual(await sms.send({ phone: '+250 788 123 456', text: 'hello there' }), true);
+  } finally { f.restore(); }
+  assert.strictEqual(f.calls[0].url, 'https://api.africastalking.com/version1/messaging');
+  assert.strictEqual(f.calls[0].init.headers.apiKey, 'secret');
+  const form = new URLSearchParams(f.calls[0].init.body);
+  assert.strictEqual(form.get('username'), 'safetouch');
+  assert.strictEqual(form.get('to'), '+250788123456');
+  assert.strictEqual(form.get('message'), 'hello there');
+  assert.strictEqual(form.has('from'), false);
+});
+
+test("Africa's Talking sandbox uses the sandbox address and username, and a set sender is passed on", async () => {
+  const f = fakeFetch(atReply(101, 'Success'));
+  try {
+    const sms = createSmsSender({ SMS_PROVIDER: 'africastalking', AT_SANDBOX: '1', AT_USERNAME: 'real', AT_API_KEY: 'k', SMS_SENDER: 'SafeTouch' });
+    await sms.send({ phone: '+250 788 123 456', text: 'x' });
+  } finally { f.restore(); }
+  assert.strictEqual(f.calls[0].url, 'https://api.sandbox.africastalking.com/version1/messaging');
+  const form = new URLSearchParams(f.calls[0].init.body);
+  assert.strictEqual(form.get('username'), 'sandbox');
+  assert.strictEqual(form.get('from'), 'SafeTouch');
+});
+
+test("Africa's Talking per-number failures count as failures, not as sent", async () => {
+  for (const [code, label] of [[405, 'InsufficientBalance'], [403, 'InvalidPhoneNumber'], [402, 'InvalidSenderId']]) {
+    const f = fakeFetch(atReply(code, label));
+    try {
+      const sms = createSmsSender({ SMS_PROVIDER: 'africastalking', AT_USERNAME: 'u', AT_API_KEY: 'k' });
+      await assert.rejects(sms.send({ phone: '+250 788 123 456', text: 'x' }), new RegExp(label));
+    } finally { f.restore(); }
+  }
+  const empty = fakeFetch({ body: { SMSMessageData: { Message: 'InvalidSenderId', Recipients: [] } } });
+  try {
+    const sms = createSmsSender({ SMS_PROVIDER: 'africastalking', AT_USERNAME: 'u', AT_API_KEY: 'k' });
+    await assert.rejects(sms.send({ phone: '+250 788 123 456', text: 'x' }), /InvalidSenderId/);
+  } finally { empty.restore(); }
+});

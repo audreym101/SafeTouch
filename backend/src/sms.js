@@ -1,10 +1,12 @@
 // Sends the parental consent code by SMS, as well as by email, so a parent can
 // type whichever arrives first. The same 6-digit code is in both.
-//   SMS_PROVIDER=brevo    SMS_API_KEY=... (defaults to MAIL_API_KEY)  SMS_SENDER=SafeTouch
-//   SMS_PROVIDER=console  prints the texts, for development and tests
+//   SMS_PROVIDER=brevo          SMS_API_KEY=... (defaults to MAIL_API_KEY)  SMS_SENDER=SafeTouch
+//   SMS_PROVIDER=africastalking AT_USERNAME=... AT_API_KEY=...  (AT_SANDBOX=1 for the free simulator;
+//                               SMS_SENDER only once a sender ID is registered with them)
+//   SMS_PROVIDER=console        prints the texts, for development and tests
 //   SMS_PROVIDER=off      (default) no SMS: email only
-// Brevo SMS is paid by credit (brevo.com > SMS > buy credits). SMS_SENDER is the
-// name shown to the parent: at most 11 letters and digits.
+// Both are paid by credit. SMS_SENDER is the name shown to the parent: at most 11
+// letters and digits.
 //
 // A fake or stolen consent form could otherwise make the API text strangers and
 // spend credit, so every sender is capped: SMS_PER_PHONE_DAILY texts to one
@@ -12,6 +14,9 @@
 // The counters live in memory, so they reset when the server restarts.
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Africa's Talking per-recipient status codes: 100 Processed, 101 Sent, 102 Queued are fine.
+const AT_OK = new Set([100, 101, 102]);
 
 const TEXT = {
   en: (code) => `SafeTouch code: ${code}. Type it in the app to confirm your consent for your child. It expires in 24 hours. If this was not you, ignore this text.`,
@@ -34,6 +39,7 @@ function createSmsSender(env = process.env, now = () => Date.now()) {
   const provider = (env.SMS_PROVIDER || 'off').toLowerCase();
   const perPhone = Number(env.SMS_PER_PHONE_DAILY) || 3;
   const total = Number(env.SMS_DAILY_LIMIT) || 100;
+  const senderGiven = !!env.SMS_SENDER;
   const sender = String(env.SMS_SENDER || 'SafeTouch').replace(/[^A-Za-z0-9]/g, '').slice(0, 11) || 'SafeTouch';
   const key = env.SMS_API_KEY || env.MAIL_API_KEY;
   const sentAt = new Map();   // phone -> times of texts in the last 24 hours
@@ -51,6 +57,26 @@ function createSmsSender(env = process.env, now = () => Date.now()) {
       if (!res.ok) {
         const reason = await res.json().then((b) => b.message, () => '');
         throw new Error(`Brevo refused the SMS (${res.status}${reason ? `: ${reason}` : ''}).`);
+      }
+    };
+  } else if (provider === 'africastalking') {
+    const username = env.AT_SANDBOX ? 'sandbox' : env.AT_USERNAME;
+    const apiKey = env.AT_API_KEY || env.SMS_API_KEY;
+    const host = env.AT_SANDBOX ? 'api.sandbox.africastalking.com' : 'api.africastalking.com';
+    transport = async (recipient, content) => {
+      const form = new URLSearchParams({ username, to: `+${recipient}`, message: content });
+      if (senderGiven) form.set('from', sender);   // an unregistered sender ID is refused, so it is only sent when set
+      const res = await fetch(`https://${host}/version1/messaging`, {
+        method: 'POST',
+        headers: { apiKey, accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
+        body: form.toString(),
+      });
+      const body = await res.json().catch(() => ({}));
+      const data = body.SMSMessageData || {};
+      const first = (data.Recipients || [])[0];
+      if (!res.ok || !first || !AT_OK.has(first.statusCode)) {
+        const reason = first ? first.status : (data.Message || res.status);
+        throw new Error(`Africa's Talking refused the SMS (${reason}).`);
       }
     };
   } else {
