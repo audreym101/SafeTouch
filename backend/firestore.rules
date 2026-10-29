@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// Phones and browsers never read or write Firestore directly. Only the
+// SafeTouch API (Cloud Functions, through the Admin SDK, which bypasses these
+// rules) touches the data, after validating every request. This keeps the
+// parents' contact details out of reach of any client.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
