@@ -7,6 +7,24 @@ The 6-digit consent code is emailed to the parent ([consent.md](consent.md)). Wi
 - **A corrected phone number** gets a new code by SMS. The same details sent again (an offline retry) send nothing.
 - **No app change.** The consent form already collects the phone number with its country code.
 
+## Setting it up with Africa's Talking (works in Rwanda)
+
+1. Sign up at <https://africastalking.com>, create an **app**, and note the **username** (the sandbox one is always `sandbox`).
+2. **Settings** > **API Key** > generate a key, and copy it.
+3. **Try it free first, with the sandbox:** open the **Sandbox** and its **Simulator**, add a test phone number, and set `AT_SANDBOX=1`. The text appears in the simulator page, not on a real phone.
+4. **For real phones:** create a live app, top up credit (**Billing**), and remove `AT_SANDBOX`. Check the price per SMS to Rwanda (MTN, Airtel) first.
+5. Set these in `backend/.env.local`, and in Render > **Environment**:
+
+   | Key | Value |
+   |---|---|
+   | `SMS_PROVIDER` | `africastalking` |
+   | `AT_USERNAME` | the app username |
+   | `AT_API_KEY` | the API key |
+   | `AT_SANDBOX` | `1` for the simulator only; leave out for real texts |
+   | `SMS_SENDER` | leave out until a sender ID is registered with them. An unregistered one is refused (`InvalidSenderId`), so it is not sent unless set |
+
+   Without a sender ID, the parent sees a short number or a generic sender. Registering SafeTouch is done with Africa's Talking support.
+
 ## Setting it up with Brevo
 
 1. In Brevo, open **SMS** and buy credits (**Pricing** / **Buy credits**). SMS is paid per message, and Rwanda's price differs from other countries'. Check it before buying.
