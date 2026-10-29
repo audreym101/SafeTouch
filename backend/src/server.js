@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { createApp } = require('./app');
-const { createStore, FirestoreStore } = require('./store');
+const { createStore, FirestoreStore, MongoStore } = require('./store');
 const { createMailer } = require('./mailer');
 
 // Minimal .env loader so the API has no extra dependency. .env.local (laptop
@@ -18,7 +18,8 @@ for (const name of ['.env.local', '.env']) {
 
 (async () => {
   const store = await createStore();
-  const where = !(store instanceof FirestoreStore) ? 'in-memory store'
+  const where = store instanceof MongoStore ? `MongoDB database "${process.env.MONGODB_DB || 'safetouch'}"`
+    : !(store instanceof FirestoreStore) ? 'in-memory store'
     : process.env.FIRESTORE_EMULATOR_HOST ? `Firestore emulator at ${process.env.FIRESTORE_EMULATOR_HOST}` : 'Cloud Firestore';
   const port = Number(process.env.PORT) || 3000;
   const mailer = createMailer();
