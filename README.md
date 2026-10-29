@@ -124,12 +124,14 @@ git clone https://github.com/audreym101/SafeTouch.git
 ```bash
 cd backend
 npm install
-npm test          # 25 tests: progress sync, the consent flow (codes, limits, withdrawal), Firestore storage
-npm start         # http://localhost:3000, in-memory store; consent emails print here
+npm test          # 29 tests: progress sync, the consent flow (codes, limits, withdrawal), Firestore and MongoDB storage
+npm start         # http://localhost:3000, in-memory store (or MongoDB with MONGODB_URI in .env.local); consent emails print here
 npm run deploy    # to Firebase: the Cloud Function and the Firestore rules
 ```
 
 The API runs on **Firebase**: a Cloud Function in front of a Cloud Firestore database. **[docs/firebase.md](docs/firebase.md)** walks through creating the project, the Blaze plan and budget, the database, the email secret and the deploy. The deploy prints the **Function URL** (`https://europe-west1-<project-id>.cloudfunctions.net/safetouch`), which is the Base Url for the app. In Unity, select **SafeTouch App**, and on **Cloud Sync Service** set **Base Url** and tick **Enabled In Build**. Sync still only runs after a parent switches it on in the grown-ups section.
+
+**MongoDB instead of Firestore:** set `MONGODB_URI` (a MongoDB Atlas connection string, or `mongodb://127.0.0.1:27017` for a local server) and optionally `MONGODB_DB` (default `safetouch`), in `backend/.env.local` on a laptop or as environment variables on the host (for example Render). When `MONGODB_URI` is set it wins over Firestore. The API uses the same two collections, `progress` and `consents`, with a unique index on `deviceId` and `consentId`.
 
 The consent page needs the API: set **Base Url** on **Consent Service** too (an `https://` address on phones), and an email provider in `.env` (`MAIL_PROVIDER`, `MAIL_API_KEY`, `MAIL_FROM`, see [docs/consent.md](docs/consent.md)). Until then the app keeps the consent on the phone and sends it when the API can be reached.
 
