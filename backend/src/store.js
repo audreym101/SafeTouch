@@ -1,7 +1,7 @@
 // Storage for anonymous progress and parental consent.
 // Cloud Firestore (Firebase) when credentials are available: always inside
 // Cloud Functions, and locally with GOOGLE_APPLICATION_CREDENTIALS,
-// FIREBASE_SERVICE_ACCOUNT or the Firestore emulator. Otherwise an in-memory
+// SAFETOUCH_SERVICE_ACCOUNT or the Firestore emulator. Otherwise an in-memory
 // map (local development and tests).
 
 class MemoryStore {
@@ -76,16 +76,16 @@ function summarise(docs) {
 function firestoreAvailable(env) {
   if (env.FIRESTORE === 'off') return false;
   return !!(env.FUNCTION_TARGET || env.K_SERVICE || env.GOOGLE_APPLICATION_CREDENTIALS
-    || env.FIREBASE_SERVICE_ACCOUNT || env.FIRESTORE_EMULATOR_HOST);
+    || env.SAFETOUCH_SERVICE_ACCOUNT || env.FIRESTORE_EMULATOR_HOST);
 }
 
 /** The Admin SDK's Firestore, initialised once. */
 function firestoreFromEnv(env) {
   const admin = require('firebase-admin');
   if (!admin.apps.length) {
+    // The project comes from the credentials (or GOOGLE_CLOUD_PROJECT with the emulator).
     const options = {};
-    if (env.FIREBASE_SERVICE_ACCOUNT) options.credential = admin.credential.cert(JSON.parse(env.FIREBASE_SERVICE_ACCOUNT));
-    if (env.FIREBASE_PROJECT_ID) options.projectId = env.FIREBASE_PROJECT_ID;
+    if (env.SAFETOUCH_SERVICE_ACCOUNT) options.credential = admin.credential.cert(JSON.parse(env.SAFETOUCH_SERVICE_ACCOUNT));
     admin.initializeApp(options);
     admin.firestore().settings({ ignoreUndefinedProperties: true });
   }
