@@ -21,7 +21,42 @@ Cloud Functions need the **Blaze (pay as you go)** plan, which asks for a paymen
 
 `maxInstances: 3` in `src/function.js` caps how far the function can scale. Set a budget alert too (step 2 below).
 
-## One-time setup
+**No card?** Use the free setup below instead. It keeps Firestore and runs the same API on Render.
+
+## Free setup (no card): Spark plan + Render
+
+Firestore works on the free **Spark** plan; only Cloud Functions need Blaze. So the API runs on Render's free web service and reaches Firestore with a service-account key. The code is the same: `npm start` uses Firestore whenever `SAFETOUCH_SERVICE_ACCOUNT` is set.
+
+1. **Firebase:** create the project as in step 1 below, and skip the "Register app" wizard. The app uses the API, not the Firebase Unity SDK.
+2. **Database:** create it as in step 3 below (Spark is fine).
+3. **Rules:** in the **Rules** tab, paste the contents of `backend/firestore.rules` and click **Publish**.
+4. **Service-account key:** **Project settings** > **Service accounts** > **Generate new private key**.
+   - Keep the `.json` file outside the repo.
+   - Never share it: it gives full access to the database.
+5. **Render:** at <https://render.com>, choose **New** > **Web Service** and pick the SafeTouch repo.
+
+   | Setting | Value |
+   |---|---|
+   | Branch | `audrey` |
+   | Root Directory | `backend` |
+   | Build Command | `npm ci` |
+   | Start Command | `npm start` |
+   | Instance type | Free |
+   | Health Check Path (Advanced) | `/api/health` |
+
+   Add these **environment variables**:
+   - `SAFETOUCH_SERVICE_ACCOUNT`: the whole contents of the `.json` key
+   - `MAIL_PROVIDER`: `console`, or `brevo` together with `MAIL_API_KEY` and `MAIL_FROM`
+6. **Check:** after the deploy, Render's log says `SafeTouch API on ... (Cloud Firestore, ...)`. `https://<name>.onrender.com/api/health` answers `{"status":"ok"}`.
+7. **Unity:** on **Consent Service** and **Cloud Sync Service**:
+   - set **Base Url** to the `https://<name>.onrender.com` address;
+   - set **Timeout Seconds** to **60**.
+
+**The free server sleeps** after 15 minutes without requests, and the first request then takes up to a minute. The 60-second timeout covers that. If a request still fails, the app keeps the consent on the phone and retries. Open `/api/health` once before a session to wake it.
+
+Render redeploys by itself on every push to `audrey`. Consent emails with `MAIL_PROVIDER=console` appear in Render's **Logs** tab.
+
+## One-time setup (Blaze plan, Cloud Functions)
 
 ### 1. Create the project
 
