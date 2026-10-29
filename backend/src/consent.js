@@ -62,7 +62,7 @@ function registerConsentRoutes(app, store, mailer, now = () => Date.now(), sms =
         } catch (err) { console.error('Consent email failed:', err.message); return false; }
       })(),
       (async () => {
-        try { return await sms.send({ phone: record.phone, text: consentSms(record, code) }); }
+        try { return await sms.send({ phone: record.phone, country: record.country, text: consentSms(record, code) }); }
         catch (err) { console.error('Consent SMS failed:', err.message); return false; }
       })(),
     ]);

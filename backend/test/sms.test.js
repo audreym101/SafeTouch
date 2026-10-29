@@ -36,6 +36,10 @@ test('phone numbers become digits with the country code', () => {
   assert.strictEqual(normalisePhone('00250-788-123-456'), '250788123456');
   assert.strictEqual(normalisePhone('(250) 788 123 456'), '250788123456');
   assert.strictEqual(normalisePhone('123'), null);
+  assert.strictEqual(normalisePhone('0780 460 053', 'Rwanda'), '250780460053', 'local Rwandan number');
+  assert.strictEqual(normalisePhone('0780 460 053', ' rwanda '), '250780460053');
+  assert.strictEqual(normalisePhone('0780 460 053', 'Kenya'), null, 'unknown country: not guessed');
+  assert.strictEqual(normalisePhone('0780 460 053'), null);
   assert.strictEqual(normalisePhone(undefined), null);
 });
 

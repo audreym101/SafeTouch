@@ -28,10 +28,22 @@ function consentSms(record, code) {
   return (TEXT[record.language === 'rw' ? 'rw' : 'en'])(code);
 }
 
-/** "+250 788 123 456" -> "250788123456" (digits only, with the country code), or null if it can't be a phone number. */
-function normalisePhone(phone) {
+// Calling codes for countries where a parent may type the local number (078...) instead of +250 78...
+const CALLING_CODES = { rwanda: '250' };
+
+/**
+ * "+250 788 123 456" -> "250788123456" (digits only, with the country code), or null if it can't be
+ * texted. A local number with a leading 0 gets the country's calling code when it is known
+ * (Rwanda: 0788 123 456 -> 250788123456); otherwise it is refused rather than texted to the wrong place.
+ */
+function normalisePhone(phone, country) {
   let digits = String(phone || '').replace(/\D/g, '');
   if (digits.startsWith('00')) digits = digits.slice(2);
+  else if (digits.startsWith('0')) {
+    const code = CALLING_CODES[String(country || '').trim().toLowerCase()];
+    if (!code) return null;
+    digits = code + digits.slice(1);
+  }
   return digits.length >= 8 && digits.length <= 15 ? digits : null;
 }
 
@@ -91,8 +103,8 @@ function createSmsSender(env = process.env, now = () => Date.now()) {
     provider,
     sent: [],
     /** Texts the phone number. Returns true if it was sent, false if the number or the limits stopped it; throws if the provider failed. */
-    async send({ phone, text }) {
-      const recipient = normalisePhone(phone);
+    async send({ phone, country, text }) {
+      const recipient = normalisePhone(phone, country);
       if (!recipient) return false;
       const t = now();
       for (const [p, times] of sentAt) {
