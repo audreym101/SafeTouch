@@ -34,7 +34,7 @@ SafeTouch is an offline Android app. Deployment means getting a tested APK onto 
 |---|---|---|
 | Runtime | Node.js 22, Express | Small, well documented, already in the architecture diagram |
 | Database | Cloud Firestore, `progress` and `consents` collections | Matches the ERD; consents kept apart from progress; free allowance is enough for a pilot |
-| Hosting | Firebase Cloud Functions (2nd gen), region `europe-west1`, at most 3 instances | HTTPS by default, no server to maintain; Blaze plan with a budget alert |
+| Hosting | Render free web service (Spark plan, no card), with the service-account key in `SAFETOUCH_SERVICE_ACCOUNT`; Cloud Functions (2nd gen, `europe-west1`) if the project moves to Blaze | HTTPS by default, deploys from GitHub, free; the same API code runs on both ([firebase.md](firebase.md)) |
 | Access | Firestore rules refuse all client access; only the function (Admin SDK) reads and writes | Parents' details can't be read from a phone or browser |
 | Secrets | `MAIL_API_KEY` as a Firebase secret (`firebase functions:secrets:set`) | Never committed (`.env`, `.env.local` and `.firebaserc` are in `.gitignore`) |
 | Endpoints | `POST /api/progress`, `GET /api/progress/:deviceId`, `DELETE /api/progress/:deviceId`, `GET /api/summary`, `GET /api/health`, and `/api/consent` ([consent.md](consent.md)) | Save, read back, withdraw, report totals, parental consent |
