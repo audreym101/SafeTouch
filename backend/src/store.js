@@ -1,5 +1,8 @@
-// Storage for anonymous progress. MongoDB Atlas when MONGODB_URI is set,
-// otherwise an in-memory map (local development and tests).
+// Storage for anonymous progress and parental consent.
+// Cloud Firestore (Firebase) when credentials are available: always inside
+// Cloud Functions, and locally with GOOGLE_APPLICATION_CREDENTIALS,
+// FIREBASE_SERVICE_ACCOUNT or the Firestore emulator. Otherwise an in-memory
+// map (local development and tests).
 
 class MemoryStore {
   constructor() { this.docs = new Map(); this.consents = new Map(); }
@@ -15,36 +18,41 @@ class MemoryStore {
   async consentCounts() { const all = [...this.consents.values()]; return { total: all.length, verified: all.filter((r) => r.verified).length }; }
 }
 
-class MongoStore {
-  constructor(uri, dbName) {
-    const { MongoClient } = require('mongodb');
-    this.client = new MongoClient(uri);
-    this.dbName = dbName;
+// Two collections, each document keyed by its id, so no indexes are needed:
+//   progress/{deviceId}   anonymous lesson results
+//   consents/{consentId}  the parent's consent, kept apart from the progress
+// firestore.rules refuses all access from phones and browsers: only this API,
+// through the Admin SDK, reads or writes.
+class FirestoreStore {
+  constructor(db) {
+    this.progress = db.collection('progress');
+    this.consents = db.collection('consents');
   }
-  async connect() {
-    await this.client.connect();
-    const db = this.client.db(this.dbName);
-    this.col = db.collection('progress');
-    // Parent details live in their own collection, never inside the anonymous progress.
-    this.consentCol = db.collection('consents');
-    await this.consentCol.createIndex({ consentId: 1 }, { unique: true });
-    await this.col.createIndex({ deviceId: 1 }, { unique: true });
-    return this;
-  }
-  async upsert(doc) {
-    await this.col.replaceOne({ deviceId: doc.deviceId }, doc, { upsert: true });
-    return doc;
-  }
-  async get(deviceId) { return this.col.findOne({ deviceId }, { projection: { _id: 0 } }); }
-  async summary() { return summarise(await this.col.find({}, { projection: { _id: 0 } }).toArray()); }
-  async remove(deviceId) { return (await this.col.deleteOne({ deviceId })).deletedCount === 1; }
+  async upsert(doc) { await this.progress.doc(doc.deviceId).set(doc); return doc; }
+  async get(deviceId) { return read(this.progress.doc(deviceId)); }
+  async summary() { return summarise((await this.progress.get()).docs.map((d) => d.data())); }
+  async remove(deviceId) { return removeDoc(this.progress.doc(deviceId)); }
 
-  async saveConsent(record) { await this.consentCol.replaceOne({ consentId: record.consentId }, record, { upsert: true }); return record; }
-  async getConsent(consentId) { return this.consentCol.findOne({ consentId }, { projection: { _id: 0 } }); }
-  async removeConsent(consentId) { return (await this.consentCol.deleteOne({ consentId })).deletedCount === 1; }
+  async saveConsent(record) { await this.consents.doc(record.consentId).set(record); return record; }
+  async getConsent(consentId) { return read(this.consents.doc(consentId)); }
+  async removeConsent(consentId) { return removeDoc(this.consents.doc(consentId)); }
   async consentCounts() {
-    return { total: await this.consentCol.countDocuments(), verified: await this.consentCol.countDocuments({ verified: true }) };
+    const total = (await this.consents.count().get()).data().count;
+    const verified = (await this.consents.where('verified', '==', true).count().get()).data().count;
+    return { total, verified };
   }
+}
+
+async function read(ref) {
+  const snap = await ref.get();
+  return snap.exists ? snap.data() : null;
+}
+
+async function removeDoc(ref) {
+  const snap = await ref.get();
+  if (!snap.exists) return false;
+  await ref.delete();
+  return true;
 }
 
 // Aggregate numbers for the evaluation chapter: no per-device data leaves the API.
@@ -64,9 +72,29 @@ function summarise(docs) {
   };
 }
 
+/** True when this process can reach Firestore: in Cloud Functions, or with local credentials or the emulator. */
+function firestoreAvailable(env) {
+  if (env.FIRESTORE === 'off') return false;
+  return !!(env.FUNCTION_TARGET || env.K_SERVICE || env.GOOGLE_APPLICATION_CREDENTIALS
+    || env.FIREBASE_SERVICE_ACCOUNT || env.FIRESTORE_EMULATOR_HOST);
+}
+
+/** The Admin SDK's Firestore, initialised once. */
+function firestoreFromEnv(env) {
+  const admin = require('firebase-admin');
+  if (!admin.apps.length) {
+    const options = {};
+    if (env.FIREBASE_SERVICE_ACCOUNT) options.credential = admin.credential.cert(JSON.parse(env.FIREBASE_SERVICE_ACCOUNT));
+    if (env.FIREBASE_PROJECT_ID) options.projectId = env.FIREBASE_PROJECT_ID;
+    admin.initializeApp(options);
+    admin.firestore().settings({ ignoreUndefinedProperties: true });
+  }
+  return admin.firestore();
+}
+
 async function createStore(env = process.env) {
-  if (env.MONGODB_URI) return new MongoStore(env.MONGODB_URI, env.MONGODB_DB || 'safetouch').connect();
+  if (firestoreAvailable(env)) return new FirestoreStore(firestoreFromEnv(env));
   return new MemoryStore();
 }
 
-module.exports = { createStore, MemoryStore, summarise };
+module.exports = { createStore, MemoryStore, FirestoreStore, firestoreAvailable, summarise };
