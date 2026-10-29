@@ -2,6 +2,7 @@ const express = require('express');
 const { validateProgress } = require('./validate');
 const { registerConsentRoutes } = require('./consent');
 const { createMailer } = require('./mailer');
+const { createSmsSender } = require('./sms');
 
 // Builds the Express app around a store (and a mailer for consent emails), so
 // tests can pass in-memory ones. options.now lets tests move the clock.
@@ -12,7 +13,7 @@ function createApp(store, options = {}) {
 
   app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-  registerConsentRoutes(app, store, options.mailer || createMailer(), options.now);
+  registerConsentRoutes(app, store, options.mailer || createMailer(), options.now, options.sms || createSmsSender());
 
   // Save or replace one device's anonymous progress (called by CloudSyncService.cs).
   app.post('/api/progress', async (req, res, next) => {
