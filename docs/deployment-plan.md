@@ -9,7 +9,7 @@ SafeTouch is an offline Android app. Deployment means getting a tested APK onto 
 | Development | Unity editor with XR Simulation; API on `localhost:3000` with the in-memory store | Researcher's laptop | Weeks 1 to 6 |
 | Device testing | Development APK (Build And Run over USB) | Researcher's ARCore phone | Weeks 2 to 7 |
 | Pilot | Signed release APK, installed by hand | 2 to 3 ARCore phones used at the partner school or community centre in Kigali | Weeks 7 to 8 |
-| Optional cloud | `backend/` on Render (free web service) with MongoDB Atlas M0 (free) | Cloud, HTTPS | Week 6, only if the supervisor and ethics review approve it |
+| Cloud API | `backend/` as a Firebase Cloud Function with Cloud Firestore ([firebase.md](firebase.md)) | Firebase project **SafeTouch**, `europe-west1`, HTTPS | Week 6: parental consent; progress sync only if the supervisor and ethics review approve it |
 
 ## Building the release APK
 
@@ -28,17 +28,18 @@ SafeTouch is an offline Android app. Deployment means getting a tested APK onto 
 5. In the parent section, confirm **Anonymous progress sync is OFF** (the default) unless the ethics approval covers it.
 6. Between children, use Settings > **Delete progress on this phone** so each session starts clean.
 
-## Optional anonymous API
+## The API (parental consent and optional anonymous progress)
 
 | Item | Choice | Reason |
 |---|---|---|
 | Runtime | Node.js 22, Express | Small, well documented, already in the architecture diagram |
-| Database | MongoDB Atlas M0 (free), `progress` collection | Matches the ERD; free tier is enough for a pilot |
-| Hosting | Render free web service, region Frankfurt | HTTPS by default, deploys from GitHub |
-| Secrets | `MONGODB_URI` set in Render's environment settings | Never committed (`.env` is in `.gitignore`) |
-| Endpoints | `POST /api/progress`, `GET /api/progress/:deviceId`, `DELETE /api/progress/:deviceId`, `GET /api/summary`, `GET /api/health` | Save, read back, withdraw, report totals |
+| Database | Cloud Firestore, `progress` and `consents` collections | Matches the ERD; consents kept apart from progress; free allowance is enough for a pilot |
+| Hosting | Firebase Cloud Functions (2nd gen), region `europe-west1`, at most 3 instances | HTTPS by default, no server to maintain; Blaze plan with a budget alert |
+| Access | Firestore rules refuse all client access; only the function (Admin SDK) reads and writes | Parents' details can't be read from a phone or browser |
+| Secrets | `MAIL_API_KEY` as a Firebase secret (`firebase functions:secrets:set`) | Never committed (`.env`, `.env.local` and `.firebaserc` are in `.gitignore`) |
+| Endpoints | `POST /api/progress`, `GET /api/progress/:deviceId`, `DELETE /api/progress/:deviceId`, `GET /api/summary`, `GET /api/health`, and `/api/consent` ([consent.md](consent.md)) | Save, read back, withdraw, report totals, parental consent |
 
-Deploy steps: push the repo to GitHub > Render > New Web Service > root directory `backend`, build `npm ci`, start `npm start`, add `MONGODB_URI` > set `baseUrl` on the **CloudSyncService** component to the Render URL and tick **Enabled In Build**. GitHub Actions runs `npm test` on every push to `backend/`.
+Deploy steps ([firebase.md](firebase.md)): create the Firebase project and Firestore database > `cd backend`, `firebase use --add`, `npm run deploy` > set **Base Url** on **ConsentService** and **CloudSyncService** to the Function URL and tick **Enabled In Build**. GitHub Actions runs `npm test` on every push to `backend/`.
 
 **Privacy rules the API enforces:** it rejects any field it doesn't know (so a name can't slip in), requires the device id to be a random UUID, accepts only role ids for trusted adults, and `/api/summary` returns totals only. Switching sync off in the app calls `DELETE`, so a parent can withdraw at any time (Law N° 058/2021, Article 9). All records are deleted when the study ends.
 
