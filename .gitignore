@@ -29,6 +29,12 @@ Thumbs.db
 # Backend
 backend/node_modules/
 backend/.env
+backend/.env.local
+backend/.firebaserc
+backend/.firebase/
+backend/.secret.local
+backend/*-debug.log
+backend/service-account*.json
 
 # SafeTouch > 7. Render Screens On Phones And Tablets (overview sheets go to docs/designs/devices)
 /Screenshots/
