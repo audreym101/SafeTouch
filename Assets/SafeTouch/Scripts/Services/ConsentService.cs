@@ -227,7 +227,7 @@ namespace SafeTouch.Services
         IEnumerator Request(string method, string path, string json, Action<long, StatusReply> handle)
         {
             busy = true;
-            using (var req = new UnityWebRequest(baseUrl.TrimEnd('/') + path, method))
+            using (var req = new UnityWebRequest(ApiAddress.Resolve(baseUrl).TrimEnd('/') + path, method))
             {
                 if (json != null)
                 {
@@ -235,7 +235,7 @@ namespace SafeTouch.Services
                     req.SetRequestHeader("Content-Type", "application/json");
                 }
                 req.downloadHandler = new DownloadHandlerBuffer();
-                req.timeout = timeoutSeconds;
+                req.timeout = ApiAddress.Timeout(timeoutSeconds);
                 yield return req.SendWebRequest();
                 busy = false;
 

@@ -59,12 +59,12 @@ namespace SafeTouch.Services
             }
 
             var body = Encoding.UTF8.GetBytes(JsonUtility.ToJson(SyncPayload.From(progress)));
-            using (var req = new UnityWebRequest(baseUrl.TrimEnd('/') + "/api/progress", "POST"))
+            using (var req = new UnityWebRequest(ApiAddress.Resolve(baseUrl).TrimEnd('/') + "/api/progress", "POST"))
             {
                 req.uploadHandler = new UploadHandlerRaw(body);
                 req.downloadHandler = new DownloadHandlerBuffer();
                 req.SetRequestHeader("Content-Type", "application/json");
-                req.timeout = timeoutSeconds;
+                req.timeout = ApiAddress.Timeout(timeoutSeconds);
                 yield return req.SendWebRequest();
 
                 LastStatus = req.result == UnityWebRequest.Result.Success ? "synced" : "failed: " + req.error;
@@ -76,9 +76,9 @@ namespace SafeTouch.Services
         public IEnumerator Withdraw(string deviceId)
         {
             if (!enabledInBuild || string.IsNullOrEmpty(deviceId)) yield break;
-            using (var req = UnityWebRequest.Delete(baseUrl.TrimEnd('/') + "/api/progress/" + deviceId))
+            using (var req = UnityWebRequest.Delete(ApiAddress.Resolve(baseUrl).TrimEnd('/') + "/api/progress/" + deviceId))
             {
-                req.timeout = timeoutSeconds;
+                req.timeout = ApiAddress.Timeout(timeoutSeconds);
                 yield return req.SendWebRequest();
                 LastStatus = req.result == UnityWebRequest.Result.Success ? "withdrawn" : "failed: " + req.error;
             }
