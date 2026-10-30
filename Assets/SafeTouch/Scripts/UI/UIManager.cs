@@ -79,6 +79,7 @@ namespace SafeTouch.UI
             screens.Add(new SplashScreen());
             screens.Add(new ConsentScreen());
             screens.Add(new VerifyScreen());
+            screens.Add(new LoginScreen());
             screens.Add(new AgeScreen());
             screens.Add(new HomeScreen());
             screens.Add(new ScanScreen());

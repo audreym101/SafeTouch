@@ -174,9 +174,11 @@ namespace SafeTouch.Core
         /// Where "Start" leads. A parent must agree first (the consent page);
         /// after 7 days without confirming the emailed code, the code is asked
         /// for again; then the child chooses an age group or goes to the lessons.
+        /// A parent with confirmed consent logs in first (email, then a code) each time the app opens.
         /// </summary>
         public void ContinueFromSplash()
         {
+            if (consent != null && consent.NeedsLogin) { uiManager.ShowMenu("login"); return; }
             if (consent != null && !consent.HasConsent) { uiManager.ShowMenu("consent"); return; }
             if (consent != null && consent.MustVerifyNow) { uiManager.ShowMenu("verify"); return; }
             ContinueToLessons();

@@ -39,6 +39,15 @@ namespace SafeTouch.Services
         /// <summary>The 7 days are over and the code was never confirmed: the app asks for it before a child continues.</summary>
         public bool MustVerifyNow { get { return HasConsent && Record.MustVerifyNow; } }
 
+        /// <summary>The parent has logged in since the app was opened. Not saved: every time the app starts, the parent logs in again.</summary>
+        public bool LoggedIn { get; private set; }
+
+        /// <summary>
+        /// A parent whose consent is confirmed must log in (email, then a code) each time the app opens.
+        /// Parents still in the 7 days before confirming go through the verify screen instead.
+        /// </summary>
+        public bool NeedsLogin { get { return HasConsent && Record.verified && !LoggedIn; } }
+
         /// <summary>Message from the last failed request, for the screen.</summary>
         public string LastError { get; private set; }
 
@@ -47,8 +56,9 @@ namespace SafeTouch.Services
             public string consentId, deviceId, parentName, phone, email, country, language, termsVersion;
             public ConsentAgreements agreements;
         }
-        [Serializable] class StatusReply { public bool verified; public string verifiedAt; public string emailMasked; public bool emailSent; public string error; public string[] errors; public int attemptsLeft; }
+        [Serializable] class StatusReply { public bool verified; public string verifiedAt; public string emailMasked; public bool emailSent; public bool sent; public bool loggedIn; public string error; public string[] errors; public int attemptsLeft; }
         [Serializable] class CodeBody { public string code; }
+        [Serializable] class EmailBody { public string email; }
 
         void Awake()
         {
@@ -86,6 +96,7 @@ namespace SafeTouch.Services
                 {
                     Record.verified = true;
                     Record.verifiedAt = reply.verifiedAt;
+                    LoggedIn = true;   // typing the emailed code proves the email: no second login right after
                     Record.Save();
                     Notify();
                     done(Result.Verified);
@@ -103,6 +114,35 @@ namespace SafeTouch.Services
         }
 
         /// <summary>
+        /// Login step 1: asks the API to email (and text) a fresh code to the parent. The API
+        /// answers "sent" even if the typed email is not the parent's, so the screen says
+        /// "if it matches, a code is on its way". done gets Sent, Invalid (not an email), Wait, EmailFailed or Offline.
+        /// </summary>
+        public void RequestLoginCode(string email, Action<Result> done)
+        {
+            if (!HasConsent || !Record.sentToServer) { done(Result.Offline); return; }
+            var body = JsonUtility.ToJson(new EmailBody { email = (email ?? "").Trim() });
+            StartCoroutine(Request("POST", "/api/consent/" + Record.consentId + "/login", body, (status, reply) =>
+                done(status == 200 ? Result.Sent : status == 400 ? Result.Invalid : status == 429 ? Result.Wait : status == 502 ? Result.EmailFailed : Classify(status))));
+        }
+
+        /// <summary>Login step 2: checks the code. done gets Verified (logged in), WrongCode, Expired, TooManyTries or Offline.</summary>
+        public void VerifyLogin(string code, Action<Result> done)
+        {
+            if (!HasConsent || !Record.sentToServer) { done(Result.Offline); return; }
+            var body = JsonUtility.ToJson(new CodeBody { code = code });
+            StartCoroutine(Request("POST", "/api/consent/" + Record.consentId + "/login/verify", body, (status, reply) =>
+            {
+                if (status == 200 && reply.loggedIn)
+                {
+                    LoggedIn = true;
+                    done(Result.Verified);
+                }
+                else done(Classify(status));
+            }));
+        }
+
+        /// <summary>
         /// Withdraws consent: forgets it on this phone at once, and asks the API to
         /// delete the parent's details and the synced progress (now, or when online).
         /// </summary>
@@ -113,6 +153,7 @@ namespace SafeTouch.Services
             bool wasSent = Record.sentToServer;
             ConsentRecord.Delete();
             Record = null;
+            LoggedIn = false;
             Notify();
             if (!wasSent) { if (done != null) done(Result.Sent); return; }
             PlayerPrefs.SetString(PendingWithdrawKey, id);
