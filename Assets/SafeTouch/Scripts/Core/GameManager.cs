@@ -116,6 +116,15 @@ namespace SafeTouch.Core
             uiManager.ShowMenu("home");
         }
 
+        /// <summary>Plays the other lesson path (6-8 Explorer or 9-11 Guardian), if it is open.</summary>
+        public void SwitchPath(string age)
+        {
+            if (!progressManager.GetData().IsPathOpen(age)) return;
+            progressManager.SwitchPath(age);
+            ageGroup = age;
+            if (voiceCoach != null) voiceCoach.PrepareForAge(age);
+        }
+
         /// <summary>Opens a lesson. Places Keza first if she is not in the room yet.</summary>
         public void StartLesson(int level)
         {

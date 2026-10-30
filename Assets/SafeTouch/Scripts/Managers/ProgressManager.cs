@@ -81,6 +81,20 @@ namespace SafeTouch.Managers
         public void SetAgeGroup(string ageGroup)
         {
             progress.ageGroup = ageGroup;
+            if (ageGroup == Progress.PathOlder) progress.guardianUnlocked = true;   // started on the 9-11 path
+            Save();
+        }
+
+        /// <summary>
+        /// Plays the other lesson path (6-8 or 9-11). Each path keeps its own finished lessons, stars and
+        /// badges; the lessons, badges and certificate all read the path in play.
+        /// </summary>
+        public void SwitchPath(string ageGroup)
+        {
+            progress.SwitchPath(ageGroup);
+            scores = new List<int>(progress.quizScores);
+            RebuildUnlockedLevels();
+            foreach (var badge in badges) badge.unlocked = progress.badgesEarned.Contains(badge.badgeId);
             Save();
         }
 
