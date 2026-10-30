@@ -139,6 +139,66 @@ function ageEmail(record, ageYears, code) {
 </div>`;
   return { subject: t.subject, html, text };
 }
+const EMAIL_TEXT = {
+  en: {
+    subject: 'SafeTouch: confirm your new email',
+    hello: (name) => `Hello ${name},`,
+    intro: 'You asked SafeTouch to use this email from now on. To confirm it is yours, type this code in the app:',
+    expires: 'The code expires in 30 minutes.',
+    ignore: 'If you did not ask for this, ignore this email: nothing changes.',
+  },
+  rw: {
+    subject: 'SafeTouch: emeza imeyili yanyu nshya',
+    hello: (name) => `Muraho ${name},`,
+    intro: 'Mwasabye SafeTouch gukoresha iyi meyili guhera ubu. Kugira ngo twemeze ko ari iyanyu, andika iyi kode muri porogaramu:',
+    expires: 'Iyi kode irangira nyuma y\'iminota 30.',
+    ignore: 'Niba atari mwe mwabisabye, irengagize iyi meyili: nta gihinduka.',
+  },
+};
+
+/** The code that proves the parent can read their new email, sent to the new address only. */
+function emailChangeEmail(record, code) {
+  const t = EMAIL_TEXT[record.language === 'rw' ? 'rw' : 'en'];
+  const text = [t.hello(record.parentName), '', t.intro, '', `    ${code}`, '', t.expires, '', t.ignore].join('\n');
+  const html = `<div style="font-family:Arial,sans-serif;color:#1F2A44;max-width:560px">
+<h2 style="color:#2474C6">SafeTouch</h2>
+<p>${escapeHtml(t.hello(record.parentName))}</p>
+<p>${escapeHtml(t.intro)}</p>
+<p style="font-size:32px;font-weight:bold;letter-spacing:8px;background:#EAF4FB;padding:16px;text-align:center">${escapeHtml(code)}</p>
+<p style="color:#5F6F86">${escapeHtml(t.expires)}</p>
+<p style="color:#5F6F86">${escapeHtml(t.ignore)}</p>
+</div>`;
+  return { subject: t.subject, html, text };
+}
+
+const CHANGED_TEXT = {
+  en: {
+    subject: 'SafeTouch: your email was changed',
+    hello: (name) => `Hello ${name},`,
+    body: (masked) => `SafeTouch will send your codes to ${masked} from now on, instead of this email.`,
+    help: 'If you did not do this, open SafeTouch on your child\'s phone, go to Grown-ups > Settings, and withdraw your consent or change the email back.',
+  },
+  rw: {
+    subject: 'SafeTouch: imeyili yanyu yahinduwe',
+    hello: (name) => `Muraho ${name},`,
+    body: (masked) => `Guhera ubu SafeTouch izajya yohereza kode zanyu kuri ${masked}, aho kuba kuri iyi meyili.`,
+    help: 'Niba atari mwe mwabikoze, mufungure SafeTouch kuri telefoni y\'umwana wanyu, mujye ahabugenewe abantu bakuru > Igenamiterere, mukureho uruhushya cyangwa musubizeho imeyili ya mbere.',
+  },
+};
+
+/** A notice to the old email after a change: no code, just so the parent can spot a change they did not make. */
+function emailChangedNotice(record, newMasked) {
+  const t = CHANGED_TEXT[record.language === 'rw' ? 'rw' : 'en'];
+  const text = [t.hello(record.parentName), '', t.body(newMasked), '', t.help].join('\n');
+  const html = `<div style="font-family:Arial,sans-serif;color:#1F2A44;max-width:560px">
+<h2 style="color:#2474C6">SafeTouch</h2>
+<p>${escapeHtml(t.hello(record.parentName))}</p>
+<p>${escapeHtml(t.body(newMasked))}</p>
+<p style="color:#5F6F86">${escapeHtml(t.help)}</p>
+</div>`;
+  return { subject: t.subject, html, text };
+}
+
 
 function createMailer(env = process.env) {
   const provider = (env.MAIL_PROVIDER || 'console').toLowerCase();
@@ -183,4 +243,4 @@ function createMailer(env = process.env) {
   };
 }
 
-module.exports = { createMailer, consentEmail, loginEmail, ageEmail, AGREEMENT_TEXT };
+module.exports = { createMailer, consentEmail, loginEmail, ageEmail, emailChangeEmail, emailChangedNotice, AGREEMENT_TEXT };

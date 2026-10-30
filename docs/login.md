@@ -33,3 +33,10 @@ Once a parent has confirmed their consent ([consent.md](consent.md)), the app as
 ## Choosing the group on the login screen
 
 The Log in screen has the two group buttons, **Explorer 6-8** and **Guardian 9-11**, above the email box. The parent picks the group for their child, logs in, and the app opens that group's lessons. Picking Guardian when the age has not been confirmed first sends the parent to the age check ([age-check.md](age-check.md)).
+
+## Changing the email
+
+Login and age-check codes always go to the email on the consent, so typing a different email on the Log in screen does not move them.
+
+- **Before the consent is confirmed:** on the "Confirm by email" screen, tap **Change my details** and fix the email. The new email gets a fresh code, and the code sent to the old one stops working.
+- **After it is confirmed:** log in, then go to **Grown-ups > Settings > Change my email**. Type the new email. The API sends a 6-digit code to the **new** email (`POST /api/consent/:id/email`). It only does this if the parent logged in within the last hour. Typing the code (`POST /api/consent/:id/email/verify`) switches the email. From then on every code goes there, and the old email gets a short notice with no code. Until the code is typed, nothing changes. The code works for 30 minutes, and at most 5 can be asked for in a day.

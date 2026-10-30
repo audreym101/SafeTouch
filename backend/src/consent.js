@@ -11,16 +11,20 @@
 //   POST   /api/consent/:consentId/login/verify  { code } -> { loggedIn: true }
 //   POST   /api/consent/:consentId/age      { ageYears: 9..11 } -> a code to the parent to confirm the child's age
 //   POST   /api/consent/:consentId/age/verify  { code } -> { ageConfirmed: true }: the Guardian (9-11) lessons may open
+//   POST   /api/consent/:consentId/email    { email } -> a code to the NEW email (logged in within the hour, consent confirmed)
+//   POST   /api/consent/:consentId/email/verify  { code } -> the new email replaces the old one; the old one gets a notice
 //   GET    /api/consent/:consentId          status only: no name, phone or full email
 //   DELETE /api/consent/:consentId          withdraw: deletes the consent and the device's progress
 
 const crypto = require('crypto');
 const { validateConsent } = require('./validate');
-const { consentEmail, loginEmail, ageEmail } = require('./mailer');
+const { consentEmail, loginEmail, ageEmail, emailChangeEmail, emailChangedNotice } = require('./mailer');
 const { consentSms, loginSms, ageSms } = require('./sms');
 
 const CODE_TTL_MS = 24 * 60 * 60 * 1000;
 const LOGIN_TTL_MS = 10 * 60 * 1000;   // a login code is for now, not for tomorrow
+const EMAIL_TTL_MS = 30 * 60 * 1000;   // time to open the new mailbox and type the code
+const LOGGED_IN_MS = 60 * 60 * 1000;   // changing the email needs a login (or a confirmation) in the last hour
 const MAX_LOGINS_PER_DAY = 10;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const MAX_ATTEMPTS = 5;
@@ -265,6 +269,59 @@ function registerConsentRoutes(app, store, mailer, now = () => Date.now(), sms =
     record.ageConfirmedAt = new Date(now()).toISOString();
     await store.saveConsent(record);
     res.json({ ageConfirmed: true, ageBand: record.ageBand });
+  }));
+
+  // Changing the email of a confirmed consent. Only a parent who has just logged in (or just confirmed)
+  // can ask. The code goes to the NEW email, so only someone who can read it can finish the change, and
+  // the old email is told afterwards. Before the consent is confirmed, the consent form corrects the email instead.
+  app.post('/api/consent/:consentId/email', findOr404(async (record, req, res) => {
+    const email = req.body && typeof req.body.email === 'string' ? req.body.email.trim() : '';
+    if (!EMAIL.test(email) || email.length > 254) return res.status(400).json({ errors: ['email must be an email address.'] });
+    if (!record.verified) return res.status(403).json({ error: 'Please confirm your email first.' });
+    const t = now();
+    const since = Math.max(Date.parse(record.lastLoginAt || '') || 0, Date.parse(record.verifiedAt || '') || 0);
+    if (t - since > LOGGED_IN_MS) return res.status(401).json({ error: 'Please log in again first.' });
+    if (email.toLowerCase() === String(record.email).toLowerCase()) return res.status(400).json({ errors: ['This is already your email.'] });
+
+    const sends = (record.emailSends || []).filter((s) => s > t - 24 * 60 * 60 * 1000);
+    if (sends.length && t - sends[sends.length - 1] < RESEND_GAP_MS) return res.status(429).json({ error: 'Please wait a minute before asking again.' });
+    if (sends.length >= MAX_SENDS_PER_DAY) return res.status(429).json({ error: 'Too many codes today. Try again tomorrow.' });
+
+    const code = newCode();
+    record.emailSends = sends.concat(t);
+    record.pendingEmail = email;
+    record.emailCodeHash = hashCode(`email-${record.consentId}`, code);
+    record.emailCodeExpiresAt = t + EMAIL_TTL_MS;
+    record.emailAttempts = 0;
+    await store.saveConsent(record);
+    try { await mailer.send({ to: email, toName: record.parentName, ...emailChangeEmail(record, code) }); }
+    catch (err) { console.error('Email-change email failed:', err.message); return res.status(502).json({ error: 'Could not send the code. Try again later.' }); }
+    res.json({ sent: true, emailMasked: maskEmail(email) });
+  }));
+
+  app.post('/api/consent/:consentId/email/verify', findOr404(async (record, req, res) => {
+    const code = req.body && typeof req.body.code === 'string' ? req.body.code.replace(/\s/g, '') : '';
+    if (!/^\d{6}$/.test(code)) return res.status(400).json({ errors: ['code must be the 6 digits from the email.'] });
+    if (!record.pendingEmail || !record.emailCodeHash || !record.emailCodeExpiresAt || now() > record.emailCodeExpiresAt) return res.status(410).json({ error: 'This code has expired. Ask for a new code.' });
+    if ((record.emailAttempts || 0) >= MAX_ATTEMPTS) return res.status(429).json({ error: 'Too many tries. Ask for a new code.' });
+    const given = Buffer.from(hashCode(`email-${record.consentId}`, code), 'hex');
+    const expected = Buffer.from(record.emailCodeHash, 'hex');
+    if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) {
+      record.emailAttempts = (record.emailAttempts || 0) + 1;
+      await store.saveConsent(record);
+      return res.status(400).json({ errors: ['That code is not right.'], attemptsLeft: Math.max(0, MAX_ATTEMPTS - record.emailAttempts) });
+    }
+    const oldEmail = record.email;
+    record.email = record.pendingEmail;
+    record.emailChangedAt = new Date(now()).toISOString();
+    delete record.pendingEmail;
+    delete record.emailCodeHash;
+    delete record.emailCodeExpiresAt;
+    delete record.emailAttempts;
+    await store.saveConsent(record);
+    try { await mailer.send({ to: oldEmail, toName: record.parentName, ...emailChangedNotice(record, maskEmail(record.email)) }); }
+    catch (err) { console.error('Email-changed notice failed:', err.message); }
+    res.json({ emailChanged: true, ...status(record) });
   }));
 
   app.get('/api/consent/:consentId', findOr404(async (record, req, res) => res.json(status(record))));

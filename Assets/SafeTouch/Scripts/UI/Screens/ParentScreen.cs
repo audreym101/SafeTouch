@@ -125,6 +125,8 @@ namespace SafeTouch.UI.Screens
 
             if (!record.verified)
                 UIFactory.Button(list, Localization.T("parent.consent.confirm", "Confirm the code now"), Theme.Primary, Color.white, () => ui.ShowMenu("verify"));
+            else
+                UIFactory.Button(list, Localization.Language == "rw" ? "Hindura imeyili" : "Change my email", Theme.Card, Theme.Ink, () => ui.ShowMenu("email"));
             UIFactory.Button(list, Localization.T(confirmWithdraw ? "parent.consent.withdraw.confirm" : "parent.consent.withdraw",
                     confirmWithdraw ? "Tap again: delete my details and my child's progress" : "Withdraw consent and delete data"),
                 confirmWithdraw ? Theme.Unsafe : Theme.Card, confirmWithdraw ? Color.white : Theme.Ink, () =>

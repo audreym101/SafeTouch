@@ -16,7 +16,7 @@ namespace SafeTouch.Services
     /// </summary>
     public class ConsentService : MonoBehaviour
     {
-        public enum Result { Sent, EmailFailed, Verified, WrongCode, Expired, TooManyTries, Wait, Invalid, Offline, Error }
+        public enum Result { Sent, EmailFailed, Verified, WrongCode, Expired, TooManyTries, Wait, Invalid, Offline, NeedsLogin, Error }
 
         [Tooltip("The SafeTouch API. Use an https:// address for phones; Android refuses plain http in release builds.")]
         [SerializeField] string baseUrl = "http://localhost:3000";
@@ -62,7 +62,7 @@ namespace SafeTouch.Services
             public string consentId, deviceId, parentName, phone, email, country, language, termsVersion;
             public ConsentAgreements agreements;
         }
-        [Serializable] class StatusReply { public bool verified; public string verifiedAt; public string emailMasked; public bool emailSent; public bool sent; public bool loggedIn; public bool ageConfirmed; public string error; public string[] errors; public int attemptsLeft; }
+        [Serializable] class StatusReply { public bool verified; public string verifiedAt; public string emailMasked; public bool emailSent; public bool sent; public bool loggedIn; public bool ageConfirmed; public bool emailChanged; public string error; public string[] errors; public int attemptsLeft; }
         [Serializable] class CodeBody { public string code; }
         [Serializable] class EmailBody { public string email; }
 
@@ -167,6 +167,42 @@ namespace SafeTouch.Services
             var body = JsonUtility.ToJson(new CodeBody { code = code });
             StartCoroutine(Request("POST", "/api/consent/" + Record.consentId + "/age/verify", body, (status, reply) =>
                 done(status == 200 && reply.ageConfirmed ? Result.Verified : Classify(status))));
+        }
+
+        /// <summary>
+        /// Change the email, step 1 (consent confirmed, parent logged in): the API sends a code to the NEW
+        /// email; the old one stays until the code is typed. done gets Sent, Invalid (not an email, or the
+        /// same one), NeedsLogin (log in again), Wait, EmailFailed or Offline.
+        /// </summary>
+        public void RequestEmailChange(string email, Action<Result> done)
+        {
+            if (!HasConsent || !Record.sentToServer || !Record.verified) { done(Result.Offline); return; }
+            var body = JsonUtility.ToJson(new EmailBody { email = (email ?? "").Trim() });
+            StartCoroutine(Request("POST", "/api/consent/" + Record.consentId + "/email", body, (status, reply) =>
+            {
+                if (status == 200) done(Result.Sent);
+                else if (status == 401) { LogOut(); done(Result.NeedsLogin); }
+                else done(status == 400 ? Result.Invalid : status == 429 ? Result.Wait : status == 502 ? Result.EmailFailed : Classify(status));
+            }));
+        }
+
+        /// <summary>Change the email, step 2: the code from the new email. Verified means the codes now go to the new email.</summary>
+        public void VerifyEmailChange(string code, string newEmail, Action<Result> done)
+        {
+            if (!HasConsent || !Record.sentToServer) { done(Result.Offline); return; }
+            var body = JsonUtility.ToJson(new CodeBody { code = code });
+            StartCoroutine(Request("POST", "/api/consent/" + Record.consentId + "/email/verify", body, (status, reply) =>
+            {
+                if (status == 200 && reply.emailChanged)
+                {
+                    Record.email = (newEmail ?? "").Trim();
+                    Record.emailMasked = reply.emailMasked;
+                    Record.Save();
+                    Notify();
+                    done(Result.Verified);
+                }
+                else done(Classify(status));
+            }));
         }
 
         /// <summary>
