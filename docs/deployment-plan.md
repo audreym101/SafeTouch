@@ -9,7 +9,7 @@ SafeTouch is an offline Android app. Deployment means getting a tested APK onto 
 | Development | Unity editor with XR Simulation; API on `localhost:3000` with the in-memory store | Researcher's laptop | Weeks 1 to 6 |
 | Device testing | Development APK (Build And Run over USB) | Researcher's ARCore phone | Weeks 2 to 7 |
 | Pilot | Signed release APK, installed by hand | 2 to 3 ARCore phones used at the partner school or community centre in Kigali | Weeks 7 to 8 |
-| Cloud API | `backend/` as a Firebase Cloud Function with Cloud Firestore ([firebase.md](firebase.md)) | Firebase project **SafeTouch**, `europe-west1`, HTTPS | Week 6: parental consent; progress sync only if the supervisor and ethics review approve it |
+| Cloud API | `backend/` on Render's free web service with MongoDB Atlas M0 ([mongodb.md](mongodb.md)) | Render and Atlas, HTTPS | Week 6: parental consent; progress sync only if the supervisor and ethics review approve it |
 
 ## Building the release APK
 
@@ -33,13 +33,13 @@ SafeTouch is an offline Android app. Deployment means getting a tested APK onto 
 | Item | Choice | Reason |
 |---|---|---|
 | Runtime | Node.js 22, Express | Small, well documented, already in the architecture diagram |
-| Database | Cloud Firestore, `progress` and `consents` collections | Matches the ERD; consents kept apart from progress; free allowance is enough for a pilot |
-| Hosting | Render free web service (Spark plan, no card), with the service-account key in `SAFETOUCH_SERVICE_ACCOUNT`; Cloud Functions (2nd gen, `europe-west1`) if the project moves to Blaze | HTTPS by default, deploys from GitHub, free; the same API code runs on both ([firebase.md](firebase.md)) |
-| Access | Firestore rules refuse all client access; only the function (Admin SDK) reads and writes | Parents' details can't be read from a phone or browser |
-| Secrets | `MAIL_API_KEY` as a Firebase secret (`firebase functions:secrets:set`) | Never committed (`.env`, `.env.local` and `.firebaserc` are in `.gitignore`) |
+| Database | MongoDB Atlas M0 (free), `progress` and `consents` collections | Matches the ERD; consents kept apart from progress; the free tier is enough for a pilot |
+| Hosting | Render free web service, deployed from GitHub (branch `audrey`, root directory `backend`) | HTTPS by default, free, no card; it sleeps after 15 minutes without use, so the first request can take up to a minute |
+| Access | Atlas: one database user for the API, and network access open to Render (`0.0.0.0/0`) because the free plan has no fixed address | Parents' details are only reachable with that user and password |
+| Secrets | `MONGODB_URI`, `MAIL_API_KEY` and the SMS key are set as Render environment variables | Never committed (`.env` and `.env.local` are in `.gitignore`) |
 | Endpoints | `POST /api/progress`, `GET /api/progress/:deviceId`, `DELETE /api/progress/:deviceId`, `GET /api/summary`, `GET /api/health`, and `/api/consent` ([consent.md](consent.md)) | Save, read back, withdraw, report totals, parental consent |
 
-Deploy steps ([firebase.md](firebase.md)): create the Firebase project and Firestore database > `cd backend`, `firebase use --add`, `npm run deploy` > set **Base Url** on **ConsentService** and **CloudSyncService** to the Function URL and tick **Enabled In Build**. GitHub Actions runs `npm test` on every push to `backend/`.
+Deploy steps ([mongodb.md](mongodb.md)): create the Atlas cluster and database user > Render > New Web Service from the repo (branch `audrey`, root directory `backend`, build `npm ci`, start `npm start`) with the environment variables > set **Base Url** on **ConsentService** and **CloudSyncService** to the Render address and tick **Enabled In Build**. GitHub Actions runs `npm test` on every push to `backend/`.
 
 **Privacy rules the API enforces:** it rejects any field it doesn't know (so a name can't slip in), requires the device id to be a random UUID, accepts only role ids for trusted adults, and `/api/summary` returns totals only. Switching sync off in the app calls `DELETE`, so a parent can withdraw at any time (Law N° 058/2021, Article 9). All records are deleted when the study ends.
 

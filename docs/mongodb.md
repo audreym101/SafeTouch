@@ -1,13 +1,13 @@
 # MongoDB backend (Atlas + Render, no card)
 
-The API stores progress and consent in MongoDB when `MONGODB_URI` is set. This is the same data as on Firebase ([firebase.md](firebase.md)); the app doesn't change, only the Base Url.
+The API stores progress and consent in MongoDB when `MONGODB_URI` is set; the Unity app only needs the address of the API (its Base Url).
 
 | Collection | Key | What it holds |
 |---|---|---|
 | `consents` | `consentId` (unique index) | The parent's name, phone, email, country, agreements, dates, and a SHA-256 hash of the verification code (see [consent.md](consent.md)) |
 | `progress` | `deviceId` (unique index) | Anonymous progress, only when a parent switches sync on |
 
-The API picks the database like this: `MONGODB_URI` set, so MongoDB; otherwise Firestore if its credentials are set; otherwise memory (lost on restart).
+Without `MONGODB_URI` the API keeps the data in memory, which is lost when it restarts: fine for testing, not for the pilot.
 
 Atlas **M0** and Render's **Free** web service need no card.
 
