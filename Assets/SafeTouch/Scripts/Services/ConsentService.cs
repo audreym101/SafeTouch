@@ -191,6 +191,10 @@ namespace SafeTouch.Services
         IEnumerator SendConsent(Action<Result> done)
         {
             var r = Record;
+            // A slow earlier request (the free server waking up) may still be on its way with the old email.
+            // Wait for it, so the newest details reach the API last and the code goes to the new email.
+            while (busy) yield return null;
+            if (r != Record) yield break;   // corrected again meanwhile: the newer details are sent instead
             var payload = new Payload
             {
                 consentId = r.consentId, deviceId = r.deviceId, parentName = r.parentName, phone = r.phone,
