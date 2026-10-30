@@ -28,6 +28,16 @@ function consentSms(record, code) {
   return (TEXT[record.language === 'rw' ? 'rw' : 'en'])(code);
 }
 
+const LOGIN_TEXT = {
+  en: (code) => `SafeTouch login code: ${code}. Type it in the app to open it. It expires in 10 minutes. If this was not you, ignore this text.`,
+  rw: (code) => `SafeTouch kode yo kwinjira: ${code}. Yandike muri porogaramu. Irangira nyuma y'iminota 10. Niba atari wowe, irengagize iyi nyandiko.`,
+};
+
+/** The login code as a short text, in the parent's language. */
+function loginSms(record, code) {
+  return (LOGIN_TEXT[record.language === 'rw' ? 'rw' : 'en'])(code);
+}
+
 // Calling codes for countries where a parent may type the local number (078...) instead of +250 78...
 const CALLING_CODES = { rwanda: '250' };
 
@@ -122,4 +132,4 @@ function createSmsSender(env = process.env, now = () => Date.now()) {
   return sender_;
 }
 
-module.exports = { createSmsSender, consentSms, normalisePhone };
+module.exports = { createSmsSender, consentSms, loginSms, normalisePhone };

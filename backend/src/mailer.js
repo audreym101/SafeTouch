@@ -76,6 +76,35 @@ function consentEmail(record, code) {
   return { subject: t.subject, html, text };
 }
 
+const LOGIN_TEXT = {
+  en: {
+    subject: 'SafeTouch: your login code',
+    hello: (name) => `Hello ${name},`,
+    intro: 'Type this code in the SafeTouch app to open it. It expires in 10 minutes.',
+    ignore: 'If you did not try to open SafeTouch, ignore this email: nobody can get in without this code.',
+  },
+  rw: {
+    subject: 'SafeTouch: kode yo kwinjira',
+    hello: (name) => `Muraho ${name},`,
+    intro: 'Andika iyi kode muri porogaramu ya SafeTouch kugira ngo uyifungure. Irangira nyuma y\'iminota 10.',
+    ignore: 'Niba atari mwe mwagerageje gufungura SafeTouch, irengagize iyi meyili: nta wundi winjira adafite iyi kode.',
+  },
+};
+
+/** The login email: just the code, in the parent's language. */
+function loginEmail(record, code) {
+  const t = LOGIN_TEXT[record.language === 'rw' ? 'rw' : 'en'];
+  const text = [t.hello(record.parentName), '', t.intro, '', `    ${code}`, '', t.ignore].join('\n');
+  const html = `<div style="font-family:Arial,sans-serif;color:#1F2A44;max-width:560px">
+<h2 style="color:#2474C6">SafeTouch</h2>
+<p>${escapeHtml(t.hello(record.parentName))}</p>
+<p>${escapeHtml(t.intro)}</p>
+<p style="font-size:32px;font-weight:bold;letter-spacing:8px;background:#EAF4FB;padding:16px;text-align:center">${escapeHtml(code)}</p>
+<p style="color:#5F6F86">${escapeHtml(t.ignore)}</p>
+</div>`;
+  return { subject: t.subject, html, text };
+}
+
 function createMailer(env = process.env) {
   const provider = (env.MAIL_PROVIDER || 'console').toLowerCase();
   const from = env.MAIL_FROM || 'no-reply@safetouch.example';
@@ -119,4 +148,4 @@ function createMailer(env = process.env) {
   };
 }
 
-module.exports = { createMailer, consentEmail, AGREEMENT_TEXT };
+module.exports = { createMailer, consentEmail, loginEmail, AGREEMENT_TEXT };
