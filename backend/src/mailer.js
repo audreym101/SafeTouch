@@ -27,6 +27,7 @@ const TEXT = {
     hello: (name) => `Hello ${name},`,
     intro: 'Thank you for allowing your child to learn with SafeTouch. To confirm that it was you who gave permission, type this code in the app:',
     agreed: 'You agreed that:',
+    termsRead: (v) => `The terms you read and agreed to (version ${v}):`,
     details: 'Details you gave',
     name: 'Name', phone: 'Phone', email: 'Email', country: 'Country', date: 'Date', terms: 'Terms version',
     withdraw: 'You can withdraw at any time in the app (Grown-ups > Settings > Withdraw consent), which deletes these details and your child\'s progress. The code expires in 24 hours.',
@@ -37,6 +38,7 @@ const TEXT = {
     hello: (name) => `Muraho ${name},`,
     intro: "Murakoze kwemerera umwana wanyu kwigira kuri SafeTouch. Kugira ngo twemeze ko ari mwe mwatanze uruhushya, andika iyi kode muri porogaramu:",
     agreed: 'Mwemeye ko:',
+    termsRead: (v) => `Amabwiriza mwasomye mukemera (verisiyo ${v}):`,
     details: 'Amakuru mwatanze',
     name: 'Izina', phone: 'Telefoni', email: 'Imeyili', country: 'Igihugu', date: 'Itariki', terms: "Verisiyo y'amabwiriza",
     withdraw: "Mushobora gukuraho uru ruhushya igihe icyo ari cyo cyose muri porogaramu (Ababyeyi > Igenamiterere > Kuraho uruhushya), bigasiba aya makuru n'iterambere ry'umwana wanyu. Iyi kode irangira nyuma y'amasaha 24.",
@@ -53,13 +55,20 @@ function consentEmail(record, code) {
   const lang = record.language === 'rw' ? 'rw' : 'en';
   const t = TEXT[lang];
   const agreements = Object.keys(AGREEMENT_TEXT[lang]).map((k) => AGREEMENT_TEXT[lang][k]);
+  // The terms exactly as the parent read them in the app (sent with the consent), so the email shows what was agreed to.
+  const terms = Array.isArray(record.terms) ? record.terms : [];
+  const termsText = terms.length ? [t.termsRead(record.termsVersion), '', ...terms.flatMap((s) => [`  ${s.title}`, `  ${s.body}`, ''])] : [];
+  const termsHtml = terms.length
+    ? `<p><b>${escapeHtml(t.termsRead(record.termsVersion))}</b></p>
+<div style="border-left:4px solid #EAF4FB;padding-left:12px">${terms.map((s) => `<p style="margin:0 0 4px"><b>${escapeHtml(s.title)}</b></p><p style="margin:0 0 12px;color:#1F2A44">${escapeHtml(s.body)}</p>`).join('')}</div>`
+    : '';
   const rows = [
     [t.name, record.parentName], [t.phone, record.phone], [t.email, record.email],
     [t.country, record.country], [t.date, record.submittedAt], [t.terms, record.termsVersion],
   ];
   const text = [
     t.hello(record.parentName), '', t.intro, '', `    ${code}`, '', t.agreed,
-    ...agreements.map((a) => `  - ${a}`), '', `${t.details}:`, ...rows.map(([k, v]) => `  ${k}: ${v}`), '', t.withdraw, '', t.ignore,
+    ...agreements.map((a) => `  - ${a}`), '', ...termsText, `${t.details}:`, ...rows.map(([k, v]) => `  ${k}: ${v}`), '', t.withdraw, '', t.ignore,
   ].join('\n');
   const html = `<div style="font-family:Arial,sans-serif;color:#1F2A44;max-width:560px">
 <h2 style="color:#2474C6">SafeTouch</h2>
@@ -68,6 +77,7 @@ function consentEmail(record, code) {
 <p style="font-size:32px;font-weight:bold;letter-spacing:8px;background:#EAF4FB;padding:16px;text-align:center">${escapeHtml(code)}</p>
 <p><b>${escapeHtml(t.agreed)}</b></p>
 <ul>${agreements.map((a) => `<li>${escapeHtml(a)}</li>`).join('')}</ul>
+${termsHtml}
 <p><b>${escapeHtml(t.details)}</b></p>
 <table>${rows.map(([k, v]) => `<tr><td style="padding-right:12px;color:#5F6F86">${escapeHtml(k)}</td><td>${escapeHtml(v)}</td></tr>`).join('')}</table>
 <p style="color:#5F6F86">${escapeHtml(t.withdraw)}</p>

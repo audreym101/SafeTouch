@@ -110,6 +110,7 @@ function registerConsentRoutes(app, store, mailer, now = () => Date.now(), sms =
         country: b.country.trim(),
         language: b.language || 'en',
         termsVersion: b.termsVersion,
+        terms: Array.isArray(b.terms) && b.terms.length ? b.terms.map((s) => ({ title: s.title.trim(), body: s.body.trim() })) : (existing && existing.terms) || null,
         agreements: { ...b.agreements },
         submittedAt: (existing && existing.submittedAt) || new Date(now()).toISOString(),
         verified: false,

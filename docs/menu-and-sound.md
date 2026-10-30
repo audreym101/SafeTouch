@@ -57,3 +57,23 @@ All cartoons are drawn in code from circles ([Decor.cs](../Assets/SafeTouch/Scri
 Music and tap sounds can each be switched off in **Settings**. The choice is kept on the phone.
 
 **Using a recorded song:** drag it onto the AudioManager's **Music Clip** field and it is used instead of the generated tune. Use only music you have the right to use.
+
+## Letter size
+
+**Settings > Letter size** has three buttons, a small, a medium and a big **A**:
+
+| Button | Letters |
+|---|---|
+| small A | as the screens were designed |
+| medium A (**the default**) | 15 % bigger |
+| big A | 30 % bigger |
+
+The choice is kept on the phone. [TextSize.cs](../Assets/SafeTouch/Scripts/UI/TextSize.cs) applies it to every text in the app, including lists and messages a screen makes later.
+
+## App icon
+
+The icon is a white shield on a sky-blue square, holding a raised yellow hand with a red heart in its palm. It has no words, so it reads at any size.
+
+- [SafeTouchAppIcon.cs](../Assets/SafeTouch/Editor/SafeTouchAppIcon.cs) draws it into `Assets/SafeTouch/Icons/`: the whole icon, plus the background and foreground layers that Android's adaptive icons need.
+- It sets the icon by itself when the project opens in Unity, if no icon is set yet.
+- **SafeTouch > Make App Icon** draws and sets it again.

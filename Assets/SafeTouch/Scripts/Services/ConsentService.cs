@@ -61,6 +61,7 @@ namespace SafeTouch.Services
         {
             public string consentId, deviceId, parentName, phone, email, country, language, termsVersion;
             public ConsentAgreements agreements;
+            public TermsSection[] terms;   // the terms exactly as the parent read them, for the email and the record
         }
         [Serializable] class StatusReply { public bool verified; public string verifiedAt; public string emailMasked; public bool emailSent; public bool sent; public bool loggedIn; public bool ageConfirmed; public bool emailChanged; public string error; public string[] errors; public int attemptsLeft; }
         [Serializable] class CodeBody { public string code; }
@@ -235,7 +236,8 @@ namespace SafeTouch.Services
             var payload = new Payload
             {
                 consentId = r.consentId, deviceId = r.deviceId, parentName = r.parentName, phone = r.phone,
-                email = r.email, country = r.country, language = r.language, termsVersion = r.termsVersion, agreements = r.agreements
+                email = r.email, country = r.country, language = r.language, termsVersion = r.termsVersion, agreements = r.agreements,
+                terms = ContentLibrary.Terms.ToArray()
             };
             yield return Request("POST", "/api/consent", JsonUtility.ToJson(payload), (status, reply) =>
             {

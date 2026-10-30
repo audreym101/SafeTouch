@@ -145,3 +145,38 @@ test('names with HTML are escaped in the email', () => withServer(async ({ call,
   await call('POST', '/api/consent', { ...consent, parentName: "Marie O'Neil" });
   assert.ok(mailer.sent[0].html.includes('O&#39;Neil'));
 }));
+
+// The terms and privacy notice as the app showed them (ConsentService sends ContentLibrary.Terms).
+const terms = [
+  { termId: 'what', title: 'What SafeTouch is', body: 'SafeTouch is an educational app that teaches children aged 6 to 11 about body safety.' },
+  { termId: 'child', title: 'What SafeTouch keeps about your child', body: 'Stars, badges and lesson answers, on this phone.' },
+];
+
+test('the consent email shows the terms the parent read and agreed to, and they are kept with the consent', () => withServer(async ({ call, mailer, store }) => {
+  const res = await call('POST', '/api/consent', { ...consent, terms });
+  assert.strictEqual(res.status, 201);
+  const mail = mailer.sent[0];
+  assert.match(mail.text, /The terms you read and agreed to \(version 1\.0\)/);
+  for (const s of terms) {
+    assert.ok(mail.text.includes(s.title) && mail.text.includes(s.body), `the text email has "${s.title}"`);
+    assert.ok(mail.html.includes(s.title) && mail.html.includes(s.body), `the HTML email has "${s.title}"`);
+  }
+  assert.deepStrictEqual((await store.getConsent(consent.consentId)).terms, terms.map(({ title, body }) => ({ title, body })));
+
+  // A corrected email keeps the terms, and its new email shows them too.
+  await call('POST', '/api/consent', { ...consent, email: 'marie.new@example.com', terms });
+  assert.ok(mailer.sent[1].text.includes(terms[1].body));
+}));
+
+test('terms in the wrong shape are refused', () => withServer(async ({ call }) => {
+  for (const bad of ['text', [{ title: 'x' }], [{ title: 'x', body: 'y', extra: 1 }], [{ title: 'x', body: 'y'.repeat(4001) }]]) {
+    assert.strictEqual((await call('POST', '/api/consent', { ...consent, terms: bad })).status, 400, JSON.stringify(bad).slice(0, 40));
+  }
+}));
+
+test('Unity\'s empty terms list and empty termId are accepted', () => withServer(async ({ call, mailer }) => {
+  assert.strictEqual((await call('POST', '/api/consent', { ...consent, terms: [] })).status, 201);
+  assert.doesNotMatch(mailer.sent[0].text, /terms you read/, 'no terms section when none were sent');
+  const other = { ...consent, consentId: '7c2e7d3f-9a1b-4d6c-8e8f-2b3c4d5e6f70', terms: [{ termId: '', title: 'T', body: 'B' }] };
+  assert.strictEqual((await call('POST', '/api/consent', other)).status, 201);
+}));

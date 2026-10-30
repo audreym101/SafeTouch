@@ -45,6 +45,7 @@ namespace SafeTouch.UI
             var shadow = buttons.caption.gameObject.AddComponent<Outline>();
             shadow.effectColor = new Color(1f, 1f, 1f, 0.8f);
             Round(root, "-", Theme.Primary, () => buttons.Zoom(1f / Step));
+            foreach (Transform child in root) child.gameObject.SetActive(false);   // hidden until Keza is on screen
 
             // Camera mode: when the child points the phone away and Keza is out of the picture, one tap brings her back.
             buttons.bringBack = UIFactory.Button(parent, "", Theme.Sun, Theme.Ink, () => game.AR.BringIntoView());

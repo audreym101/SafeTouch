@@ -51,7 +51,7 @@ module.exports = { validateProgress };
 // consent by email (Law N° 058/2021, Article 9). Nothing about the child.
 
 const CONSENT_KEYS = new Set([
-  'consentId', 'deviceId', 'parentName', 'phone', 'email', 'country', 'language', 'termsVersion', 'agreements',
+  'consentId', 'deviceId', 'parentName', 'phone', 'email', 'country', 'language', 'termsVersion', 'agreements', 'terms',
 ]);
 const AGREEMENTS = ['guardian', 'terms', 'childUse', 'dataUse'];
 const NAME = /^[\p{L}][\p{L}\p{M} .'-]{1,79}$/u;
@@ -77,6 +77,17 @@ function validateConsent(body) {
   if (typeof body.country !== 'string' || !COUNTRY.test(body.country.trim())) errors.push('country must be a country name.');
   if (body.language !== undefined && !LANGUAGES.includes(body.language)) errors.push('language must be "en" or "rw".');
   if (typeof body.termsVersion !== 'string' || !VERSION.test(body.termsVersion)) errors.push('termsVersion must be the version of the terms shown.');
+  // The terms and privacy notice exactly as the parent read them in the app (titles and text), so the email
+  // and the record show what was agreed to. Optional for older app versions (Unity sends an empty list as []).
+  if (body.terms !== undefined) {
+    const t = body.terms;
+    const ok = Array.isArray(t) && t.length <= 20 &&
+      t.every((s) => s && typeof s === 'object' && !Array.isArray(s) && Object.keys(s).every((k) => ['termId', 'title', 'body'].includes(k)) &&
+        typeof s.title === 'string' && s.title.trim().length >= 1 && s.title.length <= 200 &&
+        typeof s.body === 'string' && s.body.length <= 4000 && (s.termId === undefined || (typeof s.termId === 'string' && (s.termId === '' || ID.test(s.termId))))) &&
+      t.reduce((n, s) => n + s.title.length + s.body.length, 0) <= 30000;
+    if (!ok) errors.push('terms must list up to 20 sections of {title, body} as shown in the app.');
+  }
   const a = body.agreements;
   if (!a || typeof a !== 'object' || Array.isArray(a) || !AGREEMENTS.every((k) => a[k] === true) || Object.keys(a).some((k) => !AGREEMENTS.includes(k))) {
     errors.push(`agreements must confirm ${AGREEMENTS.join(', ')} (all true).`);

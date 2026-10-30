@@ -60,6 +60,7 @@ namespace SafeTouch.UI
             game = gameManager;
             if (canvas == null) canvas = GetComponentInChildren<Canvas>();
             if (canvas.GetComponent<ResponsiveCanvas>() == null) canvas.gameObject.AddComponent<ResponsiveCanvas>();
+            if (canvas.GetComponent<TextSizer>() == null) canvas.gameObject.AddComponent<TextSizer>();   // the letter size chosen in Settings
 
             // Fills the whole screen behind the safe area: notches, rounded corners and
             // tablet margins show the app's colour instead of black. Hidden on AR screens.

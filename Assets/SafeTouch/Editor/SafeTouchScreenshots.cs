@@ -212,6 +212,8 @@ namespace SafeTouch.EditorTools
         /// <summary>Lays everything out (layout groups need a few passes in edit mode).</summary>
         static void Settle(Canvas canvas)
         {
+            var sizer = canvas.GetComponent<TextSizer>();   // the letter size from Settings, as on the phone
+            if (sizer != null) sizer.ApplyNow();
             for (int i = 0; i < 3; i++)
             {
                 Canvas.ForceUpdateCanvases();
