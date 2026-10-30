@@ -336,6 +336,162 @@ namespace SafeTouch.UI
             return (RectTransform)row.transform;
         }
 
+        // ---- Little animals for the lesson cards ----
+
+        /// <summary>One animal per lesson card: bunny, cat, lion, elephant, owl (Memory Quest) and frog (the game).</summary>
+        public enum AnimalKind { Bunny, Cat, Lion, Elephant, Owl, Frog }
+
+        static readonly Color Pupil = new Color(0.1f, 0.12f, 0.2f);
+        static readonly Color Blush = new Color(1f, 0.45f, 0.5f, 0.45f);
+
+        /// <summary>
+        /// A small animal on a lesson card, standing just left of the number badge and hopping gently in its own
+        /// rhythm. It is drawn over the card and never takes a touch, so the whole card stays one big button.
+        /// </summary>
+        public static RectTransform Animal(RectTransform card, AnimalKind kind, float size)
+        {
+            var f = Frame(card, kind.ToString(), size, 1f);
+            f.GetComponent<LayoutElement>().ignoreLayout = true;
+            f.anchorMin = f.anchorMax = new Vector2(1f, 0.5f);
+            f.pivot = new Vector2(1f, 0.5f);
+            f.sizeDelta = new Vector2(size, size);
+            f.anchoredPosition = new Vector2(-136f, 0f);
+            switch (kind)
+            {
+                case AnimalKind.Bunny: Bunny(f); break;
+                case AnimalKind.Cat: Cat(f); break;
+                case AnimalKind.Lion: Lion(f); break;
+                case AnimalKind.Elephant: Elephant(f); break;
+                case AnimalKind.Owl: Owl(f); break;
+                default: Frog(f); break;
+            }
+            int i = (int)kind;
+            return Hop(f, size * (kind == AnimalKind.Frog || kind == AnimalKind.Bunny ? 0.12f : 0.06f), 0.75f + 0.11f * i, i * 0.17f);
+        }
+
+        static void Eyes(RectTransform f, float y, float apart, float size)
+        {
+            Oval(f, "Eye L", Pupil, 0.5f - apart, y, size, size * 1.15f);
+            Oval(f, "Eye R", Pupil, 0.5f + apart, y, size, size * 1.15f);
+            Oval(f, "Shine L", Color.white, 0.5f - apart + size * 0.2f, y + size * 0.25f, size * 0.35f, size * 0.35f);
+            Oval(f, "Shine R", Color.white, 0.5f + apart + size * 0.2f, y + size * 0.25f, size * 0.35f, size * 0.35f);
+        }
+
+        static void Bunny(RectTransform f)
+        {
+            var fur = new Color(0.95f, 0.95f, 0.97f);
+            var pink = new Color(1f, 0.7f, 0.78f);
+            Oval(f, "Shadow", new Color(0f, 0f, 0f, 0.12f), 0.5f, 0.04f, 0.6f, 0.07f);
+            Oval(f, "Ear L", fur, 0.38f, 0.83f, 0.15f, 0.38f, 10f);
+            Oval(f, "Ear R", fur, 0.62f, 0.83f, 0.15f, 0.38f, -10f);
+            Oval(f, "Inner L", pink, 0.38f, 0.83f, 0.07f, 0.28f, 10f);
+            Oval(f, "Inner R", pink, 0.62f, 0.83f, 0.07f, 0.28f, -10f);
+            Oval(f, "Body", fur, 0.5f, 0.25f, 0.52f, 0.4f);
+            Oval(f, "Foot L", fur, 0.36f, 0.07f, 0.2f, 0.1f);
+            Oval(f, "Foot R", fur, 0.64f, 0.07f, 0.2f, 0.1f);
+            Oval(f, "Head", fur, 0.5f, 0.52f, 0.5f, 0.42f);
+            Eyes(f, 0.55f, 0.1f, 0.07f);
+            Oval(f, "Cheek L", Blush, 0.33f, 0.47f, 0.09f, 0.06f);
+            Oval(f, "Cheek R", Blush, 0.67f, 0.47f, 0.09f, 0.06f);
+            Oval(f, "Nose", pink, 0.5f, 0.47f, 0.07f, 0.05f);
+        }
+
+        static void Cat(RectTransform f)
+        {
+            var fur = new Color(0.98f, 0.64f, 0.3f);
+            var light = new Color(1f, 0.88f, 0.72f);
+            Oval(f, "Shadow", new Color(0f, 0f, 0f, 0.12f), 0.5f, 0.04f, 0.6f, 0.07f);
+            Oval(f, "Tail", fur, 0.8f, 0.3f, 0.1f, 0.42f, -30f);
+            Oval(f, "Body", fur, 0.5f, 0.25f, 0.5f, 0.42f);
+            Oval(f, "Belly", light, 0.5f, 0.22f, 0.26f, 0.28f);
+            Oval(f, "Ear L", fur, 0.32f, 0.8f, 0.16f, 0.24f, 25f);
+            Oval(f, "Ear R", fur, 0.68f, 0.8f, 0.16f, 0.24f, -25f);
+            Oval(f, "Head", fur, 0.5f, 0.6f, 0.54f, 0.44f);
+            Oval(f, "Stripe", new Color(0.88f, 0.48f, 0.18f), 0.5f, 0.79f, 0.07f, 0.1f);
+            Oval(f, "Muzzle", light, 0.5f, 0.52f, 0.24f, 0.15f);
+            Eyes(f, 0.63f, 0.11f, 0.07f);
+            Oval(f, "Nose", new Color(0.9f, 0.4f, 0.45f), 0.5f, 0.56f, 0.06f, 0.04f);
+            Oval(f, "Whisker L", new Color(0.4f, 0.3f, 0.25f), 0.25f, 0.53f, 0.16f, 0.015f, 8f);
+            Oval(f, "Whisker R", new Color(0.4f, 0.3f, 0.25f), 0.75f, 0.53f, 0.16f, 0.015f, -8f);
+        }
+
+        static void Lion(RectTransform f)
+        {
+            var mane = new Color(0.85f, 0.45f, 0.15f);
+            var fur = new Color(1f, 0.78f, 0.3f);
+            Oval(f, "Shadow", new Color(0f, 0f, 0f, 0.12f), 0.5f, 0.04f, 0.6f, 0.07f);
+            Oval(f, "Body", fur, 0.5f, 0.24f, 0.5f, 0.38f);
+            for (int i = 0; i < 10; i++)
+            {
+                float a = i * 36f * Mathf.Deg2Rad;
+                Oval(f, "Mane", mane, 0.5f + Mathf.Cos(a) * 0.25f, 0.58f + Mathf.Sin(a) * 0.23f, 0.22f, 0.22f);
+            }
+            Oval(f, "Ear L", fur, 0.33f, 0.76f, 0.12f, 0.12f);
+            Oval(f, "Ear R", fur, 0.67f, 0.76f, 0.12f, 0.12f);
+            Oval(f, "Head", fur, 0.5f, 0.58f, 0.46f, 0.42f);
+            Oval(f, "Muzzle", new Color(1f, 0.9f, 0.7f), 0.5f, 0.49f, 0.22f, 0.15f);
+            Eyes(f, 0.62f, 0.1f, 0.065f);
+            Oval(f, "Nose", new Color(0.45f, 0.25f, 0.2f), 0.5f, 0.53f, 0.08f, 0.05f);
+            Oval(f, "Smile", new Color(0.45f, 0.25f, 0.2f), 0.5f, 0.46f, 0.1f, 0.025f);
+        }
+
+        static void Elephant(RectTransform f)
+        {
+            var skin = new Color(0.62f, 0.68f, 0.8f);
+            var dark = new Color(0.52f, 0.58f, 0.72f);
+            Oval(f, "Shadow", new Color(0f, 0f, 0f, 0.12f), 0.5f, 0.04f, 0.7f, 0.07f);
+            Oval(f, "Body", skin, 0.5f, 0.24f, 0.6f, 0.38f);
+            Oval(f, "Leg L", dark, 0.36f, 0.09f, 0.14f, 0.14f);
+            Oval(f, "Leg R", dark, 0.64f, 0.09f, 0.14f, 0.14f);
+            Oval(f, "Ear L", dark, 0.22f, 0.58f, 0.32f, 0.38f, 10f);
+            Oval(f, "Ear R", dark, 0.78f, 0.58f, 0.32f, 0.38f, -10f);
+            Oval(f, "Inner L", new Color(1f, 0.75f, 0.8f), 0.23f, 0.58f, 0.18f, 0.24f, 10f);
+            Oval(f, "Inner R", new Color(1f, 0.75f, 0.8f), 0.77f, 0.58f, 0.18f, 0.24f, -10f);
+            Oval(f, "Head", skin, 0.5f, 0.6f, 0.42f, 0.4f);
+            Oval(f, "Trunk", skin, 0.52f, 0.38f, 0.12f, 0.3f, -12f);
+            Oval(f, "Trunk tip", dark, 0.56f, 0.24f, 0.11f, 0.06f);
+            Eyes(f, 0.66f, 0.1f, 0.06f);
+            Oval(f, "Cheek L", Blush, 0.36f, 0.56f, 0.08f, 0.05f);
+            Oval(f, "Cheek R", Blush, 0.64f, 0.56f, 0.08f, 0.05f);
+        }
+
+        static void Owl(RectTransform f)
+        {
+            var feathers = new Color(0.6f, 0.42f, 0.3f);
+            Oval(f, "Shadow", new Color(0f, 0f, 0f, 0.12f), 0.5f, 0.04f, 0.6f, 0.07f);
+            Oval(f, "Tuft L", feathers, 0.33f, 0.85f, 0.1f, 0.18f, 25f);
+            Oval(f, "Tuft R", feathers, 0.67f, 0.85f, 0.1f, 0.18f, -25f);
+            Oval(f, "Body", feathers, 0.5f, 0.45f, 0.6f, 0.78f);
+            Oval(f, "Wing L", new Color(0.5f, 0.34f, 0.24f), 0.22f, 0.38f, 0.14f, 0.36f, -10f);
+            Oval(f, "Wing R", new Color(0.5f, 0.34f, 0.24f), 0.78f, 0.38f, 0.14f, 0.36f, 10f);
+            Oval(f, "Belly", new Color(0.93f, 0.85f, 0.7f), 0.5f, 0.32f, 0.34f, 0.36f);
+            Oval(f, "Face L", Color.white, 0.38f, 0.64f, 0.24f, 0.24f);
+            Oval(f, "Face R", Color.white, 0.62f, 0.64f, 0.24f, 0.24f);
+            Eyes(f, 0.64f, 0.12f, 0.1f);
+            Oval(f, "Beak", new Color(1f, 0.65f, 0.15f), 0.5f, 0.53f, 0.08f, 0.1f);
+            Oval(f, "Foot L", new Color(1f, 0.65f, 0.15f), 0.4f, 0.07f, 0.12f, 0.06f);
+            Oval(f, "Foot R", new Color(1f, 0.65f, 0.15f), 0.6f, 0.07f, 0.12f, 0.06f);
+        }
+
+        static void Frog(RectTransform f)
+        {
+            var green = new Color(0.4f, 0.78f, 0.35f);
+            Oval(f, "Shadow", new Color(0f, 0f, 0f, 0.12f), 0.5f, 0.04f, 0.7f, 0.07f);
+            Oval(f, "Leg L", new Color(0.32f, 0.66f, 0.28f), 0.24f, 0.13f, 0.26f, 0.16f, 15f);
+            Oval(f, "Leg R", new Color(0.32f, 0.66f, 0.28f), 0.76f, 0.13f, 0.26f, 0.16f, -15f);
+            Oval(f, "Body", green, 0.5f, 0.34f, 0.7f, 0.5f);
+            Oval(f, "Belly", new Color(0.82f, 0.95f, 0.6f), 0.5f, 0.27f, 0.4f, 0.28f);
+            Oval(f, "Eye bump L", green, 0.33f, 0.62f, 0.24f, 0.24f);
+            Oval(f, "Eye bump R", green, 0.67f, 0.62f, 0.24f, 0.24f);
+            Oval(f, "White L", Color.white, 0.33f, 0.63f, 0.17f, 0.17f);
+            Oval(f, "White R", Color.white, 0.67f, 0.63f, 0.17f, 0.17f);
+            Eyes(f, 0.63f, 0.17f, 0.08f);
+            Oval(f, "Mouth", new Color(0.55f, 0.13f, 0.17f), 0.5f, 0.45f, 0.3f, 0.1f);
+            Oval(f, "Mouth cover", green, 0.5f, 0.48f, 0.34f, 0.08f);
+            Oval(f, "Cheek L", Blush, 0.27f, 0.45f, 0.09f, 0.06f);
+            Oval(f, "Cheek R", Blush, 0.73f, 0.45f, 0.09f, 0.06f);
+        }
+
         /// <summary>A bright, round number badge for a lesson card (or any list item).</summary>
         public static Image Badge(RectTransform parent, string text, Color color, float size)
         {

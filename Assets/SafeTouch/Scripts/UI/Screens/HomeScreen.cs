@@ -54,7 +54,7 @@ namespace SafeTouch.UI.Screens
                 size.minHeight = 176f;
                 size.preferredHeight = -1f;
                 var v = card.button.gameObject.AddComponent<VerticalLayoutGroup>();
-                v.padding = new RectOffset(44, 140, 14, 14);   // room on the right for the number badge
+                v.padding = new RectOffset(44, 270, 14, 14);   // room on the right for the animal and the number badge
                 v.spacing = 4f;
                 v.childAlignment = TextAnchor.MiddleLeft;
                 v.childControlWidth = v.childControlHeight = true;
@@ -74,6 +74,8 @@ namespace SafeTouch.UI.Screens
                 card.summary = UIFactory.Label(card.button.transform, "", Theme.Label, Theme.Muted, TextAnchor.MiddleLeft, false);
                 card.summary.supportRichText = true;   // the status follows the summary in the lesson's colour
                 Decor.Badge((RectTransform)card.button.transform, info == LessonInfo.Game ? "G" : info.level.ToString(), info.color, 96f);
+                // A little animal for each lesson (bunny, cat, lion, elephant, owl; a frog for the game), hopping gently.
+                Decor.Animal((RectTransform)card.button.transform, info == LessonInfo.Game ? Decor.AnimalKind.Frog : (Decor.AnimalKind)Mathf.Clamp(info.level - 1, 0, 4), 120f);
                 cards.Add(card);
             }
 
