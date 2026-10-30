@@ -15,6 +15,9 @@ namespace SafeTouch.AR
     /// </summary>
     public class ARManager : MonoBehaviour
     {
+        [Tooltip("Off (the default): a 3D playground, where Keza appears at once and the child makes her bigger or smaller; no camera or scanning. On: augmented reality on a real floor or table.")]
+        [SerializeField] bool useAR = false;
+
         [Header("Placement")]
         [SerializeField] GameObject characterPrefab;
         [SerializeField] GameObject figurePrefab;
@@ -50,6 +53,15 @@ namespace SafeTouch.AR
         const float MaxDistanceFromAnchor = 2f;
 
         public event Action<ARCharacter> CharacterPlaced;
+
+        /// <summary>True for augmented reality (the phone's camera, a real floor); false for the 3D playground.</summary>
+        public bool UsesAR { get { return useAR; } }
+
+        /// <summary>True while a lesson uses two fingers itself, so the playground does not zoom too (none does yet).</summary>
+        public bool PinchTaken { get { return false; } }
+
+        /// <summary>The 3D playground, when the app is not in AR mode (zoom with Stage.Zoom).</summary>
+        public Stage3D Stage { get; private set; }
 
         public ARCharacter Character { get { return character; } }
         public bool HasCharacter { get { return character != null; } }
@@ -93,6 +105,13 @@ namespace SafeTouch.AR
         {
             // Floors and tables only: walls and ceilings are never detected or used.
             if (planeManager != null) planeManager.requestedDetectionMode = PlaneDetectionMode.Horizontal;
+            if (!useAR)
+            {
+                // The 3D playground: no AR session, so the phone's camera never opens.
+                if (session != null) session.enabled = false;
+                Stage = gameObject.AddComponent<Stage3D>();
+                Stage.Init(this, arCamera != null ? arCamera : Camera.main, opaqueMaterial);
+            }
         }
 
         void Update()
@@ -127,6 +146,7 @@ namespace SafeTouch.AR
         /// <summary>Starts looking for a surface and shows plane outlines.</summary>
         public void BeginPlacement()
         {
+            if (!useAR) { PlaceCharacter(Stage.KezaPose); return; }   // no scanning: Keza is on the playground at once
             placing = true;
             hasPose = false;
             SetPlanesVisible(true);
@@ -156,6 +176,7 @@ namespace SafeTouch.AR
         {
             get
             {
+                if (!useAR) return ARStatus.Ready;
                 if (!CameraPermission.Granted) return cameraDenied ? ARStatus.CameraDenied : ARStatus.NeedsCamera;
                 if (editorFloorFallback && Application.isEditor && !ARSupported())
                     return Found();
@@ -201,7 +222,7 @@ namespace SafeTouch.AR
         /// </summary>
         public void StartSession()
         {
-            if (session == null || session.enabled || !CameraPermission.Granted) return;
+            if (session == null || session.enabled || !CameraPermission.Granted || !useAR) return;
             session.enabled = true;
         }
 

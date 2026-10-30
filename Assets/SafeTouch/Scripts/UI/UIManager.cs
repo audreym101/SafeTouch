@@ -108,6 +108,7 @@ namespace SafeTouch.UI
                 menus[i].SetActive(false);
             }
 
+            SizeButtons.Build(safeArea, game, this);   // + and - for Keza's size on the 3D playground
             BuildFeedbackPanel(safeArea);
             BuildToast(safeArea);
             buttons = canvas.GetComponentsInChildren<Button>(true);
@@ -131,6 +132,9 @@ namespace SafeTouch.UI
         {
             if (backdrop != null) backdrop.enabled = active == null || !active.CameraVisibleNow;
         }
+
+        /// <summary>True while the screen showing lets the 3D view (or the camera picture) show through.</summary>
+        public bool CameraShowing { get { return active != null && active.CameraVisibleNow; } }
 
         /// <summary>Shows one screen by name and hides the others.</summary>
         public void ShowMenu(string name)
