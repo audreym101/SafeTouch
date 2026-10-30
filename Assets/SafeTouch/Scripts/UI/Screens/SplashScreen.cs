@@ -16,6 +16,7 @@ namespace SafeTouch.UI.Screens
         {
             var col = StandardColumn(root, null, null);
             UIFactory.Spacer(col, 1f);
+            Decor.Friends(col, 520f);   // Keza and her dog, waving hello
             UIFactory.Label(col, "SafeTouch", Theme.Display + 24, Theme.Primary, TextAnchor.MiddleCenter, true);
             tagline = UIFactory.Label(col, "", Theme.Body, Theme.Ink, TextAnchor.MiddleCenter, false);
             UIFactory.Spacer(col, 1f);

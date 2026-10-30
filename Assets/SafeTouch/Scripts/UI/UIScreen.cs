@@ -36,6 +36,7 @@ namespace SafeTouch.UI
             Root = (RectTransform)bg.transform;
             UIFactory.Stretch(Root);
             bg.raycastTarget = !ShowsCamera;
+            if (!ShowsCamera) Decor.Background(Root, Name);   // sun, clouds, hills and stars behind the content
             BuildContent(Root);
         }
 
