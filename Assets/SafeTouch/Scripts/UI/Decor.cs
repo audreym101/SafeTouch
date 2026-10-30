@@ -23,27 +23,24 @@ namespace SafeTouch.UI
             layer.SetAsFirstSibling();
             int h = Hash(seed);
 
-            // Hills along the bottom.
-            Blob(layer, "Hill back", new Color(0.55f, 0.80f, 0.55f, 0.35f), 0.80f, 0f, 1300f, 1f, 0.5f, 0f);
-            Blob(layer, "Hill front", new Color(0.38f, 0.70f, 0.45f, 0.30f), 0.18f, 0f, 1000f, 1f, 0.5f, 0f);
+            // Rolling hills along the bottom: wide ovals whose top halves show.
+            Blob(layer, "Hill back", new Color(0.62f, 0.84f, 0.60f, 0.55f), 0.78f, 0f, 1700f, 0.26f, 0.5f, 0.5f);
+            Blob(layer, "Hill front", new Color(0.46f, 0.76f, 0.50f, 0.50f), 0.15f, 0f, 1400f, 0.20f, 0.5f, 0.5f);
 
             // The sun, top right, with a soft halo.
-            float sunX = (h & 1) == 0 ? 0.88f : 0.12f;
-            Blob(layer, "Sun halo", new Color(1f, 0.85f, 0.35f, 0.25f), sunX, 0.955f, 330f, 1f, 0.5f, 0.5f);
-            Blob(layer, "Sun", new Color(1f, 0.78f, 0.25f, 0.95f), sunX, 0.955f, 200f, 1f, 0.5f, 0.5f);
+            Blob(layer, "Sun halo", new Color(1f, 0.85f, 0.35f, 0.25f), 0.88f, 0.955f, 330f, 1f, 0.5f, 0.5f);
+            Blob(layer, "Sun", new Color(1f, 0.78f, 0.25f, 0.95f), 0.88f, 0.955f, 200f, 1f, 0.5f, 0.5f);
 
             // Clouds.
-            Cloud(layer, "Cloud 1", 0.50f + 0.18f * (((h >> 2) & 3) - 1.5f) / 1.5f, 0.915f, 330f);
+            Cloud(layer, "Cloud 1", 0.50f + 0.14f * (((h >> 2) & 3) - 1.5f) / 1.5f, 0.915f, 330f);
             Cloud(layer, "Cloud 2", 0.22f + 0.12f * (((h >> 4) & 3) / 3f), 0.80f, 230f);
 
-            // Stars, scattered at the sides.
-            for (int i = 0; i < 6; i++)
-            {
-                int k = Hash(seed + i);
-                float x = (i % 2 == 0 ? 0.04f : 0.90f) + 0.06f * ((k & 7) / 7f);
-                float y = 0.12f + 0.60f * (((k >> 3) & 15) / 15f);
-                Star(layer, new Color(1f, 0.78f, 0.25f, 0.55f), x, y, 54f + 20f * ((k >> 7) & 3));
-            }
+            // A few sparkles around the sun and clouds.
+            var spark = new Color(1f, 0.89f, 0.50f);
+            Sparkle(layer, spark, 0.72f, 0.985f, 56f);
+            Sparkle(layer, spark, 0.965f, 0.885f, 44f);
+            Sparkle(layer, spark, 0.30f, 0.975f, 40f);
+            Sparkle(layer, spark, 0.06f, 0.84f, 46f);
         }
 
         static int Hash(string s)
@@ -82,20 +79,29 @@ namespace SafeTouch.UI
             Part(root, "base", UIFactory.Circle, white, 0.52f, 0.30f, 0.90f, 0.5f, 0f);
         }
 
-        static void Star(Transform parent, Color color, float ax, float ay, float size)
+        /// <summary>A small twinkle: a plus with a round middle. Straight edges only, so it stays crisp at any size.</summary>
+        static void Sparkle(Transform parent, Color color, float ax, float ay, float size)
         {
-            var root = UIFactory.Rect(parent, "Star");
+            var root = UIFactory.Rect(parent, "Sparkle");
             root.anchorMin = root.anchorMax = new Vector2(ax, ay);
             root.sizeDelta = new Vector2(size, size);
-            for (int i = 0; i < 2; i++)
-            {
-                var square = UIFactory.Panel(root, "Point", color, false);
-                square.raycastTarget = false;
-                var rt = square.rectTransform;
-                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-                rt.sizeDelta = new Vector2(size * 0.7f, size * 0.7f);
-                rt.localEulerAngles = new Vector3(0f, 0f, i * 45f);
-            }
+            Bar(root, color, size, size * 0.26f);
+            Bar(root, color, size * 0.26f, size);
+            var middle = UIFactory.Panel(root, "Middle", color, false);
+            middle.sprite = UIFactory.Circle;
+            middle.raycastTarget = false;
+            var rt = middle.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(size * 0.5f, size * 0.5f);
+        }
+
+        static void Bar(RectTransform parent, Color color, float width, float height)
+        {
+            var bar = UIFactory.Panel(parent, "Bar", color, false);
+            bar.raycastTarget = false;
+            var rt = bar.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(width, height);
         }
 
         // ---------- characters ----------
