@@ -7,15 +7,20 @@
 //   POST   /api/consent                     submit (or correct) a consent, email a code
 //   POST   /api/consent/:consentId/verify   { code } -> verified
 //   POST   /api/consent/:consentId/resend   new code (at most once a minute, 5 a day)
+//   POST   /api/consent/:consentId/login    { email } -> a login code by email (and SMS) when the email matches
+//   POST   /api/consent/:consentId/login/verify  { code } -> { loggedIn: true }
 //   GET    /api/consent/:consentId          status only: no name, phone or full email
 //   DELETE /api/consent/:consentId          withdraw: deletes the consent and the device's progress
 
 const crypto = require('crypto');
 const { validateConsent } = require('./validate');
-const { consentEmail } = require('./mailer');
-const { consentSms } = require('./sms');
+const { consentEmail, loginEmail } = require('./mailer');
+const { consentSms, loginSms } = require('./sms');
 
 const CODE_TTL_MS = 24 * 60 * 60 * 1000;
+const LOGIN_TTL_MS = 10 * 60 * 1000;   // a login code is for now, not for tomorrow
+const MAX_LOGINS_PER_DAY = 10;
+const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const MAX_ATTEMPTS = 5;
 const RESEND_GAP_MS = 60 * 1000;
 const MAX_SENDS_PER_DAY = 5;
@@ -137,6 +142,63 @@ function registerConsentRoutes(app, store, mailer, now = () => Date.now(), sms =
     if (sends.length >= MAX_SENDS_PER_DAY) return res.status(429).json({ error: 'Too many emails today. Try again tomorrow.' });
     const sent = await sendCode(record);
     res.json({ ...status(record), ...sent });
+  }));
+
+  // Parent login: every time the app opens, the parent types their email and then a fresh code.
+  // The reply is the same whether or not the email matches, so the API can't be used to find out
+  // which emails are registered; the code only goes to the email on record.
+  app.post('/api/consent/:consentId/login', async (req, res, next) => {
+    try {
+      if (!UUID.test(req.params.consentId)) return res.status(400).json({ errors: ['consentId must be a UUID.'] });
+      const email = req.body && typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      if (!EMAIL.test(email)) return res.status(400).json({ errors: ['email must be an email address.'] });
+      const record = await store.getConsent(req.params.consentId);
+      if (!record || !record.verified || String(record.email).toLowerCase() !== email) return res.json({ sent: true });
+
+      const t = now();
+      const sends = (record.loginSends || []).filter((s) => s > t - 24 * 60 * 60 * 1000);
+      if (sends.length && t - sends[sends.length - 1] < RESEND_GAP_MS) return res.status(429).json({ error: 'Please wait a minute before asking again.' });
+      if (sends.length >= MAX_LOGINS_PER_DAY) return res.status(429).json({ error: 'Too many codes today. Try again tomorrow.' });
+
+      const code = newCode();
+      record.loginSends = sends.concat(t);
+      record.loginCodeHash = hashCode(`login-${record.consentId}`, code);
+      record.loginExpiresAt = t + LOGIN_TTL_MS;
+      record.loginAttempts = 0;
+      await store.saveConsent(record);
+      const [emailSent, smsSent] = await Promise.all([
+        (async () => {
+          try { await mailer.send({ to: record.email, toName: record.parentName, ...loginEmail(record, code) }); return true; }
+          catch (err) { console.error('Login email failed:', err.message); return false; }
+        })(),
+        (async () => {
+          try { return await sms.send({ phone: record.phone, country: record.country, text: loginSms(record, code) }); }
+          catch (err) { console.error('Login SMS failed:', err.message); return false; }
+        })(),
+      ]);
+      if (!emailSent && !smsSent) return res.status(502).json({ error: 'Could not send the code. Try again later.' });
+      res.json({ sent: true });
+    } catch (err) { next(err); }
+  });
+
+  app.post('/api/consent/:consentId/login/verify', findOr404(async (record, req, res) => {
+    const code = req.body && typeof req.body.code === 'string' ? req.body.code.replace(/\s/g, '') : '';
+    if (!/^\d{6}$/.test(code)) return res.status(400).json({ errors: ['code must be the 6 digits from the email or text.'] });
+    if (!record.loginCodeHash || !record.loginExpiresAt || now() > record.loginExpiresAt) return res.status(410).json({ error: 'This code has expired. Ask for a new code.' });
+    if ((record.loginAttempts || 0) >= MAX_ATTEMPTS) return res.status(429).json({ error: 'Too many tries. Ask for a new code.' });
+    const given = Buffer.from(hashCode(`login-${record.consentId}`, code), 'hex');
+    const expected = Buffer.from(record.loginCodeHash, 'hex');
+    if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) {
+      record.loginAttempts = (record.loginAttempts || 0) + 1;
+      await store.saveConsent(record);
+      return res.status(400).json({ errors: ['That code is not right.'], attemptsLeft: Math.max(0, MAX_ATTEMPTS - record.loginAttempts) });
+    }
+    delete record.loginCodeHash;
+    delete record.loginExpiresAt;
+    delete record.loginAttempts;
+    record.lastLoginAt = new Date(now()).toISOString();
+    await store.saveConsent(record);
+    res.json({ loggedIn: true, ...status(record) });
   }));
 
   app.get('/api/consent/:consentId', findOr404(async (record, req, res) => res.json(status(record))));
