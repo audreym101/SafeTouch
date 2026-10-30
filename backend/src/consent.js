@@ -11,7 +11,7 @@
 //   POST   /api/consent/:consentId/login/verify  { code } -> { loggedIn: true }
 //   POST   /api/consent/:consentId/age      { ageYears: 9..11 } -> a code to the parent to confirm the child's age
 //   POST   /api/consent/:consentId/age/verify  { code } -> { ageConfirmed: true }: the Guardian (9-11) lessons may open
-//   POST   /api/consent/:consentId/email    { email } -> a code to the NEW email (logged in within the hour, consent confirmed)
+//   POST   /api/consent/:consentId/email    { email } -> a code to the NEW email (consent confirmed)
 //   POST   /api/consent/:consentId/email/verify  { code } -> the new email replaces the old one; the old one gets a notice
 //   GET    /api/consent/:consentId          status only: no name, phone or full email
 //   DELETE /api/consent/:consentId          withdraw: deletes the consent and the device's progress
@@ -24,7 +24,6 @@ const { consentSms, loginSms, ageSms } = require('./sms');
 const CODE_TTL_MS = 24 * 60 * 60 * 1000;
 const LOGIN_TTL_MS = 10 * 60 * 1000;   // a login code is for now, not for tomorrow
 const EMAIL_TTL_MS = 30 * 60 * 1000;   // time to open the new mailbox and type the code
-const LOGGED_IN_MS = 60 * 60 * 1000;   // changing the email needs a login (or a confirmation) in the last hour
 const MAX_LOGINS_PER_DAY = 10;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const MAX_ATTEMPTS = 5;
@@ -271,16 +270,14 @@ function registerConsentRoutes(app, store, mailer, now = () => Date.now(), sms =
     res.json({ ageConfirmed: true, ageBand: record.ageBand });
   }));
 
-  // Changing the email of a confirmed consent. Only a parent who has just logged in (or just confirmed)
-  // can ask. The code goes to the NEW email, so only someone who can read it can finish the change, and
-  // the old email is told afterwards. Before the consent is confirmed, the consent form corrects the email instead.
+  // Changing the email of a confirmed consent. No login is needed first: a parent who no longer reads the
+  // old email could never log in to change it (the app puts its grown-up check in front instead). The code
+  // goes to the NEW email, so only someone who can read it can finish the change, and the old email is told. Before the consent is confirmed, the consent form corrects the email instead.
   app.post('/api/consent/:consentId/email', findOr404(async (record, req, res) => {
     const email = req.body && typeof req.body.email === 'string' ? req.body.email.trim() : '';
     if (!EMAIL.test(email) || email.length > 254) return res.status(400).json({ errors: ['email must be an email address.'] });
     if (!record.verified) return res.status(403).json({ error: 'Please confirm your email first.' });
     const t = now();
-    const since = Math.max(Date.parse(record.lastLoginAt || '') || 0, Date.parse(record.verifiedAt || '') || 0);
-    if (t - since > LOGGED_IN_MS) return res.status(401).json({ error: 'Please log in again first.' });
     if (email.toLowerCase() === String(record.email).toLowerCase()) return res.status(400).json({ errors: ['This is already your email.'] });
 
     const sends = (record.emailSends || []).filter((s) => s > t - 24 * 60 * 60 * 1000);

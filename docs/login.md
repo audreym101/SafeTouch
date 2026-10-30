@@ -39,4 +39,15 @@ The Log in screen has the two group buttons, **Explorer 6-8** and **Guardian 9-1
 Login and age-check codes always go to the email on the consent, so typing a different email on the Log in screen does not move them.
 
 - **Before the consent is confirmed:** on the "Confirm by email" screen, tap **Change my details** and fix the email. The new email gets a fresh code, and the code sent to the old one stops working.
-- **After it is confirmed:** log in, then go to **Grown-ups > Settings > Change my email**. Type the new email. The API sends a 6-digit code to the **new** email (`POST /api/consent/:id/email`). It only does this if the parent logged in within the last hour. Typing the code (`POST /api/consent/:id/email/verify`) switches the email. From then on every code goes there, and the old email gets a short notice with no code. Until the code is typed, nothing changes. The code works for 30 minutes, and at most 5 can be asked for in a day.
+- **After it is confirmed:** there are two ways in. Both lead to the same change-email screen.
+  - **From the login screen:** tap **My email has changed**, then answer the grown-up check. This is for a parent who no longer reads the old email, so no login is needed.
+  - **From inside the app:** go to **Grown-ups > Settings > Change my email**.
+
+  **Steps on the change-email screen:**
+  1. Type the new email. The API sends a 6-digit code to the **new** email only (`POST /api/consent/:id/email`). Until the code is typed, nothing changes.
+  2. Type the code (`POST /api/consent/:id/email/verify`). The email switches, and the parent is logged in.
+  3. From then on every code goes to the new email. The old email gets a short notice with no code, so a change the parent did not make is noticed.
+
+  The code works for 30 minutes. At most 5 codes can be asked for in a day, one a minute.
+
+**If the typed email isn't the one on the phone:** the login screen says so and shows the start of the right one (for example `b***a@alustudent.com`), instead of waiting for a code that will never come.

@@ -91,16 +91,18 @@ test('asking again replaces the earlier new email', async () => {
   });
 });
 
-test('changing the email needs a confirmed consent and a recent login', async () => {
+test('changing the email needs a confirmed consent, but no login: the old email may be gone', async () => {
   await withVerifiedParent(async ({ call }) => {
-    assert.strictEqual((await call('POST', EMAIL, { email: 'marie.new@example.com' })).status, 403);
+    assert.strictEqual((await call('POST', EMAIL, { email: 'marie.new@example.com' })).status, 403, 'not before the consent is confirmed');
   }, { verify: false });
   await withVerifiedParent(async ({ call, mailer, clock }) => {
-    clock.t += 2 * 60 * 60 * 1000;
-    assert.strictEqual((await call('POST', EMAIL, { email: 'marie.new@example.com' })).status, 401, 'two hours after the last login');
-    await call('POST', LOGIN, { email: consent.email });
-    await call('POST', `${LOGIN}/verify`, { code: codeIn(mailer.sent[0].text) });
-    assert.strictEqual((await call('POST', EMAIL, { email: 'marie.new@example.com' })).status, 200, 'after logging in again');
+    clock.t += 3 * 24 * 60 * 60 * 1000;   // days after the last login
+    const asked = await call('POST', EMAIL, { email: 'marie.new@example.com' });
+    assert.strictEqual(asked.status, 200);
+    assert.strictEqual(mailer.sent[0].to, 'marie.new@example.com');
+    const done = await call('POST', VERIFY, { code: codeIn(mailer.sent[0].text) });
+    assert.strictEqual((await done.json()).emailChanged, true);
+    assert.strictEqual(mailer.sent[1].to, consent.email, 'the old email is told');
   });
 });
 

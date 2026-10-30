@@ -10,6 +10,8 @@ namespace SafeTouch.UI.Screens
     ///   1. the parent types the new email and the API sends a 6-digit code to that NEW email;
     ///   2. typing the code makes it the parent's email: login and age-check codes go there from then on,
     ///      and the old email gets a short notice. Until then nothing changes.
+    /// Also opened from the login screen ("My email has changed", after the grown-up check) by a parent who no
+    /// longer reads the old email: no login is needed, and the new email's code logs them in.
     /// Before the consent is confirmed, "Change my details" on the verify screen corrects the email instead.
     /// </summary>
     public class ChangeEmailScreen : UIScreen
@@ -22,9 +24,12 @@ namespace SafeTouch.UI.Screens
 
         public override string Name { get { return "email"; } }
 
+        /// <summary>True when the parent is not logged in: they came from the login screen.</summary>
+        bool FromLogin { get { return game.Consent != null && !game.Consent.LoggedIn; } }
+
         protected override void BuildContent(RectTransform root)
         {
-            var col = StandardColumn(root, "", () => { Reset(); ui.ShowMenu("parent"); });
+            var col = StandardColumn(root, "", () => { Reset(); ui.ShowMenu(FromLogin ? "login" : "parent"); });
             heading = UIFactory.Label(col, "", Theme.Title, Theme.Ink, TextAnchor.UpperLeft, true);
             body = UIFactory.Label(col, "", Theme.Body, Theme.Ink, TextAnchor.UpperLeft, false);
             email = UIFactory.Input(col, "", InputField.ContentType.EmailAddress, TouchScreenKeyboardType.EmailAddress, 254);
@@ -104,6 +109,7 @@ namespace SafeTouch.UI.Screens
             if (waiting) return;
             waiting = true;
             Say(L("Checking...", "Biraragenzura..."), Theme.Muted);
+            bool fromLogin = FromLogin;
             game.Consent.VerifyEmailChange(digits, newEmail, result =>
             {
                 waiting = false;
@@ -111,7 +117,8 @@ namespace SafeTouch.UI.Screens
                 {
                     case ConsentService.Result.Verified:
                         Reset();
-                        ui.ShowMenu("parent");
+                        if (fromLogin) game.ContinueFromSplash();   // logged in with the new email: into the app
+                        else ui.ShowMenu("parent");
                         break;
                     case ConsentService.Result.WrongCode: Say(L("That code is not right. Please check and try again.", "Iyo kode si yo. Mwongere mugerageze."), Theme.Unsafe); break;
                     case ConsentService.Result.Expired: Say(L("This code has expired. Tap \"Send the code again\".", "Iyi kode yararangiye. Mukande \"Ohereza kode nanone\"."), Theme.Unsafe); break;

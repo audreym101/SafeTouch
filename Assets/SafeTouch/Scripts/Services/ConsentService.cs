@@ -170,7 +170,7 @@ namespace SafeTouch.Services
         }
 
         /// <summary>
-        /// Change the email, step 1 (consent confirmed, parent logged in): the API sends a code to the NEW
+        /// Change the email, step 1 (consent confirmed; no login needed, the old email may be gone): the API sends a code to the NEW
         /// email; the old one stays until the code is typed. done gets Sent, Invalid (not an email, or the
         /// same one), NeedsLogin (log in again), Wait, EmailFailed or Offline.
         /// </summary>
@@ -197,6 +197,7 @@ namespace SafeTouch.Services
                 {
                     Record.email = (newEmail ?? "").Trim();
                     Record.emailMasked = reply.emailMasked;
+                    LoggedIn = true;   // the code from the new email proves it: no login with it right after
                     Record.Save();
                     Notify();
                     done(Result.Verified);

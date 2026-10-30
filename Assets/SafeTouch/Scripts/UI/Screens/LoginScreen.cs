@@ -16,7 +16,7 @@ namespace SafeTouch.UI.Screens
     {
         Text heading, body, status, pickLabel;
         InputField email, code;
-        Button send, login, again, other, youngPick, olderPick;
+        Button send, login, again, other, changed, youngPick, olderPick;
         bool codeStep, waiting;
         string picked;   // the group the parent chose for the child ("6-8" or "9-11"); applied once they are in
 
@@ -51,6 +51,8 @@ namespace SafeTouch.UI.Screens
             var row = UIFactory.Row(col, "More", Theme.Gap, Theme.TouchTarget);
             again = UIFactory.Button(row.transform, "", Theme.Card, Theme.Ink, SendCode);
             other = UIFactory.Button(row.transform, "", Theme.Card, Theme.Ink, () => { codeStep = false; status.text = ""; OnShow(); });
+            // A parent who no longer uses the email this phone was set up with changes it here, after the grown-up check.
+            changed = UIFactory.Button(col, "", Theme.Card, Theme.Ink, () => ParentGateScreen.Open(ui, "email", "login"));
             UIFactory.Spacer(col, 1f);
         }
 
@@ -71,6 +73,8 @@ namespace SafeTouch.UI.Screens
             UIFactory.SetButtonLabel(login, L("Log in", "Injira"));
             UIFactory.SetButtonLabel(again, L("Send the code again", "Ohereza kode nanone"));
             UIFactory.SetButtonLabel(other, L("Use another email", "Indi meyili"));
+            UIFactory.SetButtonLabel(changed, L("My email has changed", "Imeyili yanjye yarahindutse"));
+            changed.gameObject.SetActive(!codeStep);
             ((Text)email.placeholder).text = L("Your email", "Imeyili yanyu");
 
             email.gameObject.SetActive(!codeStep);
@@ -130,6 +134,14 @@ namespace SafeTouch.UI.Screens
             var service = game.Consent;
             var typed = email.text.Trim();
             if (typed.Length == 0 || !typed.Contains("@")) { Say(L("Please type your email.", "Andika imeyili yanyu."), Theme.Caution); return; }
+            // The phone knows which email it was set up with: say so, instead of a code that never comes.
+            var onPhone = service.Record != null ? (service.Record.email ?? "").Trim() : "";
+            if (onPhone.Length > 0 && !string.Equals(typed, onPhone, System.StringComparison.OrdinalIgnoreCase))
+            {
+                Say(string.Format(L("This phone was set up with {0}. Type that email, or tap \"My email has changed\".",
+                                    "Iyi telefoni yashyizweho na {0}. Andika iyo meyili, cyangwa ukande \"Imeyili yanjye yarahindutse\"."), Mask(onPhone)), Theme.Caution);
+                return;
+            }
             if (waiting) return;
             waiting = true;
             Say(L("Sending...", "Birohereza..."), Theme.Muted);
@@ -179,6 +191,15 @@ namespace SafeTouch.UI.Screens
         {
             status.text = text;
             status.color = colour;
+        }
+
+        /// <summary>"uwase@example.com" -> "u***e@example.com", like the API: enough to recognise, not enough to read.</summary>
+        static string Mask(string email)
+        {
+            int at = email.IndexOf('@');
+            if (at < 1) return "***";
+            var user = email.Substring(0, at);
+            return (user.Length <= 2 ? user.Substring(0, 1) : user[0] + "***" + user[user.Length - 1]) + email.Substring(at);
         }
 
         static string NoInternet()
