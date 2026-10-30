@@ -4,13 +4,13 @@ Once a parent has confirmed their consent ([consent.md](consent.md)), the app as
 
 | Step | What happens |
 |---|---|
-| 1 | The child or parent taps **Start**. If the consent is confirmed and nobody has logged in since the app opened, the **Log in** screen shows. |
+| 1 | The app opens on the **Log in** screen when the consent is confirmed (and **Start** leads there too, if someone goes back to the welcome screen). |
 | 2 | The parent types their email and taps **Send me a code**. |
 | 3 | The API checks the email against the one on record. If it matches, it emails (and texts) a new code. |
 | 4 | The parent types the code. Correct: the app opens. The login lasts until the app is closed. |
 
 - **Not saved:** the login is kept only while the app runs. Closing it, or the phone restarting it, means logging in again.
-- **Parents who haven't confirmed yet** (the 7 days after agreeing) don't log in: they use the verify screen. Typing the emailed code there also counts as a login.
+- **Parents who haven't confirmed yet** don't log in. When the app opens, they see a **reminder** to confirm the emailed code, with the days left of the 7. Within the 7 days they can tap "Verify later" and let the child start; after that, the code is needed before the child can continue. Typing the code there also counts as a login. (On the day they agree, the screen is the normal "one last step" instead of a reminder.)
 - **Needs internet,** because the code comes from the API. Without it, the screen says so and waits. There is no bypass, so check the phone has internet before a session.
 - **After withdrawing** consent, the next start goes to the consent page.
 
