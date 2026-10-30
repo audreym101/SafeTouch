@@ -54,7 +54,7 @@ namespace SafeTouch.UI.Screens
                 size.minHeight = 176f;
                 size.preferredHeight = -1f;
                 var v = card.button.gameObject.AddComponent<VerticalLayoutGroup>();
-                v.padding = new RectOffset(44, 24, 14, 14);
+                v.padding = new RectOffset(44, 140, 14, 14);   // room on the right for the number badge
                 v.spacing = 4f;
                 v.childAlignment = TextAnchor.MiddleLeft;
                 v.childControlWidth = v.childControlHeight = true;
@@ -73,6 +73,7 @@ namespace SafeTouch.UI.Screens
                 card.title = UIFactory.Label(card.button.transform, "", Theme.Title, Theme.Ink, TextAnchor.MiddleLeft, true);
                 card.summary = UIFactory.Label(card.button.transform, "", Theme.Label, Theme.Muted, TextAnchor.MiddleLeft, false);
                 card.summary.supportRichText = true;   // the status follows the summary in the lesson's colour
+                Decor.Badge((RectTransform)card.button.transform, info == LessonInfo.Game ? "G" : info.level.ToString(), info.color, 96f);
                 cards.Add(card);
             }
 
