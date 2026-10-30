@@ -136,9 +136,21 @@ namespace SafeTouch.UI
         /// <summary>True while the screen showing lets the 3D view (or the camera picture) show through.</summary>
         public bool CameraShowing { get { return active != null && active.CameraVisibleNow; } }
 
+        string previous;
+
+        /// <summary>
+        /// Where a back button leads: the screen the child came from when it is one of allowed (e.g. the lesson
+        /// map), else fallback (the menu). So My badges opened from the menu goes back to the menu.
+        /// </summary>
+        public string CameFrom(string fallback, params string[] allowed)
+        {
+            return previous != null && System.Array.IndexOf(allowed, previous) >= 0 ? previous : fallback;
+        }
+
         /// <summary>Shows one screen by name and hides the others.</summary>
         public void ShowMenu(string name)
         {
+            if (active != null && active.Name != name) previous = active.Name;
             foreach (var s in screens)
             {
                 bool show = s.Name == name;

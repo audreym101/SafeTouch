@@ -97,19 +97,29 @@ namespace SafeTouch.Core
             // Android back button: leave the lesson and go home (NFR6).
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
-                if (uiManager.ActiveMenu == "menu" || uiManager.ActiveMenu == "splash") uiManager.ShowMenu("splash");
-                else if (uiManager.ActiveMenu == "home") uiManager.ShowMenu("menu");
-                else ReturnToMenu();
+                var at = uiManager.ActiveMenu;
+                if (at == "menu" || at == "splash" || at == "login" || at == "consent" || at == "verify") uiManager.ShowMenu("splash");
+                else if (at == "home") uiManager.ShowMenu("menu");
+                else if (System.Array.IndexOf(LessonScreens, at) >= 0) ReturnToMenu();
+                else uiManager.ShowMenu(uiManager.CameFrom("menu", "home"));   // badges, settings, about...: back where the child came from
             }
         }
 
         bool started;
+
+        /// <summary>Screens that belong to a lesson: the back key leaves the lesson for the lesson map.</summary>
+        static readonly string[] LessonScreens = { "lesson", "scan", "memory", "certificate", "places", "adults" };
+
+        /// <summary>A quick look at another app (email, the phone app, the lock screen) is not opening SafeTouch again.</summary>
+        const double LoginGraceMinutes = 5;
+        System.DateTime pausedAt = System.DateTime.MaxValue;
 
         void OnApplicationPause(bool paused)
         {
             if (paused)
             {
                 if (progressManager != null) SaveProgress();
+                pausedAt = System.DateTime.UtcNow;
                 return;
             }
             // Back in the app. The parent logs in again every time it is opened. Android's camera and
@@ -117,6 +127,8 @@ namespace SafeTouch.Core
             if (!started || AppSession.AskingPermission || consent == null || !consent.HasConsent) return;
             // The parent went to their mail app to read a code (new email, age check): stay on that screen.
             if (AppSession.WaitingForCode) return;
+            // Back within a few minutes (the phone app, an email, the screen went off): carry on where they were.
+            if ((System.DateTime.UtcNow - pausedAt).TotalMinutes < LoginGraceMinutes) return;
             consent.LogOut();
             EndActiveLesson();
             uiManager.ShowMenu(FirstScreen());
@@ -297,7 +309,7 @@ namespace SafeTouch.Core
         void OnCharacterPlaced(ARCharacter character)
         {
             arManager.ApplySkinTone(SkinTones.Get(progress.skinTone), false);
-            if (currentLevel > 0 && activeLesson == null) BeginCurrentLesson();
+            if (currentLevel > 0 && activeLesson == null && uiManager.ActiveMenu == "scan") BeginCurrentLesson();   // only when a lesson was being opened
         }
 
         void BeginCurrentLesson()

@@ -24,7 +24,7 @@ namespace SafeTouch.UI.Screens
 
         protected override void BuildContent(RectTransform root)
         {
-            var col = StandardColumn(root, "", () => ui.ShowMenu("home"));
+            var col = StandardColumn(root, "", () => ui.ShowMenu(ui.CameFrom("menu", "home")));
             TitleText.color = Theme.Ink;
             BuildPreview(col);
             UIFactory.Spacer(col, 1f);
@@ -36,7 +36,7 @@ namespace SafeTouch.UI.Screens
             toneName = UIFactory.Label(cardRt, "", Theme.Title, Theme.Ink, TextAnchor.MiddleCenter, true);
             BuildSwatches(cardRt);
             hint = UIFactory.Label(cardRt, "", Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
-            done = UIFactory.Button(cardRt, "", Theme.Primary, Color.white, () => ui.ShowMenu("home"));
+            done = UIFactory.Button(cardRt, "", Theme.Primary, Color.white, () => ui.ShowMenu(ui.CameFrom("menu", "home")));
         }
 
         Button done;

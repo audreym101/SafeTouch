@@ -12,7 +12,7 @@ namespace SafeTouch.UI.Screens
 
         protected override void BuildContent(RectTransform root)
         {
-            var col = StandardColumn(root, "", () => ui.ShowMenu("home"));
+            var col = StandardColumn(root, "", () => ui.ShowMenu(ui.CameFrom("menu", "home")));
             list = UIFactory.ScrollList(col, Theme.Gap);
         }
 
