@@ -9,13 +9,15 @@
 //   POST   /api/consent/:consentId/resend   new code (at most once a minute, 5 a day)
 //   POST   /api/consent/:consentId/login    { email } -> a login code by email (and SMS) when the email matches
 //   POST   /api/consent/:consentId/login/verify  { code } -> { loggedIn: true }
+//   POST   /api/consent/:consentId/age      { ageYears: 9..11 } -> a code to the parent to confirm the child's age
+//   POST   /api/consent/:consentId/age/verify  { code } -> { ageConfirmed: true }: the Guardian (9-11) lessons may open
 //   GET    /api/consent/:consentId          status only: no name, phone or full email
 //   DELETE /api/consent/:consentId          withdraw: deletes the consent and the device's progress
 
 const crypto = require('crypto');
 const { validateConsent } = require('./validate');
-const { consentEmail, loginEmail } = require('./mailer');
-const { consentSms, loginSms } = require('./sms');
+const { consentEmail, loginEmail, ageEmail } = require('./mailer');
+const { consentSms, loginSms, ageSms } = require('./sms');
 
 const CODE_TTL_MS = 24 * 60 * 60 * 1000;
 const LOGIN_TTL_MS = 10 * 60 * 1000;   // a login code is for now, not for tomorrow
@@ -199,6 +201,70 @@ function registerConsentRoutes(app, store, mailer, now = () => Date.now(), sms =
     record.lastLoginAt = new Date(now()).toISOString();
     await store.saveConsent(record);
     res.json({ loggedIn: true, ...status(record) });
+  }));
+
+  // The Guardian lessons (ages 9-11) talk openly about online strangers and private parts of the body,
+  // so a grown-up confirms the child's age first. The app sends only the age in whole years, worked out
+  // on the phone from a date that is never kept or sent: no birth date, and nothing about the child,
+  // reaches the API. The code goes to the parent's email (and phone) on record.
+  app.post('/api/consent/:consentId/age', async (req, res, next) => {
+    try {
+      if (!UUID.test(req.params.consentId)) return res.status(400).json({ errors: ['consentId must be a UUID.'] });
+      const extra = Object.keys(req.body || {}).filter((k) => k !== 'ageYears');
+      if (extra.length) return res.status(400).json({ errors: [`Unknown field: ${extra[0]}. Only ageYears is accepted: no birth date is kept.`] });
+      const age = req.body ? req.body.ageYears : undefined;
+      if (!Number.isInteger(age)) return res.status(400).json({ errors: ['ageYears must be a whole number.'] });
+      if (age < 9 || age > 11) return res.status(400).json({ errors: ['The Guardian lessons are for ages 9 to 11.'], ageBand: age < 9 ? '6-8' : null });
+      const record = await store.getConsent(req.params.consentId);
+      if (!record) return res.status(404).json({ error: 'No consent with this id.' });
+      if (!record.verified) return res.status(403).json({ error: 'Please confirm your email first.' });
+      if (record.ageBand === '9-11') return res.json({ sent: false, ageConfirmed: true });
+
+      const t = now();
+      const sends = (record.ageSends || []).filter((s) => s > t - 24 * 60 * 60 * 1000);
+      if (sends.length && t - sends[sends.length - 1] < RESEND_GAP_MS) return res.status(429).json({ error: 'Please wait a minute before asking again.' });
+      if (sends.length >= MAX_LOGINS_PER_DAY) return res.status(429).json({ error: 'Too many codes today. Try again tomorrow.' });
+
+      const code = newCode();
+      record.ageSends = sends.concat(t);
+      record.ageCodeHash = hashCode(`age-${record.consentId}`, code);
+      record.ageCodeExpiresAt = t + CODE_TTL_MS;
+      record.ageAttempts = 0;
+      await store.saveConsent(record);
+      const [emailSent, smsSent] = await Promise.all([
+        (async () => {
+          try { await mailer.send({ to: record.email, toName: record.parentName, ...ageEmail(record, age, code) }); return true; }
+          catch (err) { console.error('Age email failed:', err.message); return false; }
+        })(),
+        (async () => {
+          try { return await sms.send({ phone: record.phone, country: record.country, text: ageSms(record, code) }); }
+          catch (err) { console.error('Age SMS failed:', err.message); return false; }
+        })(),
+      ]);
+      if (!emailSent && !smsSent) return res.status(502).json({ error: 'Could not send the code. Try again later.' });
+      res.json({ sent: true, emailMasked: maskEmail(record.email) });
+    } catch (err) { next(err); }
+  });
+
+  app.post('/api/consent/:consentId/age/verify', findOr404(async (record, req, res) => {
+    const code = req.body && typeof req.body.code === 'string' ? req.body.code.replace(/\s/g, '') : '';
+    if (!/^\d{6}$/.test(code)) return res.status(400).json({ errors: ['code must be the 6 digits from the email or text.'] });
+    if (!record.ageCodeHash || !record.ageCodeExpiresAt || now() > record.ageCodeExpiresAt) return res.status(410).json({ error: 'This code has expired. Ask for a new code.' });
+    if ((record.ageAttempts || 0) >= MAX_ATTEMPTS) return res.status(429).json({ error: 'Too many tries. Ask for a new code.' });
+    const given = Buffer.from(hashCode(`age-${record.consentId}`, code), 'hex');
+    const expected = Buffer.from(record.ageCodeHash, 'hex');
+    if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) {
+      record.ageAttempts = (record.ageAttempts || 0) + 1;
+      await store.saveConsent(record);
+      return res.status(400).json({ errors: ['That code is not right.'], attemptsLeft: Math.max(0, MAX_ATTEMPTS - record.ageAttempts) });
+    }
+    delete record.ageCodeHash;
+    delete record.ageCodeExpiresAt;
+    delete record.ageAttempts;
+    record.ageBand = '9-11';
+    record.ageConfirmedAt = new Date(now()).toISOString();
+    await store.saveConsent(record);
+    res.json({ ageConfirmed: true, ageBand: record.ageBand });
   }));
 
   app.get('/api/consent/:consentId', findOr404(async (record, req, res) => res.json(status(record))));
