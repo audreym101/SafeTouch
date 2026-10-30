@@ -22,7 +22,7 @@ namespace SafeTouch.UI
                 case NoTip.Squeaky: return Localization.T("voice.tip.squeaky", "That was very high. Use your low, strong voice.");
                 case NoTip.TooLong: return Localization.T("voice.tip.long", "Keep it short and sharp: NO!");
                 case NoTip.TooManyWords: return Localization.T("voice.tip.words", "Just one word: NO! (or OYA!)");
-                default: return Localization.T("voice.tip.nothing", "I didn't hear anything. Hold the phone near you and say NO in your big voice.");
+                default: return Localization.T("voice.tip.nothing", "I didn't hear anything. Hold the phone near you and say NO clearly, like you mean it.");
             }
         }
     }

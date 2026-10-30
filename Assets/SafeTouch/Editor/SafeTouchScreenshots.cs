@@ -138,6 +138,17 @@ namespace SafeTouch.EditorTools
                 typeof(SafeTouch.Services.ConsentService).GetProperty("Record").SetValue(game.Consent, sample);
                 ui.ShowMenu("verify");
             });
+            yield return shot("01c-login", () =>
+            {
+                // A parent whose consent is confirmed, not yet logged in (in memory only).
+                var sample = ConsentRecord.Create(Guid.NewGuid().ToString(), "en");
+                sample.parentName = "Uwase Marie"; sample.email = "uwase.marie@example.com"; sample.emailMasked = "u***e@example.com";
+                sample.phone = "+250 788 123 456"; sample.country = "Rwanda"; sample.sentToServer = true; sample.verified = true;
+                sample.agreements = new ConsentAgreements { guardian = true, terms = true, childUse = true, dataUse = true };
+                typeof(SafeTouch.Services.ConsentService).GetProperty("Record").SetValue(game.Consent, sample);
+                ui.ShowMenu("login");
+            });
+            yield return shot("01d-age-check", () => ui.ShowMenu("agegate"));
             yield return shot("02-age", () => ui.ShowMenu("age"));
             yield return shot("03-home", () => ui.ShowMenu("home"));
             yield return shot("04-scan", () => ui.ShowMenu("scan"));
@@ -164,7 +175,7 @@ namespace SafeTouch.EditorTools
                 Call(game.Voice, "Awake");
                 game.Voice.Enabled = false;   // no microphone in the Editor capture: shows the "didn't hear you" result
                 ui.Lesson.ShowVoice(Localization.T("stop.s.title", "S: Say NO"),
-                    Localization.T("stop.s.voice", "Say \"NO!\" out loud in a big, strong voice, so the person knows you mean it. Keza is listening!"),
+                    Localization.T("stop.s.voice", "Say \"NO!\" out loud, clearly, so the person knows you mean it. Keza is listening!"),
                     game.Voice, null);
             });
             yield return shot("08-memory", () =>
