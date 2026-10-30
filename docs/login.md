@@ -9,8 +9,8 @@ Once a parent has confirmed their consent ([consent.md](consent.md)), the app as
 | 3 | The API checks the email against the one on record. If it matches, it emails (and texts) a new code. |
 | 4 | The parent types the code. Correct: the app opens. The login lasts until the app is closed. |
 
-- **Not saved:** the login is kept only while the app runs. Closing it, or the phone restarting it, means logging in again.
-- **Parents who haven't confirmed yet** don't log in. When the app opens, they see a **reminder** to confirm the emailed code, with the days left of the 7. Within the 7 days they can tap "Verify later" and let the child start; after that, the code is needed before the child can continue. Typing the code there also counts as a login. (On the day they agree, the screen is the normal "one last step" instead of a reminder.)
+- **Not saved, and ended when the app is left:** the login lasts only while the app is in use. When the parent leaves the app (the home button, another app) and comes back, the Log in screen shows again. Android's camera and microphone questions also pause the app, and those do not log the parent out.
+- **The consent panel stays until the email is confirmed.** A parent who agreed to the terms but has not typed the emailed code sees the code screen every time the app opens, with a reminder once a day or more has passed. There is no "verify later" and no grace period: SafeTouch stays closed until the code is typed. Typing the code there also counts as a login.
 - **Needs internet,** because the code comes from the API. Without it, the screen says so and waits. There is no bypass, so check the phone has internet before a session.
 - **After withdrawing** consent, the next start goes to the consent page.
 
@@ -29,3 +29,7 @@ Once a parent has confirmed their consent ([consent.md](consent.md)), the app as
 
 - Each login sends one email (free on Brevo up to 300 a day) and, with SMS on, one text. The SMS limit of 3 texts per phone per day ([sms.md](sms.md)) is used up quickly by logins: after that, only the email goes out. Raise `SMS_PER_PHONE_DAILY` if the parent should always get a text.
 - The free Render server sleeps after 15 minutes without use, so the first code request after a pause can take up to a minute.
+
+## Choosing the group on the login screen
+
+The Log in screen has the two group buttons, **Explorer 6-8** and **Guardian 9-11**, above the email box. The parent picks the group for their child, logs in, and the app opens that group's lessons. Picking Guardian when the age has not been confirmed first sends the parent to the age check ([age-check.md](age-check.md)).

@@ -13,10 +13,12 @@ The home screen has a tab for each path. Each path keeps its **own finished less
 
 The AR scenes are the same room, Keza and the zones; the Guardian path adds steps on top, and the lessons already read the path in play (`Older` in `LessonBase`).
 
-## Unlocking
+## Unlocking (why it is locked)
+
+The Guardian lessons talk openly about online strangers and private parts of the body, so they are not for younger children.
 
 - The Explorer path is always open.
-- The Guardian path opens when the child **chooses 9-11 at the start**, or has **finished all 5 lessons of the Explorer path**. Until then its tab says *locked*, and tapping it explains what to finish.
+- The Guardian path opens **only when a grown-up has confirmed the child's age** ([age-check.md](age-check.md)): not by choosing it, and not by finishing the Explorer lessons. Until then its tab says *locked*, and tapping it opens the age check.
 - A child on the Guardian path can still open the Explorer tab.
 
 ## How it is stored
