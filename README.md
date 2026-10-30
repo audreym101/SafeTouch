@@ -11,7 +11,7 @@ The child places Keza, a friendly guide character, on the real floor through the
 | **Figma prototype** | https://www.figma.com/proto/LGF1ZxkHqCZH1Lswr6zrMm/Untitled?page-id=1%3A1521&node-id=1-2914&p=f&viewport=165%2C-166%2C0.17&t=y4xb4JWYI30hmsgq-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=1%3A2890&show-proto-sidebar=1  |
 | **Clickable prototype (browser)** | https://www.figma.com/proto/LGF1ZxkHqCZH1Lswr6zrMm/Untitled?page-id=1%3A1521&node-id=1-2914&p=f&viewport=165%2C-166%2C0.17&t=y4xb4JWYI30hmsgq-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=1%3A2890&show-proto-sidebar=1 |
 | **Platform** | Android 8.0+ (API 26) phones on the ARCore supported list |
-| **Built with** | Unity 6 LTS, AR Foundation 6, Google ARCore XR Plugin, C#; Node.js + Express API on Firebase (Cloud Functions + Firestore) |
+| **Built with** | Unity 6 LTS, AR Foundation 6, Google ARCore XR Plugin, C#; Node.js + Express API with MongoDB Atlas |
 
 ---
 
@@ -74,7 +74,7 @@ The child places Keza, a friendly guide character, on the real floor through the
 | **Git and GitHub** | | Version control; GitHub Actions runs the API tests |
 | **Figma** (plus the HTML prototype in `docs/prototype`) | | Screens, flows, style guide |
 | **Blender, Mixamo, Audacity** | | Models, animation, narration (week 6) |
-| **Node.js, Express, Firebase** | 22, 4, Cloud Functions 2nd gen + Cloud Firestore (Blaze plan, within the free allowance) | Parental consent API and optional anonymous progress sync |
+| **Node.js, Express, MongoDB Atlas** | 22, 4, M0 free tier (the API runs on Render's free plan) | Parental consent API and optional anonymous progress sync |
 
 ## 3. Set up the environment
 
@@ -124,14 +124,13 @@ git clone https://github.com/audreym101/SafeTouch.git
 ```bash
 cd backend
 npm install
-npm test          # 29 tests: progress sync, the consent flow (codes, limits, withdrawal), Firestore and MongoDB storage
+npm test          # 50 tests: progress sync, the consent flow (codes, limits, withdrawal), login, SMS, MongoDB storage
 npm start         # http://localhost:3000, in-memory store (or MongoDB with MONGODB_URI in .env.local); consent emails print here
-npm run deploy    # to Firebase: the Cloud Function and the Firestore rules
 ```
 
-The API runs on **Firebase**: a Cloud Function in front of a Cloud Firestore database. **[docs/firebase.md](docs/firebase.md)** walks through creating the project, the Blaze plan and budget, the database, the email secret and the deploy. The deploy prints the **Function URL** (`https://europe-west1-<project-id>.cloudfunctions.net/safetouch`), which is the Base Url for the app. In Unity, select **SafeTouch App**, and on **Cloud Sync Service** set **Base Url** and tick **Enabled In Build**. Sync still only runs after a parent switches it on in the grown-ups section.
+The API stores its data in **MongoDB Atlas** and runs on **Render**'s free plan: **[docs/mongodb.md](docs/mongodb.md)** walks through the free cluster, the database user, Render and the settings. Render gives an address like `https://safetouch-api.onrender.com`, which is the Base Url for the app. In Unity, select **SafeTouch App**, and on **Cloud Sync Service** set **Base Url** and tick **Enabled In Build**. Sync still only runs after a parent switches it on in the grown-ups section.
 
-**MongoDB instead of Firestore:** set `MONGODB_URI` (a MongoDB Atlas connection string, or `mongodb://127.0.0.1:27017` for a local server) and optionally `MONGODB_DB` (default `safetouch`), in `backend/.env.local` on a laptop or as environment variables on the host (for example Render). When `MONGODB_URI` is set it wins over Firestore. The API uses the same two collections, `progress` and `consents`, with a unique index on `deviceId` and `consentId`.
+**The database:** set `MONGODB_URI` (a MongoDB Atlas connection string, or `mongodb://127.0.0.1:27017` for a local server) and optionally `MONGODB_DB` (default `safetouch`), in `backend/.env.local` on a laptop or as environment variables on the host (for example Render). Without it, the data is kept in memory and lost when the server restarts. The API uses the same two collections, `progress` and `consents`, with a unique index on `deviceId` and `consentId`.
 
 The consent page needs the API: set **Base Url** on **Consent Service** too (an `https://` address on phones), and an email provider in `.env` (`MAIL_PROVIDER`, `MAIL_API_KEY`, `MAIL_FROM`, see [docs/consent.md](docs/consent.md)). Until then the app keeps the consent on the phone and sends it when the API can be reached.
 
@@ -213,7 +212,7 @@ Details: **[docs/deployment-plan.md](docs/deployment-plan.md)**.
 1. **Weeks 1 to 6:** development builds with Build And Run on the researcher's ARCore phone.
 2. **Week 7:** expert review of all content; a signed release APK (`0.2.0`) is built.
 3. **Weeks 7 to 8:** the APK is installed by hand on 2 to 3 ARCore phones for the evaluation sessions in Kigali; the app runs fully offline and progress is reset between children.
-4. **API:** deployed to Firebase (Cloud Functions + Firestore, [docs/firebase.md](docs/firebase.md)) for the parental consent; anonymous progress sync only if the ethics approval covers it. It stores totals for the evaluation and supports withdrawal.
+4. **API:** deployed to Render with MongoDB Atlas M0 ([docs/mongodb.md](docs/mongodb.md)) for the parental consent; anonymous progress sync only if the ethics approval covers it. It stores totals for the evaluation and supports withdrawal.
 5. **After the capstone:** Google Play internal testing under the Families policy.
 
 ## 9. Project structure
