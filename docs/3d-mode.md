@@ -11,8 +11,11 @@
 ## Camera mode: Keza in the room, no scanning
 
 1. When a lesson opens, the app asks for the camera the first time, with the usual explanation.
-2. As soon as the phone knows where it is (usually under a second, never more than 3 seconds), Keza appears **1.5 m in front of the phone**, facing the child. Nobody has to find a floor first.
-3. ARCore keeps looking for the real floor in the background, without showing any grid. When it finds the floor under Keza, she settles gently onto it. Until then she stands about 1.1 m below the phone, which is where the floor is when a child holds it.
+2. As soon as the phone knows where it is (usually under a second, never more than 3 seconds), Keza appears **where the phone is looking**, facing the child. Nobody has to find a floor first.
+   - She stands on the floor just below the middle of the screen, 0.9–3 m away, so she is in the picture whether the phone points ahead or down.
+   - That floor is the one ARCore has already found there. If it hasn't found one yet, the app guesses the floor is about 1.1 m below the phone.
+3. ARCore keeps looking for the real floor in the background, without showing any grid. When it finds the floor under Keza, she settles gently onto it **once**, and then stays put. Small corrections ARCore makes afterwards are ignored, so she never keeps drifting. She only moves again if the floor height changes by more than 4 cm.
+4. If the child points the phone away and Keza is out of the picture for a moment, a yellow **"Bring Keza back"** button appears near the top. One tap brings her back in front of the phone, with everyone around her, and the lesson carries on.
 
 **What the child can do:**
 - **Drag** Keza and the people with a finger.

@@ -24,7 +24,8 @@ namespace SafeTouch.UI
         GameObject panel;
         Text caption;
         bool showing;
-        float lastPinch;
+        float lastPinch, outOfViewSince = -1f;
+        Button bringBack;
 
         public static SizeButtons Build(RectTransform parent, GameManager game, UIManager ui)
         {
@@ -44,6 +45,13 @@ namespace SafeTouch.UI
             var shadow = buttons.caption.gameObject.AddComponent<Outline>();
             shadow.effectColor = new Color(1f, 1f, 1f, 0.8f);
             Round(root, "-", Theme.Primary, () => buttons.Zoom(1f / Step));
+
+            // Camera mode: when the child points the phone away and Keza is out of the picture, one tap brings her back.
+            buttons.bringBack = UIFactory.Button(parent, "", Theme.Sun, Theme.Ink, () => game.AR.BringIntoView());
+            var brt = (RectTransform)buttons.bringBack.transform;
+            brt.anchorMin = brt.anchorMax = new Vector2(0.5f, 0.8f);
+            brt.sizeDelta = new Vector2(660f, 150f);
+            buttons.bringBack.gameObject.SetActive(false);
             return buttons;
         }
 
@@ -77,6 +85,13 @@ namespace SafeTouch.UI
             showing = game.AR != null && game.AR.HasCharacter && ui.CameraShowing;
             if (panel.transform.childCount > 0 && panel.transform.GetChild(0).gameObject.activeSelf != showing)
                 foreach (Transform child in panel.transform) child.gameObject.SetActive(showing);
+            // Shown after Keza has been out of the picture for a moment, so a quick look around does not flash it.
+            bool away = showing && game.AR.CanBringBack && !game.AR.CharacterInView;
+            if (!away) outOfViewSince = -1f;
+            else if (outOfViewSince < 0f) outOfViewSince = Time.unscaledTime;
+            bool offer = away && Time.unscaledTime - outOfViewSince > 0.7f;
+            if (bringBack.gameObject.activeSelf != offer) bringBack.gameObject.SetActive(offer);
+            if (offer) UIFactory.SetButtonLabel(bringBack, string.Format(Localization.Language == "rw" ? "Garura {0} hano" : "Bring {0} back", string.IsNullOrEmpty(game.AR.Character.Label) ? "Keza" : game.AR.Character.Label));
             if (!showing) { lastPinch = 0f; return; }
             caption.text = Localization.Language == "rw" ? "Ingano" : "Size";
             Pinch();

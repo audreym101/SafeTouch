@@ -185,18 +185,46 @@ namespace SafeTouch.AR
         }
 
         /// <summary>
-        /// Where Keza appears in the camera picture: 1.5 m in front of the phone, facing it, on the floor ARCore
-        /// has already found there, or else about 1.1 m below the phone (where the floor is when a child holds it).
+        /// Where Keza appears in the camera picture: on the floor where the phone is looking, a little below the middle
+        /// of the screen (so she is in view whether the phone points ahead or down), 0.9 to 3 m away, facing the phone.
+        /// The floor is the one ARCore has found there, or else a guess about 1.1 m below the phone.
         /// </summary>
         public Pose InstantPose()
         {
             var cam = CameraTransform;
-            var forward = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
-            if (forward == Vector3.zero) forward = Vector3.forward;
-            var spot = cam.position + forward * 1.5f;
-            float floor;
-            spot.y = FloorUnder(spot, out floor) ? floor : cam.position.y - 1.1f;
-            return new Pose(spot, Quaternion.LookRotation(-forward));
+            var view = arCamera != null ? arCamera : Camera.main;
+            var ray = view != null ? view.ViewportPointToRay(new Vector3(0.5f, 0.3f, 0f)) : new Ray(cam.position, cam.forward);
+            var flat = Vector3.ProjectOnPlane(ray.direction, Vector3.up);
+            if (flat.sqrMagnitude < 0.0001f) flat = Vector3.ProjectOnPlane(cam.forward, Vector3.up);
+            if (flat.sqrMagnitude < 0.0001f) flat = Vector3.forward;
+            flat.Normalize();
+
+            Vector3 spot = Vector3.zero;
+            bool found = false;
+            if (raycastManager != null && raycastManager.Raycast(ray, Hits, TrackableType.PlaneWithinInfinity))
+            {
+                foreach (var hit in Hits)   // nearest first
+                {
+                    var plane = planeManager != null ? planeManager.GetPlane(hit.trackableId) : null;
+                    if (plane == null || plane.alignment != PlaneAlignment.HorizontalUp || hit.pose.position.y > cam.position.y - 0.3f) continue;
+                    float d = Vector3.ProjectOnPlane(hit.pose.position - cam.position, Vector3.up).magnitude;
+                    if (d < 0.6f || d > 3.5f) continue;
+                    spot = hit.pose.position;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                // No floor found there yet: guess it 1.1 m below the phone and stand where the aiming ray meets it.
+                float floorY = cam.position.y - 1.1f;
+                float down = -ray.direction.y;
+                float distance = down > 0.01f ? (cam.position.y - floorY) / down * Vector3.ProjectOnPlane(ray.direction, Vector3.up).magnitude : 3f;
+                spot = cam.position + flat * Mathf.Clamp(distance, 0.9f, 3f);
+                spot.y = floorY;
+            }
+            var face = Vector3.ProjectOnPlane(cam.position - spot, Vector3.up);
+            return new Pose(spot, Quaternion.LookRotation(face.sqrMagnitude > 0.0001f ? face.normalized : Vector3.back));
         }
 
         /// <summary>The height of the lowest floor (or table) ARCore has found under a point, below the phone.</summary>
@@ -221,20 +249,58 @@ namespace SafeTouch.AR
 
         float nextSettle, settleY = float.NaN;
 
-        /// <summary>Camera mode: once ARCore finds the real floor under Keza, she settles down onto it, gently.</summary>
+        /// <summary>
+        /// Camera mode: once ARCore finds the real floor under Keza, she settles down onto it, gently, and then stays
+        /// put. Small corrections ARCore makes to the floor afterwards are ignored, so she never keeps drifting.
+        /// </summary>
         void SettleOnFloor()
         {
             if (viewMode != ViewMode.Camera || Stage != null || anchorRoot == null) return;
-            if (Time.unscaledTime >= nextSettle)
+            if (float.IsNaN(settleY) && Time.unscaledTime >= nextSettle)
             {
                 nextSettle = Time.unscaledTime + 0.5f;
                 float floor;
-                if (FloorUnder(anchorRoot.position, out floor)) settleY = floor;
+                if (FloorUnder(anchorRoot.position, out floor) && Mathf.Abs(floor - anchorRoot.position.y) > 0.04f) settleY = floor;
             }
             if (float.IsNaN(settleY)) return;
             var p = anchorRoot.position;
             p.y = Mathf.MoveTowards(p.y, settleY, Time.deltaTime * 0.5f);
             anchorRoot.position = p;
+            if (Mathf.Abs(p.y - settleY) < 0.001f) settleY = float.NaN;   // landed
+        }
+
+        /// <summary>True when Keza is somewhere in the picture (her middle, give or take a little).</summary>
+        public bool CharacterInView
+        {
+            get
+            {
+                var view = arCamera != null ? arCamera : Camera.main;
+                if (character == null || view == null) return false;
+                var v = view.WorldToViewportPoint(character.transform.position + Vector3.up * 0.4f);
+                return v.z > 0f && v.x > -0.05f && v.x < 1.05f && v.y > -0.05f && v.y < 1.05f;
+            }
+        }
+
+        /// <summary>Camera mode: Keza can be brought back into the picture ("Bring Keza back").</summary>
+        public bool CanBringBack { get { return viewMode == ViewMode.Camera && Stage == null && character != null && anchorRoot != null; } }
+
+        /// <summary>
+        /// Brings Keza back in front of the phone after the child looked away. Everyone with her comes too, turned
+        /// so they stand around her just as the child saw them before; the lesson carries on.
+        /// </summary>
+        public void BringIntoView()
+        {
+            if (!CanBringBack) return;
+            var pose = InstantPose();
+            var cam = CameraTransform.position;
+            var from = character.transform.position;
+            var before = Vector3.ProjectOnPlane(cam - from, Vector3.up);
+            var after = Vector3.ProjectOnPlane(cam - pose.position, Vector3.up);
+            if (before.sqrMagnitude > 0.0001f && after.sqrMagnitude > 0.0001f)
+                anchorRoot.RotateAround(from, Vector3.up, Vector3.SignedAngle(before, after, Vector3.up));
+            anchorRoot.position += pose.position - character.transform.position;
+            settleY = float.NaN;
+            nextSettle = 0f;
         }
 
         /// <summary>
