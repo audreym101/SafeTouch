@@ -176,6 +176,8 @@ namespace SafeTouch.Voice
             var rating = NoCoach.Rate(utterance, settings);
             if (continuous)
             {
+                // A scrape, a rustle or a bump is not a word: with no voice in it, keep listening for the real NO.
+                if (utterance.VoicedFraction < settings.minVoicedFraction) return;
                 if (onNo != null) onNo(rating);   // stay open for the next word
                 return;
             }

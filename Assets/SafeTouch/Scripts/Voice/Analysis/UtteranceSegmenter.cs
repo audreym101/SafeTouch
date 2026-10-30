@@ -22,10 +22,10 @@ namespace SafeTouch.Voice
         readonly List<VoiceFrame> onset = new List<VoiceFrame>();
 
         /// <summary>A word starts this far above the noise floor (dB).</summary>
-        public float OnsetMarginDb { get; set; } = 12f;
+        public float OnsetMarginDb { get; set; } = 8f;
 
         /// <summary>A word ends after the level stays within this of the floor (dB)...</summary>
-        public float ReleaseMarginDb { get; set; } = 6f;
+        public float ReleaseMarginDb { get; set; } = 5f;
 
         /// <summary>...for this long. Long enough for the gap inside "o-ya".</summary>
         public float HangoverSeconds { get; set; } = 0.25f;

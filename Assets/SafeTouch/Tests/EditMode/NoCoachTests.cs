@@ -37,10 +37,49 @@ namespace SafeTouch.Tests
         [Test]
         public void AQuietNoIsAskedToBeALittleLouder()
         {
-            var r = RateTry(Signals.Voice(290f, 270f, 0.5f, 0.012f));
+            var r = RateTry(Signals.Voice(290f, 270f, 0.5f, 0.008f));
             Assert.AreEqual(NoTip.ALittleLouder, r.tip);
             Assert.IsFalse(r.loud);
             Assert.AreEqual(2, r.stars);
+        }
+
+        // A child should not have to shout: an ordinary firm voice counts in a busy classroom too.
+        static System.Collections.Generic.List<Utterance> InRoom(float roomNoise, float voiceAmplitude)
+        {
+            var clip = Signals.Voice(300f, 270f, 0.5f, voiceAmplitude);
+            return Signals.Segment(Signals.WithRoom(Signals.Join(Signals.Silence(0.5f), clip, Signals.Silence(1f)), roomNoise));
+        }
+
+        [Test]
+        public void ANormalVoiceInAClassroomIsLoudEnough()
+        {
+            var words = InRoom(0.012f, 0.10f);   // classroom noise about -43 dBFS, an ordinary speaking voice
+            Assert.AreEqual(1, words.Count);
+            var r = NoCoach.Rate(words[0], NoCoachSettings.ForAgeGroup("6-8"));
+            Assert.IsTrue(r.loud, "a normal voice is loud enough without shouting");
+            Assert.AreEqual(3, r.stars);
+        }
+
+        [Test]
+        public void ANormalVoiceInANoisyRoomIsStillHeard()
+        {
+            var words = InRoom(0.03f, 0.10f);   // a noisy room, about -35 dBFS
+            Assert.AreEqual(1, words.Count, "heard, not ignored");
+            var r = NoCoach.Rate(words[0], NoCoachSettings.ForAgeGroup("9-11"));
+            Assert.IsTrue(r.Heard);
+            Assert.IsTrue(r.Good, "two stars or more: the lesson moves on");
+        }
+
+        [Test]
+        public void ARustleOrScrapeHasNoVoiceAndAClapIsIgnored()
+        {
+            var settings = NoCoachSettings.ForAgeGroup("6-8");
+            var scrape = Signals.Segment(Signals.WithRoom(Signals.Join(Signals.Silence(0.8f), Signals.Noise(0.4f, 0.12f, 4), Signals.Silence(1f)), 0.012f));
+            foreach (var w in scrape) Assert.Less(w.VoicedFraction, settings.minVoicedFraction, "noise has no pitch: the game does not count it as a NO");
+            var clap = Signals.Segment(Signals.WithRoom(Signals.Join(Signals.Silence(0.8f), Signals.Noise(0.03f, 0.5f, 3), Signals.Silence(1f)), 0.012f));
+            Assert.AreEqual(0, clap.Count, "a 30 ms click is not a word");
+            var nothing = Signals.Segment(Signals.WithRoom(Signals.Silence(2f), 0.012f));
+            Assert.AreEqual(0, nothing.Count);
         }
 
         [Test]

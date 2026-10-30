@@ -20,8 +20,8 @@ namespace SafeTouch.Voice
         /// <summary>True once the talking pitch came from the child rather than the age default.</summary>
         public bool calibrated;
 
-        public float strongLoudnessDb = 20f;     // dB above the room for a full-marks voice
-        public float audibleLoudnessDb = 12f;    // dB above the room to count as heard at all
+        public float strongLoudnessDb = 13f;     // dB above the room for a full-marks voice: a firm normal voice in a classroom, not a shout
+        public float audibleLoudnessDb = 7f;     // dB above the room to count as heard at all
         public float maxRiseSemitones = 1.5f;    // more than this and "No" sounds like a question
         public float maxAboveTalkingSemitones = 6f;   // higher than this is a squeak or a scream
         public float minSeconds = 0.15f;
