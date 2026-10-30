@@ -37,9 +37,10 @@ namespace SafeTouch.AR
 #if UNITY_ANDROID && !UNITY_EDITOR
             if (Granted) { answered(true, true); return; }
             var callbacks = new PermissionCallbacks();
-            callbacks.PermissionGranted += _ => answered(true, true);
-            callbacks.PermissionDenied += _ => answered(false, true);
-            callbacks.PermissionDeniedAndDontAskAgain += _ => answered(false, false);
+            callbacks.PermissionGranted += _ => { Core.AppSession.PermissionAnswered(); answered(true, true); };
+            callbacks.PermissionDenied += _ => { Core.AppSession.PermissionAnswered(); answered(false, true); };
+            callbacks.PermissionDeniedAndDontAskAgain += _ => { Core.AppSession.PermissionAnswered(); answered(false, false); };
+            Core.AppSession.PermissionAsked();   // the question pauses the app: that is not the parent leaving
             Permission.RequestUserPermission(Permission.Camera, callbacks);
 #else
             answered(true, true);

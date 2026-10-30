@@ -81,7 +81,13 @@ namespace SafeTouch.Managers
         public void SetAgeGroup(string ageGroup)
         {
             progress.ageGroup = ageGroup;
-            if (ageGroup == Progress.PathOlder) progress.guardianUnlocked = true;   // started on the 9-11 path
+            Save();
+        }
+
+        /// <summary>A grown-up has confirmed (by the emailed code) that the child is 9 to 11: the Guardian lessons may open.</summary>
+        public void UnlockGuardian()
+        {
+            progress.guardianUnlocked = true;
             Save();
         }
 

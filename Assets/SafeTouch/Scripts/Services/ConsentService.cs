@@ -48,6 +48,12 @@ namespace SafeTouch.Services
         /// </summary>
         public bool NeedsLogin { get { return HasConsent && Record.verified && !LoggedIn; } }
 
+        /// <summary>Ends the login: the app asks the parent for a code again (called when the app goes to the background).</summary>
+        public void LogOut()
+        {
+            LoggedIn = false;
+        }
+
         /// <summary>Message from the last failed request, for the screen.</summary>
         public string LastError { get; private set; }
 
@@ -56,7 +62,7 @@ namespace SafeTouch.Services
             public string consentId, deviceId, parentName, phone, email, country, language, termsVersion;
             public ConsentAgreements agreements;
         }
-        [Serializable] class StatusReply { public bool verified; public string verifiedAt; public string emailMasked; public bool emailSent; public bool sent; public bool loggedIn; public string error; public string[] errors; public int attemptsLeft; }
+        [Serializable] class StatusReply { public bool verified; public string verifiedAt; public string emailMasked; public bool emailSent; public bool sent; public bool loggedIn; public bool ageConfirmed; public string error; public string[] errors; public int attemptsLeft; }
         [Serializable] class CodeBody { public string code; }
         [Serializable] class EmailBody { public string email; }
 
@@ -140,6 +146,27 @@ namespace SafeTouch.Services
                 }
                 else done(Classify(status));
             }));
+        }
+
+        /// <summary>
+        /// Age check step 1: tells the API the child's age in whole years (worked out on this phone from a
+        /// date that is neither kept nor sent) so it emails the parent a code. Only 9 to 11 gets one.
+        /// done gets Sent, Invalid (not 9 to 11), Wait, EmailFailed or Offline.
+        /// </summary>
+        public void RequestAgeCheck(int ageYears, Action<Result> done)
+        {
+            if (!HasConsent || !Record.sentToServer) { done(Result.Offline); return; }
+            StartCoroutine(Request("POST", "/api/consent/" + Record.consentId + "/age", "{\"ageYears\":" + ageYears + "}", (status, reply) =>
+                done(status == 200 ? Result.Sent : status == 400 ? Result.Invalid : status == 403 ? Result.Error : status == 429 ? Result.Wait : status == 502 ? Result.EmailFailed : Classify(status))));
+        }
+
+        /// <summary>Age check step 2: checks the code. done gets Verified (the Guardian lessons may open), WrongCode, Expired, TooManyTries or Offline.</summary>
+        public void VerifyAgeCheck(string code, Action<Result> done)
+        {
+            if (!HasConsent || !Record.sentToServer) { done(Result.Offline); return; }
+            var body = JsonUtility.ToJson(new CodeBody { code = code });
+            StartCoroutine(Request("POST", "/api/consent/" + Record.consentId + "/age/verify", body, (status, reply) =>
+                done(status == 200 && reply.ageConfirmed ? Result.Verified : Classify(status))));
         }
 
         /// <summary>

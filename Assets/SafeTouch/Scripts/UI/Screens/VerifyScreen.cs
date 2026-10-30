@@ -64,18 +64,14 @@ namespace SafeTouch.UI.Screens
 
             SetMode(true);
             // A day or more after agreeing, this is a reminder rather than the "one last step" thank-you.
-            bool reminder = record.sentToServer && (record.MustVerifyNow || record.DaysLeft < ConsentRecord.GraceDays);
+            bool reminder = record.sentToServer && record.DaysLeft < ConsentRecord.GraceDays;
             string where = string.IsNullOrEmpty(record.emailMasked) ? record.email : record.emailMasked;
-            heading.text = reminder ? L("Reminder: please confirm your consent", "Kwibutsa: mwemeze uruhushya rwanyu")
+            heading.text = reminder ? L("Reminder: please confirm your email", "Kwibutsa: mwemeze imeyili yanyu")
                                     : T("verify.heading", "Thank you! One last step");
             if (reminder)
             {
-                string left = record.MustVerifyNow
-                    ? L("The 7 days are over, so SafeTouch needs the code before your child can continue.",
-                        "Iminsi 7 irashize, bityo SafeTouch ikeneye kode mbere y'uko umwana wanyu akomeza.")
-                    : string.Format(L("You have {0} day(s) left to confirm it.", "Mufite iminsi {0} yo kuyemeza."), record.DaysLeft);
-                body.text = string.Format(L("You agreed to the terms, but have not confirmed the 6-digit code yet. Type the code we emailed to {0}. {1} Tap \"Send the email again\" if you can't find it.",
-                                            "Mwemeye amabwiriza, ariko ntimwemeza kode y'imibare 6. Yandike kode twohereje kuri {0}. {1} Mukande \"Ohereza imeyili nanone\" niba mutayibonye."), where, left);
+                body.text = string.Format(L("You agreed to the terms, but your email is not confirmed yet. Type the 6-digit code we emailed to {0}. SafeTouch stays closed until you do. Tap \"Send the email again\" if you can't find it.",
+                                            "Mwemeye amabwiriza, ariko imeyili yanyu ntiremezwa. Yandike kode y'imibare 6 twohereje kuri {0}. SafeTouch ikomeza gufunga kugeza muyanditse. Mukande \"Ohereza imeyili nanone\" niba mutayibonye."), where);
             }
             else
             {
@@ -85,10 +81,8 @@ namespace SafeTouch.UI.Screens
             }
             if (!waiting) status.text = "";
 
-            bool canWait = !record.MustVerifyNow;
-            later.gameObject.SetActive(canWait);
-            UIFactory.SetButtonLabel(later, string.Format(T("verify.later", "Verify later ({0} days left) and start"), record.DaysLeft));
-            if (!canWait) status.text = T("verify.required", "7 days have passed: please confirm the code so your child can keep using SafeTouch.");
+            // No "verify later": the app opens only once the parent's email is confirmed.
+            later.gameObject.SetActive(false);
         }
 
         void SetMode(bool asking)

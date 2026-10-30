@@ -36,8 +36,8 @@ namespace SafeTouch.Data
         // Two lesson paths: "6-8" (Explorer) and "9-11" (Guardian). The fields above (ageGroup, finished
         // lessons, scores, badges, chase and Bubble Guard bests, strong NOs) always belong to the path being
         // played, which is ageGroup. The other path's copy waits in otherPaths, so each keeps its own stars and
-        // badges and the rest of the app only ever sees the path in play. The 9-11 path opens when the child
-        // started there, or has finished every lesson of the 6-8 path.
+        // badges and the rest of the app only ever sees the path in play. The 9-11 path opens only once a
+        // grown-up has confirmed the child's age by email (guardianUnlocked).
         public List<PathData> otherPaths = new List<PathData>();
         public bool guardianUnlocked;
 
@@ -69,7 +69,6 @@ namespace SafeTouch.Data
         public void SwitchPath(string age)
         {
             if (string.IsNullOrEmpty(age) || age == ageGroup) return;
-            if (ageGroup == PathOlder) guardianUnlocked = true;   // it was open (a save from before the paths existed doesn't say so)
             var next = otherPaths.Find(p => p.ageGroup == age);
             if (next != null) otherPaths.Remove(next);
             if (!string.IsNullOrEmpty(ageGroup)) otherPaths.Add(PathData.From(this));
@@ -85,10 +84,13 @@ namespace SafeTouch.Data
             return other != null && other.completedLevels.FindAll(l => l >= 1 && l <= PathLessons).Count >= PathLessons;
         }
 
-        /// <summary>The 6-8 path is always open; the 9-11 path opens when the child started there or finished the 6-8 path.</summary>
+        /// <summary>
+        /// The 6-8 path is always open. The 9-11 path talks openly about online strangers and private parts of
+        /// the body, so it opens only when a grown-up has confirmed the child's age (not by finishing lessons).
+        /// </summary>
         public bool IsPathOpen(string age)
         {
-            return age != PathOlder || age == ageGroup || guardianUnlocked || IsPathComplete(PathYoung);
+            return age != PathOlder || guardianUnlocked;
         }
 
         /// <summary>Lessons finished on the path in play.</summary>

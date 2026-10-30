@@ -14,17 +14,30 @@ namespace SafeTouch.UI.Screens
     /// </summary>
     public class LoginScreen : UIScreen
     {
-        Text heading, body, status;
+        Text heading, body, status, pickLabel;
         InputField email, code;
-        Button send, login, again, other;
+        Button send, login, again, other, youngPick, olderPick;
         bool codeStep, waiting;
+        string picked;   // the group the parent chose for the child ("6-8" or "9-11"); applied once they are in
 
         public override string Name { get { return "login"; } }
 
         protected override void BuildContent(RectTransform root)
         {
             var col = StandardColumn(root, "", () => ui.ShowMenu("splash"));
+            var friends = UIFactory.Row(col, "Friends", 0f, 230f);
+            friends.childAlignment = TextAnchor.LowerCenter;
+            friends.childForceExpandWidth = false;
+            Decor.Keza(friends.transform, 230f);
+            Decor.Dog(friends.transform, 150f);
             heading = UIFactory.Label(col, "", Theme.Title, Theme.Ink, TextAnchor.UpperLeft, true);
+
+            // The parent chooses the group for their child here, next to the login.
+            pickLabel = UIFactory.Label(col, "", Theme.Label, Theme.Muted, TextAnchor.UpperLeft, true);
+            var picks = UIFactory.Row(col, "Groups", Theme.Gap, Theme.TouchTarget * 1.1f);
+            youngPick = UIFactory.Button(picks.transform, "", Theme.Card, Theme.Ink, () => Pick(Data.Progress.PathYoung));
+            olderPick = UIFactory.Button(picks.transform, "", Theme.Card, Theme.Ink, () => Pick(Data.Progress.PathOlder));
+
             body = UIFactory.Label(col, "", Theme.Body, Theme.Ink, TextAnchor.UpperLeft, false);
             email = UIFactory.Input(col, "", InputField.ContentType.EmailAddress, TouchScreenKeyboardType.EmailAddress, 254);
             code = UIFactory.Input(col, "000000", InputField.ContentType.IntegerNumber, TouchScreenKeyboardType.NumberPad, 6);
@@ -46,6 +59,12 @@ namespace SafeTouch.UI.Screens
             var service = game.Consent;
             if (service == null || !service.NeedsLogin) { game.ContinueFromSplash(); return; }
 
+            if (picked == null)
+            {
+                var data = game.Progress.GetData();
+                picked = data.ageGroup == Data.Progress.PathOlder && data.IsPathOpen(Data.Progress.PathOlder) ? Data.Progress.PathOlder : Data.Progress.PathYoung;
+            }
+            ShowPicks();
             TitleText.text = L("Log in", "Kwinjira");
             heading.text = L("Welcome back", "Murakaza neza");
             UIFactory.SetButtonLabel(send, L("Send me a code", "Mpa kode"));
@@ -71,6 +90,39 @@ namespace SafeTouch.UI.Screens
                 body.text = string.Format(L("If that email matches, we sent a 6-digit code to {0}, and by text message if it is switched on. Type it here. It works for 10 minutes.",
                                             "Niba iyo meyili ihuye, twohereje kode y'imibare 6 kuri {0}, no kuri telefoni niba byemewe. Yandike hano. Imara iminota 10."), shown);
             }
+        }
+
+        void Pick(string group)
+        {
+            picked = group;
+            ShowPicks();
+        }
+
+        /// <summary>The two group buttons: the chosen one is coloured; the Guardian one says it needs an age check until a grown-up has done it.</summary>
+        void ShowPicks()
+        {
+            var data = game.Progress.GetData();
+            bool olderOpen = data.IsPathOpen(Data.Progress.PathOlder);
+            bool young = picked != Data.Progress.PathOlder;
+            pickLabel.text = L("Who is playing today? Choose the group for your child:", "Ni nde urimo gukina uyu munsi? Hitamo itsinda ry'umwana wanyu:");
+            UIFactory.SetButtonLabel(youngPick, L("Explorer\n6 - 8", "Umuvumbuzi\n6 - 8"));
+            UIFactory.SetButtonLabel(olderPick, olderOpen ? L("Guardian\n9 - 11", "Umurinzi\n9 - 11") : L("Guardian 9 - 11\n(age check)", "Umurinzi 9 - 11\n(kwemeza imyaka)"));
+            youngPick.image.color = young ? Theme.Primary : Theme.Card;
+            olderPick.image.color = !young ? Theme.Safe : Theme.Card;
+            youngPick.GetComponentInChildren<Text>().color = young ? Color.white : Theme.Ink;
+            olderPick.GetComponentInChildren<Text>().color = !young ? Color.white : Theme.Ink;
+        }
+
+        /// <summary>Logged in: go to the chosen group. The Guardian group first needs a grown-up to confirm the child's age.</summary>
+        void Enter()
+        {
+            var data = game.Progress.GetData();
+            string group = picked;
+            picked = null;
+            codeStep = false; code.text = ""; email.text = ""; status.text = "";
+            if (group == Data.Progress.PathOlder && !data.IsPathOpen(group)) { game.ShowAgeGate("login"); return; }
+            if (!string.IsNullOrEmpty(group) && data.ageGroup != group) game.SwitchPath(group);
+            game.ContinueFromSplash();
         }
 
         void SendCode()
@@ -112,8 +164,7 @@ namespace SafeTouch.UI.Screens
                 switch (result)
                 {
                     case ConsentService.Result.Verified:
-                        codeStep = false; code.text = ""; email.text = ""; status.text = "";
-                        game.ContinueFromSplash();
+                        Enter();
                         break;
                     case ConsentService.Result.WrongCode: Say(L("That code is not right. Please check and try again.", "Iyo kode si yo. Mwongere mugerageze."), Theme.Unsafe); break;
                     case ConsentService.Result.Expired: Say(L("This code has expired. Tap \"Send the code again\".", "Iyi kode yararangiye. Mukande \"Ohereza kode nanone\"."), Theme.Unsafe); break;

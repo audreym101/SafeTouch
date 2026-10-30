@@ -43,9 +43,10 @@ namespace SafeTouch.Voice
 #if UNITY_ANDROID && !UNITY_EDITOR
             if (Permission.HasUserAuthorizedPermission(Permission.Microphone)) { answered(true); return; }
             var callbacks = new PermissionCallbacks();
-            callbacks.PermissionGranted += _ => answered(true);
-            callbacks.PermissionDenied += _ => answered(false);
-            callbacks.PermissionDeniedAndDontAskAgain += _ => answered(false);
+            callbacks.PermissionGranted += _ => { Core.AppSession.PermissionAnswered(); answered(true); };
+            callbacks.PermissionDenied += _ => { Core.AppSession.PermissionAnswered(); answered(false); };
+            callbacks.PermissionDeniedAndDontAskAgain += _ => { Core.AppSession.PermissionAnswered(); answered(false); };
+            Core.AppSession.PermissionAsked();   // the question pauses the app: that is not the parent leaving
             Permission.RequestUserPermission(Permission.Microphone, callbacks);
 #else
             answered(HasDevice);

@@ -85,11 +85,7 @@ namespace SafeTouch.UI.Screens
         void ShowPath(string age)
         {
             var progress = game.Progress.GetData();
-            if (!progress.IsPathOpen(age))
-            {
-                ui.ShowToast(L("Finish all 5 Explorer lessons to open the Guardian path.", "Mukore amasomo yose 5 y'Umuvumbuzi kugira ngo mufungure inzira y'Umurinzi."));
-                return;
-            }
+            if (!progress.IsPathOpen(age)) { game.ShowAgeGate("home"); return; }   // a grown-up confirms the age first
             game.SwitchPath(age);
             OnShow();
         }
@@ -112,8 +108,7 @@ namespace SafeTouch.UI.Screens
             {
                 note = string.Format(L("Explorer path: {0} of {1} lessons done. Four steps in each lesson, seven scenario cards and a friendly helper.",
                                        "Inzira y'Umuvumbuzi: amasomo {0} kuri {1} arangiye. Intambwe enye muri buri somo, amakarita arindwi n'umufasha w'inshuti."), done, Data.Progress.PathLessons);
-                if (olderOpen && !progress.guardianUnlocked) note += " " + L("The Guardian path is open!", "Inzira y'Umurinzi irafunguye!");
-                else if (!olderOpen) note += " " + L("Finish all 5 to open the Guardian path.", "Mukore yose 5 kugira ngo mufungure inzira y'Umurinzi.");
+                if (!olderOpen) note += " " + L("Guardian: a grown-up confirms the age first.", "Umurinzi: umuntu mukuru abanza kwemeza imyaka.");
             }
             else
             {

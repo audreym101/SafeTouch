@@ -78,6 +78,7 @@ namespace SafeTouch.Core
             progressManager.BadgeUnlocked += b => uiManager.ShowToast(Localization.T("badge.unlocked") + " " + b.title);
             foreach (var lesson in lessons) lesson.Completed += OnLessonCompleted;
             uiManager.ShowMenu(FirstScreen());
+            started = true;
         }
 
         /// <summary>
@@ -101,19 +102,49 @@ namespace SafeTouch.Core
             }
         }
 
+        bool started;
+
         void OnApplicationPause(bool paused)
         {
-            if (paused && progressManager != null) SaveProgress();
+            if (paused)
+            {
+                if (progressManager != null) SaveProgress();
+                return;
+            }
+            // Back in the app. The parent logs in again every time it is opened. Android's camera and
+            // microphone questions pause the app too, and those are not the parent leaving.
+            if (!started || AppSession.AskingPermission || consent == null || !consent.HasConsent) return;
+            consent.LogOut();
+            EndActiveLesson();
+            uiManager.ShowMenu(FirstScreen());
         }
 
         // ---- Class diagram API ----
 
         public void SelectAgeGroup(string age)
         {
+            // The Guardian (9-11) lessons need a grown-up to confirm the child's age first.
+            if (age == Data.Progress.PathOlder && !progressManager.GetData().IsPathOpen(age)) { ShowAgeGate("age"); return; }
             ageGroup = age;
             progressManager.SetAgeGroup(age);
             if (voiceCoach != null) voiceCoach.PrepareForAge(age);
             uiManager.ShowMenu("home");
+        }
+
+        /// <summary>Which screen the age check goes back to when the parent leaves it.</summary>
+        public string AgeGateReturn { get; private set; }
+
+        /// <summary>Opens the age check for the Guardian (9-11) lessons; backTo is the screen the back button returns to.</summary>
+        public void ShowAgeGate(string backTo)
+        {
+            AgeGateReturn = backTo;
+            uiManager.ShowMenu("agegate");
+        }
+
+        /// <summary>A grown-up confirmed the child is 9 to 11: the Guardian lessons are open from now on.</summary>
+        public void UnlockGuardian()
+        {
+            progressManager.UnlockGuardian();
         }
 
         /// <summary>Plays the other lesson path (6-8 Explorer or 9-11 Guardian), if it is open.</summary>
@@ -200,7 +231,7 @@ namespace SafeTouch.Core
         {
             if (consent != null && consent.NeedsLogin) { uiManager.ShowMenu("login"); return; }
             if (consent != null && !consent.HasConsent) { uiManager.ShowMenu("consent"); return; }
-            if (consent != null && consent.MustVerifyNow) { uiManager.ShowMenu("verify"); return; }
+            if (consent != null && !consent.Record.verified) { uiManager.ShowMenu("verify"); return; }   // the consent panel stays until the email is confirmed
             ContinueToLessons();
         }
 
