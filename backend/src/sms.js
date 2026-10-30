@@ -38,6 +38,16 @@ function loginSms(record, code) {
   return (LOGIN_TEXT[record.language === 'rw' ? 'rw' : 'en'])(code);
 }
 
+const AGE_TEXT = {
+  en: (code) => `SafeTouch age code: ${code}. Type it in the app to confirm your child is aged 9 to 11 and open the Guardian lessons. If this was not you, ignore this text.`,
+  rw: (code) => `SafeTouch kode y'imyaka: ${code}. Yandike muri porogaramu kwemeza ko umwana wawe afite imyaka 9 kugeza 11 kugira ngo amasomo y'Umurinzi afungurwe. Niba atari wowe, irengagize iyi nyandiko.`,
+};
+
+/** The age-confirmation code as a short text, in the parent's language. */
+function ageSms(record, code) {
+  return (AGE_TEXT[record.language === 'rw' ? 'rw' : 'en'])(code);
+}
+
 // Calling codes for countries where a parent may type the local number (078...) instead of +250 78...
 const CALLING_CODES = { rwanda: '250' };
 
@@ -132,4 +142,4 @@ function createSmsSender(env = process.env, now = () => Date.now()) {
   return sender_;
 }
 
-module.exports = { createSmsSender, consentSms, loginSms, normalisePhone };
+module.exports = { createSmsSender, consentSms, loginSms, ageSms, normalisePhone };

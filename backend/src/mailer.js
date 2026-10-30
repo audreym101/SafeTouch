@@ -105,6 +105,41 @@ function loginEmail(record, code) {
   return { subject: t.subject, html, text };
 }
 
+const AGE_TEXT = {
+  en: {
+    subject: 'SafeTouch: confirm your child\'s age',
+    hello: (name) => `Hello ${name},`,
+    intro: (age) => `You told SafeTouch that your child is ${age} years old and asked for the Guardian lessons (ages 9 to 11). To confirm their age, type this code in the app:`,
+    why: 'The Guardian lessons talk openly about things like online strangers and private parts of the body, so they are only for children aged 9 to 11. Younger children use the Explorer lessons.',
+    expires: 'The code expires in 24 hours.',
+    ignore: 'If you did not ask for this, ignore this email: the Guardian lessons stay closed.',
+  },
+  rw: {
+    subject: 'SafeTouch: emeza imyaka y\'umwana wawe',
+    hello: (name) => `Muraho ${name},`,
+    intro: (age) => `Mwabwiye SafeTouch ko umwana wanyu afite imyaka ${age} kandi musabye amasomo y'Umurinzi (imyaka 9 kugeza 11). Kugira ngo twemeze imyaka ye, andika iyi kode muri porogaramu:`,
+    why: 'Amasomo y\'Umurinzi avuga ku buryo bweruye ibintu nk\'abantu batazwi kuri interineti n\'ibice by\'umubiri by\'ibanga, ni yo mpamvu ari ay\'abana bafite imyaka 9 kugeza 11 gusa. Abato bakoresha amasomo y\'Umuvumbuzi.',
+    expires: 'Iyi kode irangira nyuma y\'amasaha 24.',
+    ignore: 'Niba atari mwe mwabisabye, irengagize iyi meyili: amasomo y\'Umurinzi azakomeza gufunga.',
+  },
+};
+
+/** The email that asks the parent to confirm their child's age (9 to 11) before the Guardian lessons open. */
+function ageEmail(record, ageYears, code) {
+  const t = AGE_TEXT[record.language === 'rw' ? 'rw' : 'en'];
+  const text = [t.hello(record.parentName), '', t.intro(ageYears), '', `    ${code}`, '', t.why, '', t.expires, '', t.ignore].join('\n');
+  const html = `<div style="font-family:Arial,sans-serif;color:#1F2A44;max-width:560px">
+<h2 style="color:#2474C6">SafeTouch</h2>
+<p>${escapeHtml(t.hello(record.parentName))}</p>
+<p>${escapeHtml(t.intro(ageYears))}</p>
+<p style="font-size:32px;font-weight:bold;letter-spacing:8px;background:#EAF4FB;padding:16px;text-align:center">${escapeHtml(code)}</p>
+<p>${escapeHtml(t.why)}</p>
+<p style="color:#5F6F86">${escapeHtml(t.expires)}</p>
+<p style="color:#5F6F86">${escapeHtml(t.ignore)}</p>
+</div>`;
+  return { subject: t.subject, html, text };
+}
+
 function createMailer(env = process.env) {
   const provider = (env.MAIL_PROVIDER || 'console').toLowerCase();
   const from = env.MAIL_FROM || 'no-reply@safetouch.example';
@@ -148,4 +183,4 @@ function createMailer(env = process.env) {
   };
 }
 
-module.exports = { createMailer, consentEmail, loginEmail, AGREEMENT_TEXT };
+module.exports = { createMailer, consentEmail, loginEmail, ageEmail, AGREEMENT_TEXT };
