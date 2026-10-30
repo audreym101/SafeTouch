@@ -28,7 +28,7 @@ namespace SafeTouch.UI.Screens
         protected override void BuildContent(RectTransform root)
         {
             // "Pick a lesson" sits in the top bar beside the back button, leaving more room for the cards.
-            var col = StandardColumn(root, "", () => ui.ShowMenu("splash"));
+            var col = StandardColumn(root, "", () => ui.ShowMenu("menu"));
             heading = TitleText;
             stars = UIFactory.Label(col, "", Theme.Label, Theme.Muted, TextAnchor.MiddleLeft, false);
 

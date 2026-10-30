@@ -24,7 +24,7 @@ namespace SafeTouch.UI.Screens
 
         protected override void BuildContent(RectTransform root)
         {
-            var col = StandardColumn(root, "", () => ui.ShowMenu("home"));
+            var col = StandardColumn(root, "", () => ui.ShowMenu("menu"));
             var row = UIFactory.Row(col, "Tabs", 16f, 120f);
             for (int i = 0; i < Tabs.Length; i++)
             {

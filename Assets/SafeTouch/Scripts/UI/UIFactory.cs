@@ -13,7 +13,7 @@ namespace SafeTouch.UI
         static Font font;
         static Sprite rounded;
 
-        /// <summary>Andika (SIL, made for early readers, covers Kinyarwanda) when imported, else Unity's built-in font.</summary>
+        /// <summary>Andika (SIL, made for early readers, covers Kinyarwanda) for reading, else Unity's built-in font.</summary>
         public static Font Font
         {
             get
@@ -23,6 +23,23 @@ namespace SafeTouch.UI
                 return font;
             }
         }
+
+        static Font boldFont, kidFont;
+
+        /// <summary>Andika Bold, for short bold text such as messages under a form.</summary>
+        public static Font BoldFont
+        {
+            get { if (boldFont == null) boldFont = Resources.Load<Font>("Fonts/Andika-Bold"); return boldFont; }
+        }
+
+        /// <summary>Sniglet ExtraBold: round, chunky letters for titles and buttons, the "kids' font" of the app.</summary>
+        public static Font KidFont
+        {
+            get { if (kidFont == null) kidFont = Resources.Load<Font>("Fonts/Sniglet-ExtraBold"); return kidFont; }
+        }
+
+        /// <summary>Played on every button tap (AudioManager sets it to a soft pop).</summary>
+        public static Action ButtonPressed;
 
         /// <summary>A 9-sliced rounded rectangle generated at runtime (no texture asset needed).</summary>
         public static Sprite Rounded
@@ -122,12 +139,14 @@ namespace SafeTouch.UI
         {
             var rt = Rect(parent, "Text");
             var t = rt.gameObject.AddComponent<Text>();
-            t.font = Font;
             t.text = text;
             t.fontSize = size;
             t.color = color;
             t.alignment = align;
-            t.fontStyle = bold ? FontStyle.Bold : FontStyle.Normal;
+            // Titles and buttons in the round kids' font; short bold text in Andika Bold; the rest in Andika.
+            var bolder = !bold ? null : size >= Theme.Body ? KidFont : BoldFont;
+            t.font = bolder != null ? bolder : Font;
+            t.fontStyle = bold && bolder == null ? FontStyle.Bold : FontStyle.Normal;
             t.horizontalOverflow = HorizontalWrapMode.Wrap;
             t.verticalOverflow = VerticalWrapMode.Overflow;
             t.lineSpacing = 1.1f;
@@ -146,7 +165,9 @@ namespace SafeTouch.UI
             colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
             colors.disabledColor = new Color(1f, 1f, 1f, 0.4f);
             button.colors = colors;
+            button.onClick.AddListener(() => { if (ButtonPressed != null) ButtonPressed(); });
             if (onClick != null) button.onClick.AddListener(() => onClick());
+            img.gameObject.AddComponent<Squish>();   // the button squashes a little under the finger and springs back
 
             var le = img.gameObject.AddComponent<LayoutElement>();
             le.minHeight = Theme.TouchTarget;

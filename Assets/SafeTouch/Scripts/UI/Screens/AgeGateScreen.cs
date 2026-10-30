@@ -27,7 +27,7 @@ namespace SafeTouch.UI.Screens
 
         protected override void BuildContent(RectTransform root)
         {
-            var col = StandardColumn(root, "", () => ui.ShowMenu(string.IsNullOrEmpty(game.AgeGateReturn) ? "home" : game.AgeGateReturn));
+            var col = StandardColumn(root, "", () => { AppSession.CodeDone(); ui.ShowMenu(string.IsNullOrEmpty(game.AgeGateReturn) ? "home" : game.AgeGateReturn); });
             var mascot = UIFactory.Row(col, "Mascot", 0f, 250f);
             mascot.childAlignment = TextAnchor.LowerCenter;
             mascot.childForceExpandWidth = false;
@@ -71,6 +71,7 @@ namespace SafeTouch.UI.Screens
         public override void OnShow()
         {
             codeStep = false;
+            AppSession.CodeDone();
             waiting = false;
             day.text = month.text = year.text = code.text = "";
             status.text = "";
@@ -161,6 +162,7 @@ namespace SafeTouch.UI.Screens
                 {
                     case ConsentService.Result.Sent:
                         codeStep = true;
+                        AppSession.CodeSent();   // the parent leaves for the mail app to read it: keep this screen when they come back
                         status.text = "";
                         Refresh();
                         Say(L("Please check the parent's email, including the spam folder.", "Murebe imeyili y'umubyeyi, harimo n'aho spam iba."), Theme.Safe);
@@ -188,6 +190,7 @@ namespace SafeTouch.UI.Screens
                 {
                     case ConsentService.Result.Verified:
                         code.text = "";
+                        AppSession.CodeDone();
                         game.UnlockGuardian();
                         game.SwitchPath(Data.Progress.PathOlder);
                         game.ContinueFromSplash();

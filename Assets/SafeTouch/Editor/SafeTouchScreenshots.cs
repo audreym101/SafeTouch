@@ -150,6 +150,7 @@ namespace SafeTouch.EditorTools
             });
             yield return shot("01d-age-check", () => ui.ShowMenu("agegate"));
             yield return shot("02-age", () => ui.ShowMenu("age"));
+            yield return shot("02b-menu", () => ui.ShowMenu("menu"));
             yield return shot("03-home", () => ui.ShowMenu("home"));
             yield return shot("04-scan", () => ui.ShowMenu("scan"));
             yield return shot("05-lesson", () =>
@@ -202,6 +203,10 @@ namespace SafeTouch.EditorTools
             yield return shot("13-look", () => ui.ShowMenu("look"));
             yield return shot("14-grown-ups", () => ui.ShowMenu("parentGate"));
             yield return shot("15-parent", () => ui.ShowMenu("parent"));
+            yield return shot("16-settings", () => ui.ShowMenu("settings"));
+            yield return shot("17-help", () => ui.ShowMenu("help"));
+            yield return shot("18-about", () => ui.ShowMenu("about"));
+            yield return shot("19-contact", () => ui.ShowMenu("contact"));
         }
 
         /// <summary>Lays everything out (layout groups need a few passes in edit mode).</summary>

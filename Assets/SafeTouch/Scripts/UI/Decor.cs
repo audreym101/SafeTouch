@@ -206,8 +206,133 @@ namespace SafeTouch.UI
             var row = UIFactory.Row(parent, "Friends", 0f, height);
             row.childForceExpandWidth = false;
             row.childAlignment = TextAnchor.LowerCenter;
-            Keza(row.transform, height);
-            Dog(row.transform, height * 0.62f);
+            Hop(Keza(row.transform, height), height * 0.035f, 1.1f, 0f);
+            Hop(Dog(row.transform, height * 0.62f), height * 0.05f, 0.55f, 0.3f);
+            return (RectTransform)row.transform;
+        }
+
+        /// <summary>Makes a picture hop gently in a loop (see Bob).</summary>
+        public static RectTransform Hop(RectTransform picture, float height, float period, float phase)
+        {
+            var bob = picture.gameObject.AddComponent<Bob>();
+            bob.height = height;
+            bob.period = period;
+            bob.phase = phase;
+            return picture;
+        }
+
+        /// <summary>How a cartoon kid looks: skin, hair (and its style), clothes, glasses, and arms up or waving.</summary>
+        public struct KidLook
+        {
+            public Color skin, hair, top, bottom, shoes;
+            public int hairStyle;   // 0 curly, 1 bob, 2 puffs, 3 spiky, 4 long
+            public bool skirt, glasses, armsUp;
+        }
+
+        /// <summary>Five friends who look different from each other, like a real class in Kigali.</summary>
+        public static readonly KidLook[] Kids =
+        {
+            new KidLook { skin = new Color(0.45f, 0.28f, 0.17f), hair = new Color(0.12f, 0.08f, 0.06f), top = new Color(1f, 0.78f, 0.2f), bottom = new Color(0.25f, 0.45f, 0.4f), shoes = new Color(0.2f, 0.65f, 0.5f), hairStyle = 0, armsUp = true },
+            new KidLook { skin = new Color(0.96f, 0.80f, 0.66f), hair = new Color(0.93f, 0.42f, 0.18f), top = new Color(0.98f, 0.45f, 0.62f), bottom = new Color(0.98f, 0.45f, 0.62f), shoes = new Color(0.85f, 0.2f, 0.3f), hairStyle = 1, skirt = true },
+            new KidLook { skin = new Color(0.62f, 0.40f, 0.25f), hair = new Color(0.1f, 0.07f, 0.06f), top = new Color(0.4f, 0.75f, 0.95f), bottom = new Color(0.22f, 0.36f, 0.7f), shoes = new Color(0.95f, 0.5f, 0.2f), hairStyle = 2, armsUp = true },
+            new KidLook { skin = new Color(0.87f, 0.65f, 0.48f), hair = new Color(0.45f, 0.28f, 0.15f), top = new Color(0.35f, 0.78f, 0.45f), bottom = new Color(0.95f, 0.72f, 0.25f), shoes = new Color(0.3f, 0.3f, 0.35f), hairStyle = 3, glasses = true },
+            new KidLook { skin = new Color(0.72f, 0.45f, 0.27f), hair = new Color(0.15f, 0.1f, 0.08f), top = new Color(0.62f, 0.45f, 0.85f), bottom = new Color(0.62f, 0.45f, 0.85f), shoes = new Color(0.98f, 0.8f, 0.3f), hairStyle = 4, skirt = true, armsUp = true },
+        };
+
+        /// <summary>
+        /// A cartoon kid with a big happy smile, jumping with arms up or waving. Square; size is in canvas units.
+        /// Drawn from circles like Keza, so it stays sharp on any phone.
+        /// </summary>
+        public static RectTransform Kid(Transform parent, float size, KidLook k)
+        {
+            var f = Frame(parent, "Kid", size, 0.82f);
+            var cheek = new Color(1f, 0.45f, 0.5f, 0.4f);
+            var legs = k.skirt ? k.skin : k.bottom;
+
+            Oval(f, "Shadow", new Color(0f, 0f, 0f, 0.12f), 0.5f, 0.03f, 0.6f, 0.06f);
+            Oval(f, "Leg L", legs, 0.41f, 0.13f, 0.13f, 0.2f, k.armsUp ? 12f : 0f);
+            Oval(f, "Leg R", legs, 0.59f, 0.13f, 0.13f, 0.2f, k.armsUp ? -12f : 0f);
+            Oval(f, "Shoe L", k.shoes, k.armsUp ? 0.37f : 0.39f, 0.045f, 0.17f, 0.07f);
+            Oval(f, "Shoe R", k.shoes, k.armsUp ? 0.63f : 0.61f, 0.045f, 0.17f, 0.07f);
+
+            // Arms behind the body: both up for a jump, or one waving.
+            if (k.armsUp)
+            {
+                Oval(f, "Arm L", k.skin, 0.22f, 0.49f, 0.12f, 0.3f, 38f);
+                Oval(f, "Arm R", k.skin, 0.78f, 0.49f, 0.12f, 0.3f, -38f);
+                Oval(f, "Hand L", k.skin, 0.13f, 0.6f, 0.12f, 0.1f);
+                Oval(f, "Hand R", k.skin, 0.87f, 0.6f, 0.12f, 0.1f);
+            }
+            else
+            {
+                Oval(f, "Arm L", k.skin, 0.27f, 0.3f, 0.12f, 0.26f, 18f);
+                Oval(f, "Arm R", k.skin, 0.78f, 0.46f, 0.12f, 0.28f, -32f);
+                Oval(f, "Hand R", k.skin, 0.84f, 0.58f, 0.12f, 0.1f);
+            }
+            if (k.skirt) Oval(f, "Skirt", k.bottom, 0.5f, 0.22f, 0.5f, 0.2f);
+            Oval(f, "Body", k.top, 0.5f, 0.32f, 0.42f, 0.32f);
+            Oval(f, "Sleeve L", k.top, 0.31f, 0.4f, 0.14f, 0.12f);
+            Oval(f, "Sleeve R", k.top, 0.69f, 0.4f, 0.14f, 0.12f);
+            Oval(f, "Shine", new Color(1f, 1f, 1f, 0.2f), 0.43f, 0.37f, 0.1f, 0.14f, 12f);
+
+            // Hair behind the head.
+            if (k.hairStyle == 0)
+                for (int i = 0; i < 7; i++)
+                {
+                    float a = Mathf.Lerp(200f, -20f, i / 6f) * Mathf.Deg2Rad;
+                    Oval(f, "Curl", k.hair, 0.5f + Mathf.Cos(a) * 0.25f, 0.69f + Mathf.Sin(a) * 0.23f, 0.17f, 0.17f);
+                }
+            if (k.hairStyle == 1) Oval(f, "Hair back", k.hair, 0.5f, 0.66f, 0.62f, 0.5f);
+            if (k.hairStyle == 2)
+            {
+                Oval(f, "Puff L", k.hair, 0.22f, 0.79f, 0.2f, 0.2f);
+                Oval(f, "Puff R", k.hair, 0.78f, 0.79f, 0.2f, 0.2f);
+                Oval(f, "Ribbon", new Color(1f, 0.35f, 0.45f), 0.31f, 0.84f, 0.08f, 0.05f, 30f);
+            }
+            if (k.hairStyle == 4) Oval(f, "Hair back", k.hair, 0.5f, 0.6f, 0.6f, 0.62f);
+
+            Oval(f, "Head", k.skin, 0.5f, 0.68f, 0.5f, 0.45f);
+
+            // Hair on top of the head.
+            if (k.hairStyle == 0 || k.hairStyle == 2) Oval(f, "Hair", k.hair, 0.5f, 0.865f, 0.46f, 0.15f);
+            if (k.hairStyle == 1 || k.hairStyle == 4) Oval(f, "Fringe", k.hair, 0.5f, 0.85f, 0.5f, 0.17f, 4f);
+            if (k.hairStyle == 3)
+            {
+                Oval(f, "Spike L", k.hair, 0.38f, 0.88f, 0.13f, 0.17f, 25f);
+                Oval(f, "Spike", k.hair, 0.5f, 0.915f, 0.13f, 0.17f);
+                Oval(f, "Spike R", k.hair, 0.62f, 0.88f, 0.13f, 0.17f, -25f);
+                Oval(f, "Hair", k.hair, 0.5f, 0.855f, 0.48f, 0.13f);
+            }
+
+            Oval(f, "Cheek L", cheek, 0.32f, 0.6f, 0.09f, 0.07f);
+            Oval(f, "Cheek R", cheek, 0.68f, 0.6f, 0.09f, 0.07f);
+            if (k.glasses)
+            {
+                Oval(f, "Glass L", new Color(0.2f, 0.2f, 0.25f), 0.405f, 0.675f, 0.15f, 0.15f);
+                Oval(f, "Glass R", new Color(0.2f, 0.2f, 0.25f), 0.595f, 0.675f, 0.15f, 0.15f);
+                Oval(f, "Bridge", new Color(0.2f, 0.2f, 0.25f), 0.5f, 0.69f, 0.06f, 0.02f);
+            }
+            Oval(f, "Eye L", Color.white, 0.405f, 0.675f, 0.11f, 0.12f);
+            Oval(f, "Eye R", Color.white, 0.595f, 0.675f, 0.11f, 0.12f);
+            Oval(f, "Pupil L", new Color(0.1f, 0.12f, 0.2f), 0.41f, 0.665f, 0.065f, 0.08f);
+            Oval(f, "Pupil R", new Color(0.1f, 0.12f, 0.2f), 0.6f, 0.665f, 0.065f, 0.08f);
+            Oval(f, "Shine L", Color.white, 0.425f, 0.685f, 0.025f, 0.028f);
+            Oval(f, "Shine R", Color.white, 0.615f, 0.685f, 0.025f, 0.028f);
+            // A big open smile, with a tongue.
+            Oval(f, "Mouth", new Color(0.55f, 0.13f, 0.17f), 0.5f, 0.565f, 0.17f, 0.11f);
+            Oval(f, "Tongue", new Color(1f, 0.5f, 0.55f), 0.5f, 0.535f, 0.1f, 0.045f);
+            Oval(f, "Mouth cover", k.skin, 0.5f, 0.6f, 0.2f, 0.06f);
+            return f;
+        }
+
+        /// <summary>The five friends in a row, hopping one after the other: the banner for the menu.</summary>
+        public static RectTransform Gang(Transform parent, float height)
+        {
+            var row = UIFactory.Row(parent, "Gang", -height * 0.1f, height);
+            row.childForceExpandWidth = false;
+            row.childAlignment = TextAnchor.LowerCenter;
+            for (int i = 0; i < Kids.Length; i++)
+                Hop(Kid(row.transform, height, Kids[i]), height * (Kids[i].armsUp ? 0.09f : 0.04f), 0.8f + 0.07f * i, i * 0.21f);
             return (RectTransform)row.transform;
         }
 

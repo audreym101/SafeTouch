@@ -27,5 +27,28 @@ namespace SafeTouch.Core
         {
             asking = false;
         }
+
+        const float CodeTimeout = 30f * 60f;
+        static float codeSentAt = -1f;
+
+        /// <summary>
+        /// True while a screen is waiting for a 6-digit code the parent must read in their email (changing the
+        /// email, the age check). Reading it means leaving SafeTouch for the mail app, so coming back must not
+        /// log the parent out or leave that screen. It stops counting after 30 minutes, when the codes expire.
+        /// </summary>
+        public static bool WaitingForCode
+        {
+            get { return codeSentAt >= 0f && UnityEngine.Time.realtimeSinceStartup - codeSentAt < CodeTimeout; }
+        }
+
+        public static void CodeSent()
+        {
+            codeSentAt = UnityEngine.Time.realtimeSinceStartup;
+        }
+
+        public static void CodeDone()
+        {
+            codeSentAt = -1f;
+        }
     }
 }

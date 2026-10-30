@@ -82,6 +82,11 @@ namespace SafeTouch.UI
             screens.Add(new LoginScreen());
             screens.Add(new AgeGateScreen());
             screens.Add(new ChangeEmailScreen());
+            screens.Add(new MenuScreen());
+            screens.Add(new SettingsScreen());
+            screens.Add(new HelpScreen());
+            screens.Add(new AboutScreen());
+            screens.Add(new ContactScreen());
             screens.Add(new AgeScreen());
             screens.Add(new HomeScreen());
             screens.Add(new ScanScreen());
@@ -106,7 +111,7 @@ namespace SafeTouch.UI
             BuildFeedbackPanel(safeArea);
             BuildToast(safeArea);
             buttons = canvas.GetComponentsInChildren<Button>(true);
-            foreach (var b in buttons) b.onClick.AddListener(() => game.Audio.PlaySFX("tap"));
+            // Every button pops when tapped: UIFactory.ButtonPressed, set by AudioManager, also covers buttons made later.
             Localization.Changed += RefreshActive;
         }
 

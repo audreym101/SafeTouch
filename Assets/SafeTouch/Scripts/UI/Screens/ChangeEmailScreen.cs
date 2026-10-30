@@ -84,6 +84,7 @@ namespace SafeTouch.UI.Screens
                 {
                     case ConsentService.Result.Sent:
                         newEmail = typed; codeStep = true; code.text = ""; OnShow();
+                        AppSession.CodeSent();   // reading the code means leaving for the mail app: keep this screen when they come back
                         Say(L("Please check the new email, including the spam folder.", "Murebe muri imeyili nshya, harimo n'aho spam iba."), Theme.Safe);
                         break;
                     case ConsentService.Result.Invalid: Say(L("Please type a real email that is different from the one you use now.", "Andika imeyili nyayo itandukanye n'iyo mukoresha ubu."), Theme.Caution); break;
@@ -123,6 +124,7 @@ namespace SafeTouch.UI.Screens
 
         void Reset()
         {
+            AppSession.CodeDone();
             codeStep = false; newEmail = null; email.text = ""; code.text = ""; status.text = "";
         }
 

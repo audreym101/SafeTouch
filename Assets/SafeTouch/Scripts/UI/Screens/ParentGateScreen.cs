@@ -20,12 +20,21 @@ namespace SafeTouch.UI.Screens
         Text question;
         readonly Button[] answers = new Button[3];
         int correct;
+        static string then = "parent", back = "home";
+
+        /// <summary>Asks the grown-up question, then opens the screen named then (the parent area, Contact us); a wrong answer or back goes to back.</summary>
+        public static void Open(UIManager ui, string thenScreen, string backScreen)
+        {
+            then = thenScreen;
+            back = backScreen;
+            ui.ShowMenu("parentGate");
+        }
 
         public override string Name { get { return "parentGate"; } }
 
         protected override void BuildContent(RectTransform root)
         {
-            var col = StandardColumn(root, "", () => ui.ShowMenu("home"));
+            var col = StandardColumn(root, "", () => Leave(false));
             question = UIFactory.Label(col, "", Theme.Title, Theme.Ink, TextAnchor.MiddleLeft, true);
             for (int i = 0; i < answers.Length; i++)
             {
@@ -51,7 +60,15 @@ namespace SafeTouch.UI.Screens
 
         void Answer(int index)
         {
-            ui.ShowMenu(index == correct ? "parent" : "home");
+            Leave(index == correct);
+        }
+
+        void Leave(bool passed)
+        {
+            var next = passed ? then : back;
+            then = "parent";   // the lesson map opens the parent area here too, with the usual places
+            back = "home";
+            ui.ShowMenu(next);
         }
     }
 }

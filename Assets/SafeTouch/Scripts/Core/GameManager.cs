@@ -97,7 +97,8 @@ namespace SafeTouch.Core
             // Android back button: leave the lesson and go home (NFR6).
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
-                if (uiManager.ActiveMenu == "home" || uiManager.ActiveMenu == "splash") uiManager.ShowMenu("splash");
+                if (uiManager.ActiveMenu == "menu" || uiManager.ActiveMenu == "splash") uiManager.ShowMenu("splash");
+                else if (uiManager.ActiveMenu == "home") uiManager.ShowMenu("menu");
                 else ReturnToMenu();
             }
         }
@@ -114,6 +115,8 @@ namespace SafeTouch.Core
             // Back in the app. The parent logs in again every time it is opened. Android's camera and
             // microphone questions pause the app too, and those are not the parent leaving.
             if (!started || AppSession.AskingPermission || consent == null || !consent.HasConsent) return;
+            // The parent went to their mail app to read a code (new email, age check): stay on that screen.
+            if (AppSession.WaitingForCode) return;
             consent.LogOut();
             EndActiveLesson();
             uiManager.ShowMenu(FirstScreen());
@@ -128,7 +131,7 @@ namespace SafeTouch.Core
             ageGroup = age;
             progressManager.SetAgeGroup(age);
             if (voiceCoach != null) voiceCoach.PrepareForAge(age);
-            uiManager.ShowMenu("home");
+            uiManager.ShowMenu("menu");
         }
 
         /// <summary>Which screen the age check goes back to when the parent leaves it.</summary>
@@ -238,7 +241,7 @@ namespace SafeTouch.Core
         /// <summary>After consent (or "verify later"): the age question the first time, then the lesson map.</summary>
         public void ContinueToLessons()
         {
-            uiManager.ShowMenu(string.IsNullOrEmpty(progressManager.GetData().ageGroup) ? "age" : "home");
+            uiManager.ShowMenu(string.IsNullOrEmpty(progressManager.GetData().ageGroup) ? "age" : "menu");   // the menu: lessons, badges, settings, about, contact
         }
 
         /// <summary>
