@@ -60,10 +60,9 @@ After the deploy, the log says `SafeTouch API on ... (MongoDB Atlas, consent ema
 
 ## 4. Connect Unity
 
-On **Consent Service** and **Cloud Sync Service** (both on **SafeTouch App**):
-- set **Base Url** to the `https://<name>.onrender.com` address, with no `/` at the end;
-- set **Timeout Seconds** to **60**, because the free server sleeps after 15 minutes and takes up to a minute to wake;
-- on **Cloud Sync Service**, also tick **Enabled In Build**.
+The app calls the API at the address in `ApiAddress.cs` (`https://safetouch-api-xc6t.onrender.com`), with a 60-second wait for the free server to wake up. **On a phone, a scene that still says `http://localhost:3000` is ignored**: "localhost" is the phone itself, so the consent could never reach the server and no email would be sent. In the Editor, the **Base Url** on **Consent Service** and **Cloud Sync Service** is still used, so you can test against `localhost` on your laptop.
+
+To use another server, set **Base Url** on both components to its `https://` address, or change `ApiAddress.Default`. Tick **Enabled In Build** on **Cloud Sync Service** if the ethics approval covers anonymous sync (a parent still has to switch it on).
 
 Then rebuild the APK. Open `/api/health` once before a session to wake the server.
 
