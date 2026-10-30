@@ -1,9 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.EnhancedTouch;
-using ETouch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 namespace SafeTouch.AR
 {
@@ -12,8 +8,8 @@ namespace SafeTouch.AR
     /// phone shows it through a virtual camera. No camera permission and no scanning for a floor or table.
     /// The lessons are unchanged: they still place people around Keza, in metres, through ARManager.
     ///
-    /// The child makes Keza bigger or smaller with the + and - buttons or by pinching with two fingers
-    /// (the mouse wheel in the Editor). The camera moves closer or further away rather than changing
+    /// The child makes Keza bigger or smaller with the + and - buttons or by pinching (SizeButtons, through
+    /// ARManager.ChangeSize). The camera moves closer or further away rather than changing
     /// Keza's real size, so her bubble zones and the distances in the lessons stay right.
     /// </summary>
     public class Stage3D : MonoBehaviour
@@ -27,7 +23,6 @@ namespace SafeTouch.AR
         Material baseMaterial;
         readonly Dictionary<Color, Material> materials = new Dictionary<Color, Material>();
         float size = 1f, shownSize = 1f, lookHeight = 0.2f;
-        float lastPinch;
 
         /// <summary>How big Keza looks: 1 is the starting size, between MinSize and MaxSize.</summary>
         public float Size { get { return size; } }
@@ -46,11 +41,6 @@ namespace SafeTouch.AR
             LateUpdate();   // the camera in place from the first frame, so Keza turns to face it
         }
 
-        void OnEnable()
-        {
-            EnhancedTouchSupport.Enable();
-        }
-
         /// <summary>Makes Keza look bigger (more than 1) or smaller (less than 1).</summary>
         public void Zoom(float times)
         {
@@ -61,7 +51,6 @@ namespace SafeTouch.AR
         {
             // Keza is always on the lawn, ready for a lesson or for "Keza's look".
             if (!ar.HasCharacter && Time.frameCount > 2) ar.PlaceCharacter(KezaPose);
-            Pinch();
         }
 
         void LateUpdate()
@@ -72,39 +61,6 @@ namespace SafeTouch.AR
             var target = centre + Vector3.up * lookHeight;
             var direction = Quaternion.Euler(Pitch, 0f, 0f) * Vector3.forward;
             cam.transform.SetPositionAndRotation(target - direction * (BaseDistance / shownSize), Quaternion.LookRotation(direction));
-        }
-
-        /// <summary>Two fingers apart or together, anywhere but on a button: bigger or smaller.</summary>
-        void Pinch()
-        {
-            if (ar.PinchTaken) { lastPinch = 0f; return; }   // a lesson is using the pinch (turning Keza in "look closer")
-            var touches = ETouch.activeTouches;
-            if (touches.Count >= 2)
-            {
-                var a = touches[0].screenPosition;
-                var b = touches[1].screenPosition;
-                if (OverUI(a) || OverUI(b)) return;
-                float distance = Vector2.Distance(a, b);
-                if (lastPinch > 0f) Zoom(distance / lastPinch);
-                lastPinch = Mathf.Max(distance, 1f);
-                return;
-            }
-            lastPinch = 0f;
-            var mouse = Mouse.current;
-            if (mouse == null || OverUI(mouse.position.ReadValue())) return;
-            float scroll = mouse.scroll.ReadValue().y;
-            if (Mathf.Abs(scroll) > 0.01f) Zoom(scroll > 0f ? 1.1f : 1f / 1.1f);
-        }
-
-        static readonly List<RaycastResult> UiHits = new List<RaycastResult>();
-
-        static bool OverUI(Vector2 position)
-        {
-            if (EventSystem.current == null) return false;
-            UiHits.Clear();
-            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = position }, UiHits);
-            foreach (var hit in UiHits) if (hit.gameObject.GetComponentInParent<UnityEngine.UI.Selectable>() != null) return true;
-            return false;
         }
 
         static float HeightOf(GameObject go)

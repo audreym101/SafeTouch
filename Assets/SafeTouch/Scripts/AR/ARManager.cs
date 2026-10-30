@@ -15,8 +15,11 @@ namespace SafeTouch.AR
     /// </summary>
     public class ARManager : MonoBehaviour
     {
-        [Tooltip("Off (the default): a 3D playground, where Keza appears at once and the child makes her bigger or smaller; no camera or scanning. On: augmented reality on a real floor or table.")]
-        [SerializeField] bool useAR = false;
+        /// <summary>How Keza is shown: in the camera picture (no scanning), on a 3D playground, or on a scanned floor.</summary>
+        public enum ViewMode { Camera, Playground, ScanFloor }
+
+        [Tooltip("Camera (the default): the phone's camera picture with Keza standing in it at once, no scanning. Playground: a 3D lawn, no camera. ScanFloor: find a real floor or table first, then place Keza.")]
+        [SerializeField] ViewMode viewMode = ViewMode.Camera;
 
         [Header("Placement")]
         [SerializeField] GameObject characterPrefab;
@@ -54,8 +57,8 @@ namespace SafeTouch.AR
 
         public event Action<ARCharacter> CharacterPlaced;
 
-        /// <summary>True for augmented reality (the phone's camera, a real floor); false for the 3D playground.</summary>
-        public bool UsesAR { get { return useAR; } }
+        /// <summary>True while the phone's camera picture is used; false on the 3D playground.</summary>
+        public bool UsesAR { get { return Stage == null; } }
 
         /// <summary>True while a lesson uses two fingers itself, so the playground does not zoom too (none does yet).</summary>
         public bool PinchTaken { get { return false; } }
@@ -105,19 +108,14 @@ namespace SafeTouch.AR
         {
             // Floors and tables only: walls and ceilings are never detected or used.
             if (planeManager != null) planeManager.requestedDetectionMode = PlaneDetectionMode.Horizontal;
-            if (!useAR)
-            {
-                // The 3D playground: no AR session, so the phone's camera never opens.
-                if (session != null) session.enabled = false;
-                Stage = gameObject.AddComponent<Stage3D>();
-                Stage.Init(this, arCamera != null ? arCamera : Camera.main, opaqueMaterial);
-            }
+            if (viewMode == ViewMode.Playground) StartPlayground();
         }
 
         void Update()
         {
-            if (!placing) return;
+            if (!placing) { SettleOnFloor(); return; }
             StartSession();   // also picks up a camera allowed in Android Settings while the app was away
+            if (viewMode == ViewMode.Camera) { PlaceInCamera(); return; }
             hasPose = CameraPermission.Granted && DetectPlane();
             UpdateSurfaceHighlight();
             if (reticle == null) return;
@@ -146,11 +144,112 @@ namespace SafeTouch.AR
         /// <summary>Starts looking for a surface and shows plane outlines.</summary>
         public void BeginPlacement()
         {
-            if (!useAR) { PlaceCharacter(Stage.KezaPose); return; }   // no scanning: Keza is on the playground at once
+            if (Stage != null) { PlaceCharacter(Stage.KezaPose); return; }   // no scanning: Keza is on the playground at once
             placing = true;
             hasPose = false;
-            SetPlanesVisible(true);
+            SetPlanesVisible(viewMode == ViewMode.ScanFloor);   // camera mode finds floors quietly, without showing them
             StartSession();
+        }
+
+        // ---- Camera mode: the phone's camera picture, Keza in it at once, no scanning ----
+
+        /// <summary>The 3D playground instead of the camera picture (also when the camera is refused or ARCore is missing).</summary>
+        void StartPlayground()
+        {
+            if (Stage != null) return;
+            if (session != null) session.enabled = false;
+            SetPlanesVisible(false);
+            Stage = gameObject.AddComponent<Stage3D>();
+            Stage.Init(this, arCamera != null ? arCamera : Camera.main, opaqueMaterial);
+        }
+
+        float cameraWaitStart = -1f;
+
+        /// <summary>Puts Keza in the camera picture as soon as the phone knows where it is: no floor to find first.</summary>
+        void PlaceInCamera()
+        {
+            // No camera allowed, a phone without ARCore, or the Editor without AR: the 3D playground instead.
+            if (cameraDenied || ARSession.state == ARSessionState.Unsupported || (Application.isEditor && !ARSupported()))
+            {
+                StartPlayground();
+                PlaceCharacter(Stage.KezaPose);
+                return;
+            }
+            if (!CameraPermission.Granted) return;   // the scan screen explains and asks for the camera
+            if (cameraWaitStart < 0f) cameraWaitStart = Time.unscaledTime;
+            // Wait until the phone tracks the room (usually under a second), but never more than 3 seconds.
+            bool tracking = ARSession.state == ARSessionState.SessionTracking;
+            if (!tracking && (ARSession.state != ARSessionState.SessionInitializing || Time.unscaledTime - cameraWaitStart < 3f)) return;
+            cameraWaitStart = -1f;
+            PlaceCharacter(InstantPose());
+        }
+
+        /// <summary>
+        /// Where Keza appears in the camera picture: 1.5 m in front of the phone, facing it, on the floor ARCore
+        /// has already found there, or else about 1.1 m below the phone (where the floor is when a child holds it).
+        /// </summary>
+        public Pose InstantPose()
+        {
+            var cam = CameraTransform;
+            var forward = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
+            if (forward == Vector3.zero) forward = Vector3.forward;
+            var spot = cam.position + forward * 1.5f;
+            float floor;
+            spot.y = FloorUnder(spot, out floor) ? floor : cam.position.y - 1.1f;
+            return new Pose(spot, Quaternion.LookRotation(-forward));
+        }
+
+        /// <summary>The height of the lowest floor (or table) ARCore has found under a point, below the phone.</summary>
+        bool FloorUnder(Vector3 point, out float height)
+        {
+            height = 0f;
+            if (planeManager == null) return false;
+            bool found = false;
+            float phone = CameraTransform.position.y;
+            foreach (var plane in planeManager.trackables)
+            {
+                if (plane.alignment != PlaneAlignment.HorizontalUp || plane.subsumedBy != null) continue;
+                float y = plane.center.y;
+                if (y > phone - 0.3f) continue;
+                var local = plane.transform.InverseTransformPoint(point);
+                var half = plane.size * 0.5f + Vector2.one * 0.5f;   // a little past its edges still counts
+                if (Mathf.Abs(local.x - plane.centerInPlaneSpace.x) > half.x || Mathf.Abs(local.z - plane.centerInPlaneSpace.y) > half.y) continue;
+                if (!found || y < height) { height = y; found = true; }
+            }
+            return found;
+        }
+
+        float nextSettle, settleY = float.NaN;
+
+        /// <summary>Camera mode: once ARCore finds the real floor under Keza, she settles down onto it, gently.</summary>
+        void SettleOnFloor()
+        {
+            if (viewMode != ViewMode.Camera || Stage != null || anchorRoot == null) return;
+            if (Time.unscaledTime >= nextSettle)
+            {
+                nextSettle = Time.unscaledTime + 0.5f;
+                float floor;
+                if (FloorUnder(anchorRoot.position, out floor)) settleY = floor;
+            }
+            if (float.IsNaN(settleY)) return;
+            var p = anchorRoot.position;
+            p.y = Mathf.MoveTowards(p.y, settleY, Time.deltaTime * 0.5f);
+            anchorRoot.position = p;
+        }
+
+        /// <summary>
+        /// Makes Keza look bigger (more than 1) or smaller. On the playground the camera moves closer; in the camera
+        /// picture Keza, and everyone with her, steps closer to the phone or further away. Her real size and the
+        /// distances in the lessons never change.
+        /// </summary>
+        public void ChangeSize(float times)
+        {
+            if (Stage != null) { Stage.Zoom(times); return; }
+            if (anchorRoot == null) return;
+            var flat = Vector3.ProjectOnPlane(anchorRoot.position - CameraTransform.position, Vector3.up);
+            if (flat.sqrMagnitude < 0.0001f) return;
+            float distance = Mathf.Clamp(flat.magnitude / times, 0.6f, 5f);
+            anchorRoot.position += flat.normalized * distance - flat;
         }
 
         // ---- Camera and AR start-up ----
@@ -176,7 +275,7 @@ namespace SafeTouch.AR
         {
             get
             {
-                if (!useAR) return ARStatus.Ready;
+                if (Stage != null) return ARStatus.Ready;
                 if (!CameraPermission.Granted) return cameraDenied ? ARStatus.CameraDenied : ARStatus.NeedsCamera;
                 if (editorFloorFallback && Application.isEditor && !ARSupported())
                     return Found();
@@ -192,6 +291,7 @@ namespace SafeTouch.AR
 
         ARStatus Found()
         {
+            if (viewMode == ViewMode.Camera) return ARStatus.Ready;   // no floor needed
             if (!hasPose) return ARStatus.Searching;
             return SurfaceBigEnough ? ARStatus.Ready : ARStatus.TooSmall;
         }
@@ -222,7 +322,7 @@ namespace SafeTouch.AR
         /// </summary>
         public void StartSession()
         {
-            if (session == null || session.enabled || !CameraPermission.Granted || !useAR) return;
+            if (session == null || session.enabled || !CameraPermission.Granted || Stage != null) return;
             session.enabled = true;
         }
 
@@ -272,6 +372,7 @@ namespace SafeTouch.AR
         /// <summary>Called by the Place button on the scan screen.</summary>
         public bool PlaceAtReticle()
         {
+            if (viewMode == ViewMode.Camera) { PlaceCharacter(InstantPose()); return true; }
             if (!hasPose || !SurfaceBigEnough) return false;   // keep scanning until the surface is big enough
             PlaceCharacter(currentPose);
             return true;
@@ -315,7 +416,7 @@ namespace SafeTouch.AR
             }
             var go = new GameObject("Keza anchor");
             go.transform.SetPositionAndRotation(character.transform.position, Quaternion.identity);
-            if (ARSupported()) go.AddComponent<ARAnchor>();
+            if (ARSupported() && viewMode == ViewMode.ScanFloor) go.AddComponent<ARAnchor>();   // camera mode settles Keza on the floor itself
             anchorRoot = go.transform;
             character.transform.SetParent(anchorRoot, true);
         }
