@@ -1,4 +1,5 @@
 using SafeTouch.Core;
+using SafeTouch.Data;
 using SafeTouch.Services;
 using UnityEngine;
 using UnityEngine.UI;
@@ -62,10 +63,26 @@ namespace SafeTouch.UI.Screens
             }
 
             SetMode(true);
-            heading.text = T("verify.heading", "Thank you! One last step");
-            body.text = record.sentToServer
-                ? string.Format(T("verify.sent", "We emailed a 6-digit code and a copy of your consent to {0}. Type the code here."), string.IsNullOrEmpty(record.emailMasked) ? record.email : record.emailMasked)
-                : T("verify.offline", "Your consent is saved on this phone. As soon as the phone has internet, we will email you a 6-digit code and a copy of your consent.");
+            // A day or more after agreeing, this is a reminder rather than the "one last step" thank-you.
+            bool reminder = record.sentToServer && (record.MustVerifyNow || record.DaysLeft < ConsentRecord.GraceDays);
+            string where = string.IsNullOrEmpty(record.emailMasked) ? record.email : record.emailMasked;
+            heading.text = reminder ? L("Reminder: please confirm your consent", "Kwibutsa: mwemeze uruhushya rwanyu")
+                                    : T("verify.heading", "Thank you! One last step");
+            if (reminder)
+            {
+                string left = record.MustVerifyNow
+                    ? L("The 7 days are over, so SafeTouch needs the code before your child can continue.",
+                        "Iminsi 7 irashize, bityo SafeTouch ikeneye kode mbere y'uko umwana wanyu akomeza.")
+                    : string.Format(L("You have {0} day(s) left to confirm it.", "Mufite iminsi {0} yo kuyemeza."), record.DaysLeft);
+                body.text = string.Format(L("You agreed to the terms, but have not confirmed the 6-digit code yet. Type the code we emailed to {0}. {1} Tap \"Send the email again\" if you can't find it.",
+                                            "Mwemeye amabwiriza, ariko ntimwemeza kode y'imibare 6. Yandike kode twohereje kuri {0}. {1} Mukande \"Ohereza imeyili nanone\" niba mutayibonye."), where, left);
+            }
+            else
+            {
+                body.text = record.sentToServer
+                    ? string.Format(T("verify.sent", "We emailed a 6-digit code and a copy of your consent to {0}. Type the code here."), where)
+                    : T("verify.offline", "Your consent is saved on this phone. As soon as the phone has internet, we will email you a 6-digit code and a copy of your consent.");
+            }
             if (!waiting) status.text = "";
 
             bool canWait = !record.MustVerifyNow;
@@ -129,6 +146,12 @@ namespace SafeTouch.UI.Screens
         static string T(string key, string english)
         {
             return Localization.T(key, english);
+        }
+
+        /// <summary>English or Kinyarwanda text written in place, for the reminder.</summary>
+        static string L(string english, string kinyarwanda)
+        {
+            return Localization.Language == "rw" ? kinyarwanda : english;
         }
     }
 }

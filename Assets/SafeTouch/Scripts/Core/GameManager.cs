@@ -77,7 +77,18 @@ namespace SafeTouch.Core
             arManager.CharacterPlaced += OnCharacterPlaced;
             progressManager.BadgeUnlocked += b => uiManager.ShowToast(Localization.T("badge.unlocked") + " " + b.title);
             foreach (var lesson in lessons) lesson.Completed += OnLessonCompleted;
-            uiManager.ShowMenu("splash");
+            uiManager.ShowMenu(FirstScreen());
+        }
+
+        /// <summary>
+        /// What the app shows when it opens: the parent's login (consent confirmed), the reminder to
+        /// confirm the emailed code (consent given, not confirmed), or the welcome screen.
+        /// </summary>
+        string FirstScreen()
+        {
+            if (consent == null || !consent.HasConsent) return "splash";
+            if (consent.NeedsLogin) return "login";
+            return consent.Record.verified ? "splash" : "verify";
         }
 
         void Update()
