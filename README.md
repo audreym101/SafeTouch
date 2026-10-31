@@ -238,7 +238,7 @@ The live API runs on Render from branch `audrey`; [docs/mongodb.md](docs/mongodb
 | Node.js, Ubuntu (GitHub Actions) | 22 LTS | 71 API tests on every push |
 | Render and MongoDB Atlas | Free plan, M0 | Live consent, login and email-change flows |
 
-**Measuring on phones:** use the Unity Profiler over USB (**Development Build** + **Autoconnect Profiler**), or `adb shell dumpsys gfxinfo com.alu.safetouch`. For each phone, record the FPS, memory and battery use in a lesson. The results for a low-end and a higher-end phone are in the technical report.
+**Measuring on phones:** for FPS, use the Unity Profiler over USB (**Development Build** + **Autoconnect Profiler**); for memory, `adb shell dumpsys meminfo com.alu.safetouch`. For each phone, record the FPS, memory and battery use in a lesson. The results for a low-end and a higher-end phone are in the technical report.
 
 ## 7. Code quality, OOP and algorithms
 
