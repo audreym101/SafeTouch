@@ -34,6 +34,7 @@ namespace SafeTouch.Core
         [SerializeField] CloudSyncService cloudSync;
         [SerializeField] VoiceCoach voiceCoach;
         [SerializeField] ConsentService consent;
+        [SerializeField] ReadAloud readAloud;
 
         [Header("Lessons (levels 1-4) and the Memory Quest (5)")]
         [SerializeField] LessonBase[] lessons = new LessonBase[0];
@@ -48,6 +49,7 @@ namespace SafeTouch.Core
         public ProgressManager Progress { get { return progressManager; } }
         public VoiceCoach Voice { get { return voiceCoach; } }
         public ConsentService Consent { get { return consent; } }
+        public ReadAloud Reader { get { return readAloud; } }
         public int CurrentLevel { get { return currentLevel; } }
         public string SelectedMode { get { return selectedMode; } }
 
@@ -66,6 +68,8 @@ namespace SafeTouch.Core
             if (voiceCoach == null) voiceCoach = GetComponentInChildren<VoiceCoach>();
             if (consent == null) consent = GetComponentInChildren<ConsentService>();
             if (consent == null) consent = gameObject.AddComponent<ConsentService>();
+            if (readAloud == null) readAloud = GetComponentInChildren<ReadAloud>();
+            if (readAloud == null) readAloud = gameObject.AddComponent<ReadAloud>();
             if (lessons.Length == 0) lessons = GetComponentsInChildren<LessonBase>();
         }
 
@@ -75,6 +79,8 @@ namespace SafeTouch.Core
             Localization.SetLanguage(string.IsNullOrEmpty(progress.language) ? "en" : progress.language);
             uiManager.Initialise(this);
             arManager.CharacterPlaced += OnCharacterPlaced;
+            // Outside a lesson (e.g. on "Keza's look" with Keza in the room) a tap still gets a hello.
+            arManager.Touch.Tapped += tap => { if (activeLesson == null) arManager.DefaultTap(tap); };
             progressManager.BadgeUnlocked += b => uiManager.ShowToast(Localization.T("badge.unlocked") + " " + b.title);
             foreach (var lesson in lessons) lesson.Completed += OnLessonCompleted;
             uiManager.ShowMenu(FirstScreen());
@@ -195,6 +201,9 @@ namespace SafeTouch.Core
         {
             progress = progressManager.Load();
             ageGroup = progress.ageGroup;
+            Localization.SetCharacterName(progress.childName);
+            if (arManager != null && arManager.Character != null) arManager.Character.SetName(Localization.CharacterName);
+            if (readAloud != null) readAloud.AutoRead = progress.readAloud;
             if (voiceCoach != null)
             {
                 voiceCoach.Enabled = progress.voiceEnabled;
@@ -215,6 +224,7 @@ namespace SafeTouch.Core
             arManager.CancelPlacement();
             audioManager.StopAll();
             if (voiceCoach != null) voiceCoach.Stop();
+            if (readAloud != null) readAloud.Stop();
             currentLevel = 0;
             uiManager.ShowMenu("home");
         }
@@ -250,10 +260,28 @@ namespace SafeTouch.Core
             ContinueToLessons();
         }
 
-        /// <summary>After consent (or "verify later"): the age question the first time, then the lesson map.</summary>
+        /// <summary>After consent (or "verify later"): the child's name and age the first time, then the lesson map.</summary>
         public void ContinueToLessons()
         {
-            uiManager.ShowMenu(string.IsNullOrEmpty(progressManager.GetData().ageGroup) ? "age" : "menu");   // the menu: lessons, badges, settings, about, contact
+            var data = progressManager.GetData();
+            if (!data.nameAsked) { uiManager.ShowMenu("name"); return; }
+            uiManager.ShowMenu(string.IsNullOrEmpty(data.ageGroup) ? "age" : "menu");   // the menu: lessons, badges, settings, about, contact
+        }
+
+        /// <summary>
+        /// The child named their guide (their own first name or a nickname;
+        /// empty keeps "Keza"). Every text and the name over the guide's head
+        /// change at once.
+        /// </summary>
+        public void SetChildName(string name)
+        {
+            progressManager.SetChildName(name);
+            Localization.SetCharacterName(progress.childName);
+            if (arManager.Character != null)
+            {
+                arManager.Character.SetName(Localization.CharacterName);
+                arManager.Character.Bounce();
+            }
         }
 
         /// <summary>
@@ -265,6 +293,25 @@ namespace SafeTouch.Core
         {
             if (consent != null) consent.Withdraw(null);
             ResetProgress();
+        }
+
+        /// <summary>Parent switched "read every card aloud" on or off.</summary>
+        public void SetReadAloud(bool on)
+        {
+            progressManager.SetReadAloud(on);
+            if (readAloud == null) return;
+            readAloud.AutoRead = on;
+            if (!on) readAloud.Stop();
+        }
+
+        /// <summary>
+        /// Reads text aloud for a child who is learning to read. When the phone
+        /// has no voice for the language (often Kinyarwanda), says so once.
+        /// </summary>
+        public void ReadToMe(params string[] lines)
+        {
+            if (readAloud == null || readAloud.Speak(lines)) return;
+            uiManager.ShowToast(Localization.T("read.nolanguage", "This phone can't read this language out loud yet."));
         }
 
         /// <summary>Parent switched spoken NO practice on or off. Off closes the microphone straight away.</summary>
@@ -340,22 +387,44 @@ namespace SafeTouch.Core
                 // Bubble Guard is replayable and outside the lesson order: record the score only.
                 int best = progress.bestGuardScore;
                 progressManager.RecordGuard(score);
-                string summary = string.Format(Localization.T("game.end.body", "You scored {0} out of {1}."), score, max);
-                if (score > best && best > 0) summary += " " + Localization.T("game.end.best", "That's your best score yet!");
-                uiManager.ShowFeedback(Localization.T("game.end.title", "Bubble Guard complete!"), summary, FeedbackTone.Badge, ReturnToMenu);
+                uiManager.ShowFeedback(Localization.T("game.end.title", "Bubble Guard complete!"), GameEndText(score, max, best),
+                    FeedbackTone.Badge, ReturnToMenu);
                 return;
             }
-            progressManager.CompleteLevel(level, score);
+            progressManager.CompleteLevel(level, score, max);
             UnlockNextLevel();
             SaveProgress();
             SyncNow();
 
-            string next = level < ProgressManager.LessonCount
-                ? Localization.T("complete.next")
-                : Localization.T("complete.all");
-            uiManager.ShowFeedback(Localization.T("complete.title"),
-                string.Format(Localization.T("complete.body"), score, max) + " " + next,
-                FeedbackTone.Badge, ReturnToMenu);
+            string body = string.Format(Localization.T("complete.body"), score, max);
+            // Every lesson stays open: say why it's worth coming back.
+            if (score < max) body += " " + Localization.T("complete.again", "Play again any time to win all the stars!");
+            body += " " + (level < ProgressManager.LessonCount ? Localization.T("complete.next") : Localization.T("complete.all"));
+            uiManager.ShowFeedback(Localization.T("complete.title"), body, FeedbackTone.Badge, ReturnToMenu);
+        }
+
+        /// <summary>
+        /// The Bubble Guard result, and why the game is always open: there is a
+        /// badge still to win, or more points to get. Short sentences, for
+        /// young readers.
+        /// </summary>
+        string GameEndText(int score, int max, int previousBest)
+        {
+            string text = string.Format(Localization.T("game.end.body", "You got {0} of {1} points."), score, max);
+            if (score > previousBest && previousBest > 0) text += " " + Localization.T("game.end.best", "Your best yet!");
+
+            int target = progressManager.GuardBadgeScore();
+            bool badgeWon = progress.badgesEarned.Contains("guard");
+            if (!badgeWon && target > 0)
+                text += "\n\n" + string.Format(Localization.T("game.end.badge", "Get {0} points to win the Bubble Guard badge. You can play as many times as you like!"), target);
+            else if (score < max)
+                text += "\n\n" + string.Format(Localization.T("game.end.more", "You can play as many times as you like. Try to get all {0} points!"), max);
+            else
+                text += "\n\n" + Localization.T("game.end.perfect", "Every point! You are a real Bubble Guard.");
+
+            int left = progressManager.BadgesToWin().Count;
+            if (left > 0) text += " " + string.Format(Localization.T("game.end.left", "Badges left to win: {0}."), left);
+            return text;
         }
     }
 }

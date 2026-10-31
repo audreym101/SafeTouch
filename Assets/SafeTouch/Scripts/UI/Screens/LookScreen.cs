@@ -36,10 +36,12 @@ namespace SafeTouch.UI.Screens
             toneName = UIFactory.Label(cardRt, "", Theme.Title, Theme.Ink, TextAnchor.MiddleCenter, true);
             BuildSwatches(cardRt);
             hint = UIFactory.Label(cardRt, "", Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
-            done = UIFactory.Button(cardRt, "", Theme.Primary, Color.white, () => ui.ShowMenu(ui.CameFrom("menu", "home")));
+            var buttons = UIFactory.Row(cardRt, "Buttons", Theme.Gap, Theme.TouchTarget);
+            rename = UIFactory.Button(buttons.transform, "", Theme.Sky, Theme.Ink, () => ui.Names.Change(Name));
+            done = UIFactory.Button(buttons.transform, "", Theme.Primary, Color.white, () => ui.ShowMenu(ui.CameFrom("menu", "home")));
         }
 
-        Button done;
+        Button done, rename;
         readonly Image[] swatches = new Image[SkinTones.All.Length];
 
         /// <summary>One big round button per tone; the chosen one gets a dark ring.</summary>
@@ -98,11 +100,12 @@ namespace SafeTouch.UI.Screens
         {
             TitleText.text = Localization.T("look.title", "Keza's look");
             UIFactory.SetButtonLabel(done, Localization.T("look.done", "Done"));
+            UIFactory.SetButtonLabel(rename, Localization.T("look.rename", "Change my name"));
             bool inRoom = game.AR.HasCharacter;
             preview.gameObject.SetActive(!inRoom);
             Root.GetComponent<Image>().color = inRoom ? Theme.Clear : Theme.Sky;   // no camera picture yet: not a black screen
             hint.text = inRoom
-                ? Localization.T("look.hint.room", "Keza can look like you, or like a friend. Watch her change in your room!")
+                ? Localization.T("look.hint.room", "Keza can look like you, or like a friend. Watch the change in your room!")
                 : Localization.T("look.hint", "Keza can look like you, or like a friend. Pick any colour.");
             Show(SkinTones.Get(game.Progress.GetData().skinTone));
         }

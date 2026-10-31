@@ -141,6 +141,8 @@ namespace SafeTouch.Voice
 
         void Update()
         {
+            // The child can't answer while the phone is reading to them: the wait starts after.
+            if (Listening && ReadAloud.Speaking) listenStart = Time.unscaledTime;
             // Silence for too long: hand back "nothing heard" so the lesson can encourage the child.
             if (Listening && !continuous && !segmenter.InUtterance && Time.unscaledTime - listenStart > noAnswerSeconds)
                 Deliver(NoRating.NothingHeard());
@@ -154,6 +156,14 @@ namespace SafeTouch.Voice
         void OnFrame(VoiceFrame frame)
         {
             if (!Listening) return;
+            if (ReadAloud.Speaking)
+            {
+                // The phone's own voice is not the child's NO. Start fresh once it stops.
+                segmenter.Reset();
+                Level01 = 0f;
+                PitchHz = 0f;
+                return;
+            }
             float target = Mathf.Clamp01((frame.levelDb - segmenter.NoiseFloorDb) / MeterRangeDb);
             Level01 = target > Level01 ? target : Mathf.Lerp(Level01, target, 0.25f);   // rise fast, fall gently
             PitchHz = frame.Voiced ? frame.pitchHz : 0f;

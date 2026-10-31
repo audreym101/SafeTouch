@@ -145,21 +145,37 @@ namespace SafeTouch.UI.Screens
                 if (card.info == LessonInfo.Game)
                 {
                     card.title.text = Localization.T(card.info.titleKey, "Bubble Guard");
-                    status = !unlocked
-                        ? string.Format(Localization.T("status.locked"), ProgressManager.GameUnlockedBy)
-                        : progress.guardGamesPlayed > 0
-                            ? string.Format(Localization.T("game.best", "Best score: {0}"), progress.bestGuardScore)
-                            : Localization.T("game.ready", "Ready to play");
+                    status = !unlocked ? string.Format(Localization.T("status.locked"), ProgressManager.GameUnlockedBy)
+                        : progress.guardGamesPlayed == 0 ? Localization.T("game.ready", "Ready to play")
+                        : GameStatus(progress);
                     SetSummary(card, Localization.T(card.info.summaryKey, "Game: say NO to keep Keza's bubble safe"), status);
                     continue;
                 }
                 bool done = progress.IsLevelComplete(level);
                 card.title.text = level + ". " + Localization.T(card.info.titleKey);
-                status = done ? Localization.T("status.done")
+                status = done ? DoneStatus(progress, level)
                     : unlocked ? Localization.T("status.ready")
                     : string.Format(Localization.T("status.locked"), level - 1);
                 SetSummary(card, Localization.T(card.info.summaryKey), status);
             }
+        }
+
+        /// <summary>A finished lesson stays open; the card says whether there are stars left to win.</summary>
+        static string DoneStatus(Data.Progress progress, int level)
+        {
+            int max = progress.MaxScore(level);
+            if (max <= 0) return Localization.T("status.done");   // finished before the maximum was recorded
+            if (progress.IsPerfect(level)) return Localization.T("status.perfect", "All stars! Play any time");
+            return string.Format(Localization.T("status.more", "{0} of {1} stars. Play again to win them all!"), progress.BestScore(level), max);
+        }
+
+        /// <summary>Bubble Guard never closes: the card says what there is still to win.</summary>
+        string GameStatus(Data.Progress progress)
+        {
+            int target = game.Progress.GuardBadgeScore();
+            if (target > 0 && !progress.badgesEarned.Contains("guard"))
+                return string.Format(Localization.T("game.best.badge", "Best: {0}. Get {1} to win the badge!"), progress.bestGuardScore, target);
+            return string.Format(Localization.T("game.best.won", "Best: {0}. Badge won! Play any time"), progress.bestGuardScore);
         }
 
         /// <summary>"Learn the three zones around your body  -  Ready to play", the status bold in the lesson's colour.</summary>

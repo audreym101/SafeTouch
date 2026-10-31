@@ -55,7 +55,7 @@ namespace SafeTouch.Lessons
 
             Header(T("game.title", "Bubble Guard"));
             Prompt(T("game.intro.title", "Guard Keza's bubble!"),
-                T("game.intro.body", "People will walk up to Keza and ask her something. If it's not okay, say NO before they reach the red zone. If it's okay, tap OK."),
+                T("game.intro.body", "People will walk up to Keza and ask something. Not okay? Say NO before they reach red. Okay? Tap OK."),
                 new PromptOption(T("game.start", "Start!"), Theme.Primary, NextVisitor));
         }
 
@@ -83,7 +83,8 @@ namespace SafeTouch.Lessons
             index++;
 
             float angle = Random.Range(120f, 240f);   // from the far side, where the child can see them
-            visitor = Spawn(string.Format(T("game.visitor", "Visitor {0}"), index), new Color(0.55f, 0.6f, 0.68f), SpawnRadius, angle);
+            visitor = Spawn(string.Format(T("game.visitor", "Visitor {0}"), index), new Color(0.55f, 0.6f, 0.68f), SpawnRadius, angle,
+                current.who == "child" ? "child" : null);
             game.AR.SetMovable(visitor, false);
             visitor.WalkSpeed = Mathf.Lerp(SlowSpeed, FastSpeed, progress);
             visitor.Say(current.text, game.AR.OpaqueMaterial);
@@ -164,7 +165,7 @@ namespace SafeTouch.Lessons
             visitor.Say(null, null);
             game.Audio.PlaySFX("tryagain");
             LeaveFast();
-            Explain(T("game.result.close", "Too close! Say NO sooner, while they are still in the green zone."));
+            Explain(T("game.result.close", "Too close! Say NO sooner, while they are still in green."));
         }
 
         void LeaveFast()

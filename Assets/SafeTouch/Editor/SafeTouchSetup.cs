@@ -227,12 +227,20 @@ namespace SafeTouch.EditorTools
             var keza = PersonPrefab("Keza", opaque, Theme.Hex("#F28C38"), 0.75f, true);
             var figure = PersonPrefab("Figure", opaque, Theme.Hex("#8C99AD"), 1f, false);
 
-            // Prefabs from the repo's 3D models (SafeTouch > 4. Build Character Prefabs From Models), when built.
+            // Prefabs from the repo's 3D models (SafeTouch > 4. Build Character Prefabs From Models).
+            // Built here when any is missing, so the scene never falls back to the simple shapes by accident.
+            bool modelsMissing = new[] { SafeTouchCharacters.KezaPrefabPath, SafeTouchCharacters.ClassmatePrefabPath,
+                    SafeTouchCharacters.MumPrefabPath, SafeTouchCharacters.DadPrefabPath }
+                .Concat(SafeTouchCharacters.AdultPrefabPaths)
+                .Any(p => AssetDatabase.LoadAssetAtPath<GameObject>(p) == null);
+            if (modelsMissing) SafeTouchCharacters.BuildAll();
             var kezaModel = AssetDatabase.LoadAssetAtPath<GameObject>(SafeTouchCharacters.KezaPrefabPath);
             if (kezaModel != null) keza = kezaModel;
+            // Visitors are the modelled adults when they have been built; the simple figure
+            // (capsule and spheres) only stands in when there are none.
             var people = SafeTouchCharacters.AdultPrefabPaths
-                .Select(p => AssetDatabase.LoadAssetAtPath<GameObject>(p)).Where(p => p != null)
-                .Concat(new[] { figure }).ToArray();
+                .Select(p => AssetDatabase.LoadAssetAtPath<GameObject>(p)).Where(p => p != null).ToArray();
+            if (people.Length == 0) people = new[] { figure };
             var reticle = ReticlePrefab(planeMat);
             var planePrefab = PlanePrefab(planeMat);
 
@@ -287,7 +295,8 @@ namespace SafeTouch.EditorTools
             Set(ar, "characterPrefab", keza);
             Set(ar, "figurePrefab", figure);
             SetArray(ar, "figureVariants", people);
-            SetRoles(ar, new[] { "mum", "dad" }, new[] { SafeTouchCharacters.MumPrefabPath, SafeTouchCharacters.DadPrefabPath });
+            SetRoles(ar, new[] { "mum", "dad", "child" },
+                new[] { SafeTouchCharacters.MumPrefabPath, SafeTouchCharacters.DadPrefabPath, SafeTouchCharacters.ClassmatePrefabPath });
             Set(ar, "reticle", reticleInstance.transform);
             Set(ar, "raycastManager", raycasts);
             Set(ar, "planeManager", planes);

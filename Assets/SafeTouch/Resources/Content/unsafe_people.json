@@ -1,0 +1,14 @@
+{
+  "_note": "Lesson 4: 'Is there anyone who makes you feel unsafe or worried?' Kinds of people, never names, so the child is not asked to name anyone. The answer stays on the phone and is shown to the parent behind the parent gate (Grown-ups > My child). Draft for review by the supervisor, the ethics committee and a child-protection officer.",
+  "items": [
+    { "adultId": "family",        "name": "Someone in my family", "category": "home",   "colorHex": "#E4574C" },
+    { "adultId": "family_friend", "name": "A family friend",      "category": "home",   "colorHex": "#E4574C" },
+    { "adultId": "neighbour",     "name": "A neighbour",          "category": "area",   "colorHex": "#E4574C" },
+    { "adultId": "older_child",   "name": "An older child",       "category": "area",   "colorHex": "#E4574C" },
+    { "adultId": "classmate",     "name": "A classmate",          "category": "school", "colorHex": "#E4574C" },
+    { "adultId": "school_adult",  "name": "An adult at school",   "category": "school", "colorHex": "#E4574C" },
+    { "adultId": "stranger",      "name": "Someone I don't know", "category": "area",   "colorHex": "#E4574C" },
+    { "adultId": "online",        "name": "Someone online",       "category": "area",   "colorHex": "#E4574C" },
+    { "adultId": "other",         "name": "Someone else",         "category": "area",   "colorHex": "#E4574C" }
+  ]
+}

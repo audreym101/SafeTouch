@@ -49,6 +49,7 @@ namespace SafeTouch.Tests
 
         [TestCase("scenarios")]
         [TestCase("trusted_adults")]
+        [TestCase("unsafe_people")]
         [TestCase("badges")]
         [TestCase("parent_resources")]
         [TestCase("review")]

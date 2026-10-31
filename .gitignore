@@ -33,3 +33,6 @@ backend/.env.local
 
 # SafeTouch > 7. Render Screens On Phones And Tablets (overview sheets go to docs/designs/devices)
 /Screenshots/
+
+# Temporary build-tool files
+/.utmp/

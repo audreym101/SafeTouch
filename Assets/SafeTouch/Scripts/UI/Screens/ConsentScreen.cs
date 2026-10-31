@@ -67,7 +67,7 @@ namespace SafeTouch.UI.Screens
         public override void OnShow()
         {
             TitleText.text = T("consent.title", "For parents and guardians");
-            intro.text = T("consent.intro", "Before your child uses SafeTouch, please read what it does and what it keeps, tick the boxes, and give your details so we can confirm by email that it was you.");
+            intro.text = T("consent.intro", "Dear parents,\n\nBefore your child uses SafeTouch, please read what it does and what it keeps, tick the boxes, and give your details so we can confirm by email that it was you.");
             detailsTitle.text = T("consent.details", "Your details");
             SetPlaceholder(nameField, T("consent.name", "Your full name"));
             SetPlaceholder(phoneField, T("consent.phone", "Phone number with country code"));

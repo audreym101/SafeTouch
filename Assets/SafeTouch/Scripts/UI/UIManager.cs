@@ -41,7 +41,7 @@ namespace SafeTouch.UI
         GameManager game;
 
         Text feedbackTitle, feedbackBody;
-        Button feedbackButton;
+        Button feedbackButton, feedbackRead;
         Action feedbackContinue;
         GameObject toast;
         Image backdrop;
@@ -54,6 +54,7 @@ namespace SafeTouch.UI
         public MemoryGameScreen Memory { get; private set; }
         public CertificateScreen Certificate { get; private set; }
         public PlacesScreen Places { get; private set; }
+        public NameScreen Names { get; private set; }
 
         public void Initialise(GameManager gameManager)
         {
@@ -77,6 +78,7 @@ namespace SafeTouch.UI
             Memory = new MemoryGameScreen();
             Certificate = new CertificateScreen();
             Places = new PlacesScreen();
+            Names = new NameScreen();
             screens.Add(new SplashScreen());
             screens.Add(new ConsentScreen());
             screens.Add(new VerifyScreen());
@@ -88,6 +90,7 @@ namespace SafeTouch.UI
             screens.Add(new HelpScreen());
             screens.Add(new AboutScreen());
             screens.Add(new ContactScreen());
+            screens.Add(Names);
             screens.Add(new AgeScreen());
             screens.Add(new HomeScreen());
             screens.Add(new ScanScreen());
@@ -178,7 +181,9 @@ namespace SafeTouch.UI
             feedbackBody.text = msg;
             feedbackContinue = onContinue;
             UIFactory.SetButtonLabel(feedbackButton, Localization.T("continue"));
+            UIFactory.SetButtonLabel(feedbackRead, Localization.T("lesson.replay", "Read to me"));
             game.Audio.PlaySFX(tone == FeedbackTone.Correct ? "correct" : tone == FeedbackTone.TryAgain ? "tryagain" : tone == FeedbackTone.Badge ? "badge" : "tap");
+            if (game.Reader != null) game.Reader.SpeakIfAuto(title, msg);
         }
 
         public void HideFeedback()
@@ -236,13 +241,18 @@ namespace SafeTouch.UI
 
             feedbackTitle = UIFactory.Label(card.transform, "", Theme.Title, Theme.Ink, TextAnchor.UpperLeft, true);
             feedbackBody = UIFactory.Label(card.transform, "", Theme.Body, Theme.Ink, TextAnchor.UpperLeft, false);
-            feedbackButton = UIFactory.Button(card.transform, "Continue", Theme.Primary, Color.white, () =>
+            var buttons = UIFactory.Row(card.transform, "Buttons", Theme.Gap, Theme.TouchTarget);
+            feedbackRead = UIFactory.Button(buttons.transform, "Read to me", Theme.Sky, Theme.Ink,
+                () => game.ReadToMe(feedbackTitle.gameObject.activeSelf ? feedbackTitle.text : "", feedbackBody.text));
+            feedbackButton = UIFactory.Button(buttons.transform, "Continue", Theme.Primary, Color.white, () =>
             {
+                if (game.Reader != null) game.Reader.Stop();
                 HideFeedback();
                 var next = feedbackContinue;
                 feedbackContinue = null;
                 if (next != null) next();
             });
+            feedbackButton.GetComponent<LayoutElement>().flexibleWidth = 2f;   // Continue is the main action
             feedbackPanel.SetActive(false);
         }
 

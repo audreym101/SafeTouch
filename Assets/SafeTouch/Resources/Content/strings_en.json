@@ -18,7 +18,7 @@
     },
     {
       "key": "age.note",
-      "value": "SafeTouch only asks your age group. It never asks your name."
+      "value": "SafeTouch only asks your age group."
     },
     {
       "key": "home.heading",
@@ -70,7 +70,7 @@
     },
     {
       "key": "status.done",
-      "value": "Done - play again"
+      "value": "Done - play again!"
     },
     {
       "key": "status.ready",
@@ -98,7 +98,7 @@
     },
     {
       "key": "lesson.replay",
-      "value": "Listen again"
+      "value": "Read to me"
     },
     {
       "key": "lesson.move",
@@ -106,7 +106,7 @@
     },
     {
       "key": "adults.instructions",
-      "value": "Tap the grown-ups you trust. Choose at least 2. Can you fill a whole hand with 5?"
+      "value": "Tap the grown-ups you trust. Pick at least 2."
     },
     {
       "key": "adults.counter",
@@ -143,6 +143,10 @@
     {
       "key": "parent.title",
       "value": "Parents and teachers"
+    },
+    {
+      "key": "parent.tab.child",
+      "value": "My child"
     },
     {
       "key": "parent.tab.talk",
@@ -210,7 +214,7 @@
     },
     {
       "key": "complete.next",
-      "value": "The next lesson is open."
+      "value": "Try the next lesson!"
     },
     {
       "key": "complete.all",
@@ -250,7 +254,7 @@
     },
     {
       "key": "move.keza",
-      "value": "Use the arrows to walk Keza. Her bubble moves with her."
+      "value": "The bubble moves with Keza."
     },
     {
       "key": "voice.ready",
@@ -306,7 +310,7 @@
     },
     {
       "key": "voice.warmup.body",
-      "value": "Say \"Hello Keza!\" in your everyday voice, so Keza knows how you sound."
+      "value": "Say \"Hello Keza!\" in your normal voice."
     },
     {
       "key": "voice.warmup.skip",
@@ -358,11 +362,11 @@
     },
     {
       "key": "game.end.body",
-      "value": "You scored {0} out of {1}."
+      "value": "You got {0} of {1} points."
     },
     {
       "key": "game.end.best",
-      "value": "That's your best score yet!"
+      "value": "Your best yet!"
     },
     {
       "key": "home.look",
@@ -401,7 +405,7 @@
       "value": "Ebony"
     },
     { "key": "scan.camera.title", "value": "Keza needs your camera" },
-    { "key": "scan.camera.body", "value": "SafeTouch uses the camera to show Keza in your room. The picture stays on this phone: it is never saved or sent." },
+    { "key": "scan.camera.body", "value": "Keza needs the camera to appear in your room. The picture is never saved or sent." },
     { "key": "scan.camera.allow", "value": "Allow the camera" },
     { "key": "scan.denied.title", "value": "The camera is switched off" },
     { "key": "scan.denied.body", "value": "Without the camera, Keza can't appear in your room. Tap below and choose Allow." },
@@ -413,12 +417,12 @@
     { "key": "scan.unsupported.back", "value": "Back to the lessons" },
     { "key": "scan.preparing", "value": "Getting the camera ready..." },
     { "key": "scan.search.title", "value": "Find the floor or a table" },
-    { "key": "scan.search.body", "value": "Point your phone at the floor or a big table and move it slowly from side to side. Squares appear where Keza can stand." },
+    { "key": "scan.search.body", "value": "Point your phone at the floor or a big table. Move it slowly. Squares show where Keza can stand." },
     { "key": "scan.small.title", "value": "Found it! Keep going..." },
     { "key": "scan.small.body", "value": "This surface is {0:0.0} x {1:0.0} m. Keza needs about {2:0.0} x {2:0.0} m: move your phone slowly over more of it until the squares turn green." },
     { "key": "scan.ready.title", "value": "Big enough!" },
     { "key": "consent.title", "value": "For parents and guardians" },
-    { "key": "consent.intro", "value": "Before your child uses SafeTouch, please read what it does and what it keeps, tick the boxes, and give your details so we can confirm by email that it was you." },
+    { "key": "consent.intro", "value": "Dear parents,\n\nBefore your child uses SafeTouch, please read what it does and what it keeps, tick the boxes, and give your details so we can confirm by email that it was you." },
     { "key": "consent.details", "value": "Your details" },
     { "key": "consent.name", "value": "Your full name" },
     { "key": "consent.phone", "value": "Phone number with country code" },

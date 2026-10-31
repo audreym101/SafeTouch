@@ -29,18 +29,58 @@ namespace SafeTouch.AR
         [Tooltip("Keep the model's own textured clothes instead of tinting them with the role colour (e.g. Mum and Dad).")]
         [SerializeField] bool keepOwnColours;
 
-        public void Setup(string label, Color color, Material baseMaterial)
+        void Start()
+        {
+            // A soft shadow under the feet makes the person stand on the real floor.
+            ARFx.AddShadow(transform, 0.3f);
+        }
+
+        /// <summary>Shows or hides the name over the head (hidden while looking closely at the body).</summary>
+        public void ShowName(bool show)
+        {
+            if (nameLabel != null) nameLabel.gameObject.SetActive(show);
+        }
+
+        /// <summary>Changes the name over the person's head (Keza takes the child's chosen name).</summary>
+        public void SetName(string label)
         {
             Label = label;
             name = label;
             if (nameLabel != null) nameLabel.text = label;
+        }
+
+        // Materials that keep their own look: skin (the skin tone sets it), eyes, hair, glasses.
+        static readonly string[] KeepLook = { "skin", "realismbody", "head", "face", "hand", "eye", "iris", "sclera", "brow", "lash", "glass", "teeth", "hair" };
+
+        /// <summary>
+        /// Names the person and dresses them in the role's colour. Only the
+        /// clothes take the colour: skin keeps the skin tone, and eyes, hair
+        /// and glasses keep their own look. Mum and Dad keep their own
+        /// textured clothes (keepOwnColours).
+        /// </summary>
+        public void Setup(string label, Color color, Material baseMaterial)
+        {
+            SetName(label);
             if (keepOwnColours) return;
             var parts = tintedParts.Length > 0 ? tintedParts : GetComponentsInChildren<Renderer>();
             foreach (var r in parts)
             {
                 if (r == null || r.GetComponent<TextMesh>() != null) continue;
-                r.material = baseMaterial != null ? new Material(baseMaterial) : r.material;
-                r.material.color = color;
+                var materials = r.sharedMaterials;
+                bool changed = false;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    var m = materials[i];
+                    string lower = m != null ? m.name.ToLowerInvariant() : "";
+                    if (m != null && System.Array.Exists(KeepLook, k => lower.Contains(k))) continue;
+                    var dressed = m != null ? new Material(m) : (baseMaterial != null ? new Material(baseMaterial) : null);
+                    if (dressed == null) continue;
+                    dressed.name = m != null ? m.name : "Clothes";   // keep the name: the skin tone looks for it
+                    dressed.color = color;
+                    materials[i] = dressed;
+                    changed = true;
+                }
+                if (changed) r.materials = materials;
             }
         }
 
@@ -63,7 +103,8 @@ namespace SafeTouch.AR
 
             speech = new GameObject("Speech");
             speech.transform.SetParent(transform, true);
-            speech.transform.position = new Vector3(transform.position.x, top + 0.16f, transform.position.z);
+            // Above the name label (which sits about 0.08 m over the head), not on top of it.
+            speech.transform.position = new Vector3(transform.position.x, top + 0.25f, transform.position.z);
             speech.AddComponent<Billboard>();
 
             string wrapped = Wrap(text, 18);
@@ -80,6 +121,8 @@ namespace SafeTouch.AR
             label.transform.SetParent(speech.transform, false);
             label.transform.localPosition = new Vector3(0f, 0f, -0.005f);
             var mesh = label.AddComponent<TextMesh>();
+            mesh.font = ARFx.Font;
+            label.GetComponent<MeshRenderer>().sharedMaterial = ARFx.Font.material;
             mesh.text = wrapped;
             mesh.anchor = TextAnchor.MiddleCenter;
             mesh.alignment = TextAlignment.Center;
@@ -90,25 +133,24 @@ namespace SafeTouch.AR
 
         static string Wrap(string text, int width)
         {
-            var words = text.Split(' ');
-            var result = new System.Text.StringBuilder();
-            int lineLength = 0;
-            foreach (var word in words)
-            {
-                if (lineLength > 0 && lineLength + 1 + word.Length > width)
-                {
-                    result.Append('\n');
-                    lineLength = 0;
-                }
-                else if (lineLength > 0)
-                {
-                    result.Append(' ');
-                    lineLength++;
-                }
-                result.Append(word);
-                lineLength += word.Length;
-            }
-            return result.ToString();
+            return ARFx.Wrap(text, width);
+        }
+
+        Coroutine sayTimer;
+
+        /// <summary>A speech bubble that goes away by itself after a few seconds.</summary>
+        public void SayFor(string text, Material background, float seconds)
+        {
+            Say(text, background);
+            if (sayTimer != null) StopCoroutine(sayTimer);
+            sayTimer = StartCoroutine(ClearSpeechLater(seconds));
+        }
+
+        IEnumerator ClearSpeechLater(float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            sayTimer = null;
+            Say(null, null);
         }
 
         public void FaceTowards(Vector3 worldPoint)

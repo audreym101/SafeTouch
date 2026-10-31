@@ -34,6 +34,8 @@ Before a child uses SafeTouch for the first time, a parent or legal guardian rea
 | Parent's name, phone, email, country, consent date, terms version, the four agreements | The phone (PlayerPrefs, `safetouch.consent.v1`) and the SafeTouch API, in a `consents` collection **separate from progress** | To verify the consent by email and contact the parent about it |
 | Verification code | API only, as a **SHA-256 hash**, expiring after 24 hours | To check the code the parent types |
 | Child's age group, progress, badges | The phone; anonymous sync only if switched on | Unchanged: never the child's name, photo, location or voice |
+| Child's first name or nickname, given to the guide character (optional: "Skip" keeps "Keza") | The phone only (PlayerPrefs); **never synced** | The guide in the room carries it and the lessons use it. Deleted with the progress or a withdrawal. Added in terms version 1.2 |
+| Child's lesson 4 answers: the kinds of grown-ups they trust, and the kinds of people who make them feel unsafe (e.g. "A neighbour", never a name) | The phone. The trusted roles sync with progress if sync is on; the "unsafe" answer is **never synced** | Shown to the parent in Grown-ups › My child (behind the parent gate), with what to do next. Added in terms version 1.1 |
 
 The child's data is still anonymous, but the parent's details are **personal data**. The proposal's NFR1 ("the app collects no personal data") and the ethics application should be updated to say:
 

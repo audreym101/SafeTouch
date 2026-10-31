@@ -29,7 +29,7 @@ namespace SafeTouch.Data
         public const string PrefsKey = "safetouch.consent.v1";
 
         /// <summary>The version of the terms shown; bump it when the terms change so parents agree again.</summary>
-        public const string TermsVersion = "1.0";
+        public const string TermsVersion = "1.3";
 
         /// <summary>Days a child can use SafeTouch before the parent must confirm the emailed code.</summary>
         public const int GraceDays = 7;

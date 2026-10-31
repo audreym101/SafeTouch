@@ -22,6 +22,7 @@ namespace SafeTouch.Data
 
         static List<Scenario> scenarios;
         static List<TrustedAdult> adults;
+        static List<TrustedAdult> unsafePeople;
         static List<Badge> badges;
         static List<ParentResource> resources;
         static List<ReviewPair> reviewPairs;
@@ -36,6 +37,12 @@ namespace SafeTouch.Data
         public static List<TrustedAdult> TrustedAdults
         {
             get { CheckLanguage(); return adults ?? (adults = (Load<AdultList>("trusted_adults").items ?? new List<TrustedAdult>())); }
+        }
+
+        /// <summary>Kinds of people a child can say make them feel unsafe (lesson 4). Roles only, never names.</summary>
+        public static List<TrustedAdult> UnsafePeople
+        {
+            get { CheckLanguage(); return unsafePeople ?? (unsafePeople = (Load<AdultList>("unsafe_people").items ?? new List<TrustedAdult>())); }
         }
 
         public static List<Badge> Badges
@@ -64,19 +71,21 @@ namespace SafeTouch.Data
             get { CheckLanguage(); return terms ?? (terms = (Load<TermsList>("terms").items ?? new List<TermsSection>())); }
         }
 
-        static string loadedLanguage;
+        static string loadedLanguage, loadedName;
 
         /// <summary>
-        /// Forgets the loaded content when the language changes, so the next
-        /// read loads the right language. Called by every getter.
+        /// Forgets the loaded content when the language or the guide's name
+        /// changes, so the next read loads the right words. Called by every getter.
         /// </summary>
         static void CheckLanguage()
         {
             string language = string.IsNullOrEmpty(Localization.Language) ? "en" : Localization.Language;
-            if (language == loadedLanguage) return;
+            if (language == loadedLanguage && Localization.CharacterName == loadedName) return;
             loadedLanguage = language;
+            loadedName = Localization.CharacterName;
             scenarios = null;
             adults = null;
+            unsafePeople = null;
             badges = null;
             resources = null;
             reviewPairs = null;
@@ -100,7 +109,9 @@ namespace SafeTouch.Data
                 Debug.LogError("[SafeTouch] Missing content file Resources/Content/" + file + ".json");
                 return new T();
             }
-            return JsonUtility.FromJson<T>(asset.text);
+            // The content says "Keza"; the child's chosen name goes in instead. Names are
+            // cleaned to letters, spaces, hyphens and apostrophes, so the JSON stays valid.
+            return JsonUtility.FromJson<T>(Localization.Named(asset.text));
         }
     }
 
@@ -133,6 +144,7 @@ namespace SafeTouch.Data
         public string requestId;
         public int level;        // 1 = everyone, 2 = ages 9-11 only
         public bool safe;        // false: the right answer is a strong NO
+        public string who;       // "child" for a child visitor (the Classmate model); empty for an adult
         public string text;      // shown in the visitor's speech bubble
         public string explain;   // shown after the child answers
     }

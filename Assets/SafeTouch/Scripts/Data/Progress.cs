@@ -17,12 +17,22 @@ namespace SafeTouch.Data
 
         public string userId;
         public string ageGroup;                 // "6-8" or "9-11"
+        // The first name or nickname the child gave their guide (it is the guide's
+        // name in the room). On this phone only: never synced, deleted with the progress.
+        public string childName;
+        public bool nameAsked;
         public string language = "en";          // "en" or "rw"
         public List<int> completedLevels = new List<int>();
         public List<int> quizScores = new List<int>();          // best score per level, index = level - 1
         public List<int> maxScores = new List<int>();           // the most each level can score, index = level - 1
         public List<string> badgesEarned = new List<string>();  // badge ids
         public List<string> trustedAdults = new List<string>(); // adult ids chosen by the child
+        // Who the child feels unsafe or worried with: role ids only (e.g. "neighbour"),
+        // never a name. Shown to the parent behind the parent gate; never synced.
+        public List<string> unsafePeople = new List<string>();
+        public bool unsafeAsked;                                // the child has answered the question (maybe "nobody")
+        public List<string> parentGuesses = new List<string>(); // the parent's guess of the child's trusted adults
+        public bool readAloud;                                  // read each card aloud without a tap (set by a parent)
         public List<ScenarioResponse> scenarioResponses = new List<ScenarioResponse>();
         public float bestChaseSeconds;          // fastest "NO" in the Memory Quest chase; 0 = not played yet
         public bool voiceEnabled = true;        // spoken NO practice; a parent can switch it off
@@ -65,6 +75,35 @@ namespace SafeTouch.Data
             badge.Unlock();
         }
 
+        public bool IsLevelComplete(int level)
+        {
+            return completedLevels.Contains(level);
+        }
+
+        public int GetTotalScore()
+        {
+            return quizScores.Sum();
+        }
+
+        public void SetScore(int level, int score, int max)
+        {
+            while (quizScores.Count < level) quizScores.Add(0);
+            while (maxScores.Count < level) maxScores.Add(0);
+            quizScores[level - 1] = Mathf.Max(quizScores[level - 1], score);
+            maxScores[level - 1] = Mathf.Max(maxScores[level - 1], max);
+        }
+
+        public int BestScore(int level)
+        {
+            return quizScores.Count >= level ? quizScores[level - 1] : 0;
+        }
+
+        /// <summary>The most a level can score; 0 when it hasn't been played since this was recorded.</summary>
+        public int MaxScore(int level)
+        {
+            return maxScores.Count >= level ? maxScores[level - 1] : 0;
+        }
+
         /// <summary>Plays the other path: this path's results are put aside and the other's brought back (empty the first time).</summary>
         public void SwitchPath(string age)
         {
@@ -99,20 +138,11 @@ namespace SafeTouch.Data
             return completedLevels.FindAll(l => l >= 1 && l <= PathLessons).Count;
         }
 
-        public bool IsLevelComplete(int level)
+        /// <summary>True when the level was finished with every star.</summary>
+        public bool IsPerfect(int level)
         {
-            return completedLevels.Contains(level);
-        }
-
-        public int GetTotalScore()
-        {
-            return quizScores.Sum();
-        }
-
-        public void SetScore(int level, int score)
-        {
-            while (quizScores.Count < level) quizScores.Add(0);
-            quizScores[level - 1] = Mathf.Max(quizScores[level - 1], score);
+            int max = MaxScore(level);
+            return IsLevelComplete(level) && max > 0 && BestScore(level) >= max;
         }
     }
 

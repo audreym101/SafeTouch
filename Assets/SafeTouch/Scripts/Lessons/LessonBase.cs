@@ -17,7 +17,6 @@ namespace SafeTouch.Lessons
         protected GameManager game;
         protected ARCharacter keza;
         readonly List<ARFigure> figures = new List<ARFigure>();
-        string lastNarration;
 
         public abstract int Level { get; }
         public bool Running { get; private set; }
@@ -31,8 +30,60 @@ namespace SafeTouch.Lessons
             keza = game.AR.Character;
             Running = true;
             game.AR.ClearMovable();
-            game.UI.Lesson.ReplayNarration = () => Narrate(lastNarration);
+            game.AR.Touch.DragEnabled = true;
+            game.AR.Touch.Tapped += HandleTap;
+            TouchHint(T("touch.hint", "Tap {0} to say hi. Drag people to move them."));
             OnBegin();
+        }
+
+        void HandleTap(ARTap tap)
+        {
+            if (!Running) return;
+            if (choice != null && choice.HandleTap(tap)) return;
+            if (!OnTap(tap)) game.AR.DefaultTap(tap);
+        }
+
+        ChoiceCircles choice;
+
+        /// <summary>
+        /// Asks a question whose answers are circles on the floor around the
+        /// guide (see ChoiceCircles) instead of buttons. The arrow buttons
+        /// appear too, to walk the guide there.
+        /// </summary>
+        protected void ChooseInRoom(string heading, string body, params PromptOption[] options)
+        {
+            Prompt(heading, body);
+            if (choice == null) choice = gameObject.AddComponent<ChoiceCircles>();
+            choice.enabled = true;
+            choice.Show(game, keza, options);
+            MovePad(true);
+            TouchHint(T("choice.touch", "Move {0} onto your answer."));
+        }
+
+        void ClearChoice()
+        {
+            if (choice == null || !choice.Active) return;
+            choice.Clear();
+            MovePad(false);
+        }
+
+        /// <summary>Shows or hides the arrow buttons that walk the guide.</summary>
+        protected void MovePad(bool show)
+        {
+            game.UI.Lesson.ShowMovePad(show);
+        }
+
+        /// <summary>
+        /// A tap in the room: a person, a floor point, a letter or a body dot.
+        /// Return true when the lesson used it; otherwise Keza says hello or
+        /// the floor ripples.
+        /// </summary>
+        protected virtual bool OnTap(ARTap tap) { return false; }
+
+        /// <summary>The small line above the card that says what touching the room does now ({0} is the guide's name).</summary>
+        protected void TouchHint(string text)
+        {
+            game.UI.Lesson.SetTouchHint(string.Format(text, Localization.CharacterName));
         }
 
         /// <summary>Stops the lesson and removes everything it placed in the room.</summary>
@@ -40,6 +91,11 @@ namespace SafeTouch.Lessons
         {
             if (!Running) return;
             Running = false;
+            game.AR.Touch.Tapped -= HandleTap;
+            game.AR.Touch.EndManipulate();
+            game.AR.Touch.DragEnabled = true;
+            if (choice != null) choice.Clear();
+            MovePad(false);
             StopAllCoroutines();
             game.UI.Lesson.HideVoice();
             if (game.Voice != null) game.Voice.Stop();   // the microphone is never left open after a lesson
@@ -69,8 +125,10 @@ namespace SafeTouch.Lessons
             game.UI.Lesson.SetHeader(Title, step);
         }
 
+        /// <summary>A card with words (and buttons, if any). Any answer circles in the room are taken away.</summary>
         protected void Prompt(string heading, string body, params PromptOption[] options)
         {
+            ClearChoice();
             game.UI.Lesson.ShowPrompt(heading, body, options);
         }
 
@@ -133,16 +191,25 @@ namespace SafeTouch.Lessons
         protected void Narrate(string clipKey)
         {
             if (string.IsNullOrEmpty(clipKey)) return;
-            lastNarration = clipKey;
             game.Audio.PlayVoice(clipKey + "_" + Localization.Language);
         }
 
-        /// <summary>Places a person in the room. role ("parent", "mum", a trusted-adult id...) picks a matching model when there is one.</summary>
+        /// <summary>
+        /// Places a person in the room. role ("parent", "mum", a trusted-adult id...)
+        /// picks a matching model when there is one. They can be dragged unless a
+        /// lesson says otherwise (SetMovable).
+        /// </summary>
         protected ARFigure Spawn(string label, Color color, float radius, float angle, string role = null)
         {
             var f = game.AR.SpawnFigure(label, color, radius, angle, role);
             figures.Add(f);
             return f;
+        }
+
+        /// <summary>The guide's name: the one the child typed, or "Keza".</summary>
+        protected static string GuideName
+        {
+            get { return Localization.CharacterName; }
         }
 
         /// <summary>Removes the figures this lesson placed, before a new round.</summary>

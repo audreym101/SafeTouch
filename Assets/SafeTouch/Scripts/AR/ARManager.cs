@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SafeTouch.UI;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -49,19 +50,14 @@ namespace SafeTouch.AR
         bool hasPose;
         bool placing;
         readonly List<ARFigure> movable = new List<ARFigure>();
-        int selectedIndex;
+        ARTouch touch;
 
-        /// <summary>One tap on a move button walks the selected character this far, in metres.</summary>
-        public const float MoveStep = 0.15f;
         const float MaxDistanceFromAnchor = 2f;
 
         public event Action<ARCharacter> CharacterPlaced;
 
         /// <summary>True while the phone's camera picture is used; false on the 3D playground.</summary>
         public bool UsesAR { get { return Stage == null; } }
-
-        /// <summary>True while a lesson uses two fingers itself, so the playground does not zoom too (none does yet).</summary>
-        public bool PinchTaken { get { return false; } }
 
         /// <summary>The 3D playground, when the app is not in AR mode (zoom with Stage.Zoom).</summary>
         public Stage3D Stage { get; private set; }
@@ -74,17 +70,11 @@ namespace SafeTouch.AR
         public Material TransparentMaterial { get { return transparentMaterial; } }
         public Transform AnchorRoot { get { return anchorRoot; } }
 
-        /// <summary>The character the on-screen move buttons control: Keza, or a figure the lesson placed.</summary>
-        public ARFigure Selected
-        {
-            get
-            {
-                movable.RemoveAll(f => f == null);
-                if (character == null && movable.Count == 0) return null;
-                if (selectedIndex <= 0 || selectedIndex > movable.Count) return character;
-                return movable[selectedIndex - 1];
-            }
-        }
+        /// <summary>Taps, drags, pinches and twists in the camera view.</summary>
+        public ARTouch Touch { get { return touch; } }
+
+        /// <summary>True while a lesson uses two fingers to resize and turn something, so the playground does not zoom too.</summary>
+        public bool PinchTaken { get { return touch != null && touch.Manipulating; } }
 
         /// <summary>
         /// Keza needs a surface at least this wide and deep (metres) before she
@@ -109,6 +99,9 @@ namespace SafeTouch.AR
             // Floors and tables only: walls and ceilings are never detected or used.
             if (planeManager != null) planeManager.requestedDetectionMode = PlaneDetectionMode.Horizontal;
             if (viewMode == ViewMode.Playground) StartPlayground();
+            touch = GetComponent<ARTouch>();
+            if (touch == null) touch = gameObject.AddComponent<ARTouch>();
+            touch.Init(this);
         }
 
         void Update()
@@ -301,6 +294,7 @@ namespace SafeTouch.AR
             anchorRoot.position += pose.position - character.transform.position;
             settleY = float.NaN;
             nextSettle = 0f;
+            ARFx.Ripple(pose.position, Color.white);
         }
 
         /// <summary>
@@ -449,13 +443,15 @@ namespace SafeTouch.AR
             if (character == null)
             {
                 var go = Instantiate(characterPrefab, pose.position, Quaternion.identity);
-                go.name = "Keza (guide character)";
                 character = GetOrAdd<ARCharacter>(go);
             }
             else
             {
                 character.transform.position = pose.position;
             }
+            // The guide carries the name the child chose (or "Keza").
+            character.SetName(Core.Localization.CharacterName);
+            ARFx.Ripple(pose.position, Color.white);
 
             character.FaceTowards(CameraTransform.position);
             AnchorCharacter();
@@ -500,8 +496,10 @@ namespace SafeTouch.AR
         /// <summary>Which person model plays a named visitor or helper; the same name always gets the same one.</summary>
         GameObject FigurePrefabFor(string label)
         {
+            // The modelled people only: the simple figure (capsule and spheres) stands in
+            // just when no model has been built, even if an older scene still lists it.
             var choices = new List<GameObject>();
-            foreach (var v in figureVariants) if (v != null) choices.Add(v);
+            foreach (var v in figureVariants) if (v != null && v != figurePrefab) choices.Add(v);
             if (choices.Count == 0) return figurePrefab != null ? figurePrefab : characterPrefab;
             uint hash = 2166136261;   // FNV-1a, stable between runs (like SkinTones.ForName)
             foreach (char c in label ?? "") { hash ^= c; hash *= 16777619; }
@@ -542,8 +540,10 @@ namespace SafeTouch.AR
         /// <summary>Spawns a figure (visitor or trusted adult) at a point around Keza. role picks a model, e.g. "parent".</summary>
         public ARFigure SpawnFigure(string label, Color color, float radius, float angleDegrees, string role = null)
         {
-            var go = Instantiate(RolePrefabFor(role, label) ?? FigurePrefabFor(label));
+            var prefab = RolePrefabFor(role, label) ?? FigurePrefabFor(label);
+            var go = Instantiate(prefab);
             var figure = GetOrAdd<ARFigure>(go);
+            // Clothes in the role's colour, so the roles can be told apart; skin, eyes and hair keep their look.
             figure.Setup(label, color, opaqueMaterial);
             // A mix of skin tones in every lesson; the same name always gets the same tone.
             // Mum and Dad match Keza, so they look like her family.
@@ -559,84 +559,140 @@ namespace SafeTouch.AR
             return figure;
         }
 
-        // ---- Move buttons (LessonScreen): the child walks the characters around ----
+        // ---- Touch: the child moves people with a finger (ARTouch) ----
 
-        /// <summary>Switches the move buttons to the next character in the room (Keza first).</summary>
-        public ARFigure SelectNext()
-        {
-            movable.RemoveAll(f => f == null);
-            selectedIndex = (selectedIndex + 1) % (movable.Count + 1);
-            var selected = Selected;
-            if (selected != null) selected.Bounce();
-            return selected;
-        }
-
-        /// <summary>Lets a lesson take a figure off (or put it back on) the move buttons.</summary>
+        /// <summary>Lets a lesson stop a figure being dragged (or allow it again). Keza can always be dragged.</summary>
         public void SetMovable(ARFigure figure, bool canMove)
         {
             movable.Remove(figure);
             if (canMove) movable.Add(figure);
-            selectedIndex = 0;
         }
 
-        /// <summary>Forgets the lesson's figures; the move buttons go back to Keza.</summary>
+        /// <summary>Forgets the lesson's figures; only Keza can be dragged.</summary>
         public void ClearMovable()
         {
             movable.Clear();
-            selectedIndex = 0;
         }
 
         /// <summary>
-        /// Steps the selected character across the floor. The direction is
-        /// relative to the phone: up walks away from the child, right walks
-        /// to the right of the screen, so the buttons always match the view.
+        /// One step of the guide for the arrow buttons: up walks away from the
+        /// phone, right walks to the right of the screen, so the buttons always
+        /// match the view. A help for children who find dragging hard.
         /// </summary>
-        public void Nudge(Vector2 direction)
+        public void Step(Vector2 direction)
         {
-            var figure = Selected;
-            if (figure == null || figure.IsMoving) return;
+            if (character == null) return;
             var cam = CameraTransform;
             var forward = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
             var right = Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;
-            var target = figure.transform.position + (right * direction.x + forward * direction.y) * MoveStep;
+            var target = character.transform.position + (right * direction.x + forward * direction.y) * 0.18f;
             if (anchorRoot != null)
             {
                 var offset = Vector3.ProjectOnPlane(target - anchorRoot.position, Vector3.up);
                 if (offset.magnitude > MaxDistanceFromAnchor) return;   // stay near the placed spot
             }
-            figure.WalkTo(target, null);
+            character.WalkTo(target, null);
         }
 
-        /// <summary>Which of Keza's bubble zones a figure is standing in: "red", "yellow", "green" or "outside".</summary>
-        public string ZoneOf(ARFigure figure)
+        public bool CanDrag(ARFigure figure)
         {
-            if (figure == null || character == null) return "outside";
-            float d = Vector3.ProjectOnPlane(figure.transform.position - character.transform.position, Vector3.up).magnitude;
+            return figure != null && (figure == character || movable.Contains(figure));
+        }
+
+        /// <summary>
+        /// Moves a figure towards a floor point under the child's finger,
+        /// smoothly, facing the way it walks, and never far from where Keza
+        /// was placed.
+        /// </summary>
+        public void DragFigure(ARFigure figure, Vector3 point)
+        {
+            if (anchorRoot != null)
+            {
+                var offset = Vector3.ProjectOnPlane(point - anchorRoot.position, Vector3.up);
+                if (offset.magnitude > MaxDistanceFromAnchor) point = anchorRoot.position + offset.normalized * MaxDistanceFromAnchor;
+            }
+            point.y = figure.transform.position.y;
+            var from = figure.transform.position;
+            var to = Vector3.Lerp(from, point, 1f - Mathf.Exp(-18f * Time.deltaTime));
+            if ((to - from).sqrMagnitude > 0.000001f) figure.FaceTowards(to + (to - from) * 10f);
+            figure.transform.position = to;
+        }
+
+        /// <summary>Which of Keza's bubble zones a floor point is in: "red", "yellow", "green" or "outside".</summary>
+        public string ZoneAt(Vector3 point)
+        {
+            if (character == null) return "outside";
+            float d = Vector3.ProjectOnPlane(point - character.transform.position, Vector3.up).magnitude;
             if (d <= 0.3f) return "red";
             if (d <= 0.6f) return "yellow";
             if (d <= 0.9f) return "green";
             return "outside";
         }
 
+        /// <summary>Which of Keza's bubble zones a figure is standing in.</summary>
+        public string ZoneOf(ARFigure figure)
+        {
+            return figure == null ? "outside" : ZoneAt(figure.transform.position);
+        }
+
         /// <summary>
-        /// Spawns a floating block with a word or letter on it, used by the
-        /// Memory Quest to build S-T-O-P above Keza.
+        /// True when the camera really tracks the room (a phone, or XR
+        /// Simulation), so the child can walk up to things. False on the
+        /// Editor's virtual floor, where "walk closer" can't be done.
+        /// </summary>
+        public bool CanWalkAround
+        {
+            get { return Stage == null && ARSupported() && ARSession.state == ARSessionState.SessionTracking; }
+        }
+
+        /// <summary>
+        /// What happens when the child taps something no lesson is waiting
+        /// for: Keza waves and says hello with the child's name, other people
+        /// wave back, and the floor ripples.
+        /// </summary>
+        public void DefaultTap(ARTap tap)
+        {
+            var figure = tap.Find<ARFigure>();
+            if (figure != null && figure == character)
+            {
+                character.Bounce();
+                character.SayFor(string.Format(Core.Localization.T("keza.hello", "Hi! I'm {0}!"), Core.Localization.CharacterName), opaqueMaterial, 2.5f);
+                return;
+            }
+            if (figure != null) { figure.Bounce(); return; }
+            if (tap.hasFloor) ARFx.Ripple(tap.floor, Color.white);
+        }
+
+        /// <summary>
+        /// Spawns a floating letter block that the child can grab with a tap
+        /// (the Memory Quest's S-T-O-P). A soft glow on the floor below shows
+        /// where it is.
         /// </summary>
         public GameObject SpawnSign(string text, Color color, Vector3 position)
         {
+            // An unscaled root holds the block (which turns to the phone) and its glow
+            // on the floor (which must stay flat), so both move together.
+            var root = new GameObject("Sign " + text);
+            root.transform.position = position;
+
             var block = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            block.name = "Sign " + text;
-            Destroy(block.GetComponent<Collider>());
-            block.transform.position = position;
-            block.transform.localScale = new Vector3(0.2f, 0.2f, 0.05f);
-            var r = block.GetComponent<Renderer>();
-            if (opaqueMaterial != null) r.material = new Material(opaqueMaterial);
-            r.material.color = color;
+            block.name = "Block";
+            block.GetComponent<BoxCollider>().size = new Vector3(1.6f, 1.6f, 4f);   // bigger than it looks: easy to tap
+            block.transform.SetParent(root.transform, false);
+            block.transform.localScale = new Vector3(0.16f, 0.16f, 0.04f);
+            // Unlit, so the letter is the same bright colour from every side of the room.
+            // Drawn after everything solid (this shader writes no depth, so anything drawn
+            // later would cover it) and before the white letter on it (3000).
+            var solid = ARFx.Unlit(color);
+            solid.renderQueue = 2990;
+            block.GetComponent<Renderer>().sharedMaterial = solid;
 
             var label = new GameObject("Text");
             label.transform.SetParent(block.transform, false);
             label.transform.localPosition = new Vector3(0f, 0f, -0.6f);
             var mesh = label.AddComponent<TextMesh>();
+            mesh.font = ARFx.Font;
+            label.GetComponent<MeshRenderer>().sharedMaterial = ARFx.Font.material;
             mesh.text = text;
             mesh.anchor = TextAnchor.MiddleCenter;
             mesh.alignment = TextAlignment.Center;
@@ -645,8 +701,13 @@ namespace SafeTouch.AR
             mesh.color = Color.white;
             block.AddComponent<Billboard>();
 
-            if (anchorRoot != null) block.transform.SetParent(anchorRoot, true);
-            return block;
+            var glow = ARFx.FloorQuad("Glow", ARFx.SoftDot, Theme.WithAlpha(color, 0.55f), 0.3f);
+            glow.transform.position = new Vector3(position.x, character != null ? character.transform.position.y + 0.005f : position.y - 0.3f, position.z);
+            glow.transform.SetParent(root.transform, true);
+            FxAnimator.Pulse(glow);
+
+            if (anchorRoot != null) root.transform.SetParent(anchorRoot, true);
+            return root;
         }
 
         /// <summary>

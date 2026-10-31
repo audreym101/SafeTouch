@@ -30,6 +30,7 @@ namespace SafeTouch.UI.Screens
         RectTransform grid;
         GridLayoutGroup layout;
         Text hint, counter;
+        Button read;
         Card first;
         bool busy;
         int flips, matchedPairs, pairCount;
@@ -42,7 +43,11 @@ namespace SafeTouch.UI.Screens
             var col = StandardColumn(root, "", () => game.ReturnToMenu());
             hint = UIFactory.Label(col, "", Theme.Body, Theme.Ink, TextAnchor.UpperLeft, false);
             UIFactory.FixedHeight(hint, 170f);
-            counter = UIFactory.Label(col, "", Theme.Label, Theme.Muted, TextAnchor.MiddleLeft, true);
+            var row = UIFactory.Row(col, "Counter row", Theme.Gap, 110f);
+            counter = UIFactory.Label(row.transform, "", Theme.Label, Theme.Muted, TextAnchor.MiddleLeft, true);
+            counter.GetComponent<LayoutElement>().flexibleWidth = 2f;
+            read = UIFactory.Button(row.transform, "Read to me", Theme.Card, Theme.Ink, () => game.ReadToMe(hint.text));
+            read.GetComponentInChildren<Text>().fontSize = Theme.Label;
             grid = UIFactory.Rect(col, "Cards");
             grid.gameObject.AddComponent<LayoutElement>().flexibleHeight = 1f;
             layout = grid.gameObject.AddComponent<GridLayoutGroup>();
@@ -54,6 +59,7 @@ namespace SafeTouch.UI.Screens
         public override void OnShow()
         {
             TitleText.text = Localization.T("review.round1", "Round 1 of 4: match the pairs");
+            UIFactory.SetButtonLabel(read, Localization.T("lesson.replay", "Read to me"));
         }
 
         /// <summary>Deals two cards per pair, face down and shuffled.</summary>
@@ -91,8 +97,9 @@ namespace SafeTouch.UI.Screens
                 c.text = c.button.GetComponentInChildren<Text>();
                 c.text.fontSize = Theme.Display;
             }
-            hint.text = Localization.T("review.memory.hint", "Turn over two cards. Find each word and what it means.");
+            hint.text = Localization.T("review.memory.hint", "Turn over two cards. Find the ones that go together.");
             UpdateCounter();
+            if (game.Reader != null) game.Reader.SpeakIfAuto(hint.text);
         }
 
         /// <summary>
@@ -113,8 +120,11 @@ namespace SafeTouch.UI.Screens
 
         void Flip(Card card)
         {
-            if (busy || card.matched || card.faceUp) return;
+            // A card that is already turned over is read out when tapped, for children still learning to read.
+            if (card.matched || card.faceUp) { game.ReadToMe(card.text.text); return; }
+            if (busy) return;
             Show(card, true);
+            if (game.Reader != null) game.Reader.SpeakIfAuto(card.text.text);
             if (first == null) { first = card; return; }
 
             flips++;
@@ -127,6 +137,7 @@ namespace SafeTouch.UI.Screens
                 Paint(card, Theme.WithAlpha(Theme.Safe, 0.35f));
                 matchedPairs++;
                 hint.text = Localization.T("review.memory.match", "A match!") + " " + card.pair.remember;
+                if (game.Reader != null) game.Reader.SpeakIfAuto(hint.text);
                 game.Audio.PlaySFX("correct");
                 if (game.AR.Character != null) game.AR.Character.Bounce();
                 if (matchedPairs == pairCount) game.UI.StartCoroutine(FinishSoon());

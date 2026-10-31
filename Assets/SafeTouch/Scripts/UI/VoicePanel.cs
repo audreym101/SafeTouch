@@ -39,6 +39,9 @@ namespace SafeTouch.UI
 
         public bool Visible { get { return root != null && root.gameObject.activeSelf; } }
 
+        /// <summary>The card's words, for reading aloud.</summary>
+        public string[] Words { get { return new[] { heading.text, body.text }; } }
+
         public void Build(RectTransform parent)
         {
             var card = UIFactory.Panel(parent, "Voice card", Theme.WithAlpha(Theme.Card, 0.96f), true);

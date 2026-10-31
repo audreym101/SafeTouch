@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace SafeTouch.UI.Screens
 {
-    /// <summary>Age band only. SafeTouch never asks for a name (NFR1).</summary>
+    /// <summary>Age band. (The name, for the guide, is asked on NameScreen and stays on the phone.)</summary>
     public class AgeScreen : UIScreen
     {
         Text question, note;
@@ -13,7 +13,7 @@ namespace SafeTouch.UI.Screens
 
         protected override void BuildContent(RectTransform root)
         {
-            var col = StandardColumn(root, "", () => ui.ShowMenu("splash"));
+            var col = StandardColumn(root, "", () => ui.ShowMenu("name"));
             question = UIFactory.Label(col, "", Theme.Display, Theme.Ink, TextAnchor.MiddleCenter, true);
             UIFactory.Spacer(col, 0.5f);
             var young = UIFactory.Button(col, "6 - 8", Theme.Primary, Color.white, () => game.SelectAgeGroup("6-8"));

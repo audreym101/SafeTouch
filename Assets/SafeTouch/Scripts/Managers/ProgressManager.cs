@@ -15,7 +15,7 @@ namespace SafeTouch.Managers
     {
         public const int LessonCount = 5;   // four lessons + the Memory Quest end game
 
-        /// <summary>Bubble Guard: a replayable game, opened by the STOP lesson. It is not a lesson, so it never counts towards finishing.</summary>
+        /// <summary>Bubble Guard: a replayable game. It is not a lesson, so it never counts towards finishing.</summary>
         public const int GameLevel = 6;
         public const int GameUnlockedBy = 3;
 
@@ -110,17 +110,68 @@ namespace SafeTouch.Managers
             Save();
         }
 
+        /// <summary>
+        /// Every lesson and the game are open from the start: a child (or a
+        /// teacher in class) can begin anywhere. The order on the home screen
+        /// is still the suggested path.
+        /// </summary>
         public bool IsUnlocked(int level)
         {
-            if (level == GameLevel) return progress.IsLevelComplete(GameUnlockedBy);
-            return levels.Contains(level);
+            return level >= 1 && (level <= LessonCount || level == GameLevel);
         }
 
-        public void CompleteLevel(int level, int score)
+        public void CompleteLevel(int level, int score, int max)
         {
             if (!progress.completedLevels.Contains(level)) progress.completedLevels.Add(level);
-            progress.SetScore(level, score);
+            progress.SetScore(level, score, max);
             UpdateBadges();
+            Save();
+        }
+
+        /// <summary>Badges not won yet, so a finished game can say why it's worth playing again.</summary>
+        public List<Badge> BadgesToWin()
+        {
+            return badges.FindAll(b => !b.unlocked);
+        }
+
+        /// <summary>The Bubble Guard badge rule's target score (e.g. 8 from "guard:8").</summary>
+        public int GuardBadgeScore()
+        {
+            foreach (var badge in badges)
+            {
+                if (badge.requirement == null || !badge.requirement.StartsWith("guard:")) continue;
+                int value;
+                if (int.TryParse(badge.requirement.Substring(6), out value)) return value;
+            }
+            return 0;
+        }
+
+        /// <summary>The child's answer to "who makes you feel unsafe?" (role ids; empty for nobody). Stays on this phone.</summary>
+        public void SetUnsafePeople(IEnumerable<string> ids)
+        {
+            progress.unsafePeople = new List<string>(ids);
+            progress.unsafeAsked = true;
+            Save();
+        }
+
+        /// <summary>The parent's guess of who their child trusts.</summary>
+        public void SetParentGuesses(IEnumerable<string> ids)
+        {
+            progress.parentGuesses = new List<string>(ids);
+            Save();
+        }
+
+        /// <summary>The child's first name or nickname (empty keeps "Keza"). Stays on this phone.</summary>
+        public void SetChildName(string name)
+        {
+            progress.childName = Core.Localization.CleanName(name);
+            progress.nameAsked = true;
+            Save();
+        }
+
+        public void SetReadAloud(bool on)
+        {
+            progress.readAloud = on;
             Save();
         }
 

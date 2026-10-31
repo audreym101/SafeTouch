@@ -18,6 +18,9 @@ namespace SafeTouch.EditorTools
     ///             and helpers whose "RealismBody" skin takes the palette.
     ///   Mum/Dad - from the parents-and-dog model, with skin masks so they
     ///             can match Keza's tone (Keza's family).
+    ///   Classmate - Keza's model again, child-sized, in a school uniform
+    ///             (dark hair, blue shirt, navy shorts), so the children in
+    ///             the lessons are children and not adults or simple shapes.
     ///   Props   - the playground, school desk, chalkboard, family dog and a
     ///             merged grass patch, at table-top size,
     ///             in Resources/Props for the Memory Quest chase.
@@ -58,6 +61,7 @@ namespace SafeTouch.EditorTools
             var sparkle = AssetDatabase.LoadAssetAtPath<Material>(SparkleMaterial);
 
             BuildKeza(sparkle);
+            BuildClassmate(sparkle);
             BuildAdults(sparkle);
             BuildProp(PlaygroundModel, "playground", 1.1f, true);
             BuildProp(DeskModel, "school", 0.32f, false);
@@ -191,6 +195,86 @@ namespace SafeTouch.EditorTools
             back.exitTime = 0.95f;
             back.duration = 0.2f;
             return controller;
+        }
+
+        // ---------------------------------------------------------------
+        // Classmate
+        // ---------------------------------------------------------------
+
+        public const string ClassmatePrefabPath = PrefabFolder + "/Classmate.prefab";
+
+        /// <summary>
+        /// A second child for the classmate and other children in the lessons:
+        /// Keza's model and greeting wave with her clothes and hair recoloured,
+        /// so the child can tell them apart. The skin is left as painted, so
+        /// Keza's skin mask still applies and the classmate gets their own tone.
+        /// </summary>
+        static void BuildClassmate(Material sparkle)
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(KezaModel);
+            var kezaMaterial = AssetDatabase.LoadAssetAtPath<Material>(GeneratedFolder + "/Keza Skin Tone.mat");
+            var greeting = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(GeneratedFolder + "/Keza Greeting.controller");
+            if (model == null || kezaMaterial == null || !File.Exists(KezaDiffuse))
+            {
+                Debug.LogWarning("[SafeTouch] Build Keza first: the classmate is made from her model.");
+                return;
+            }
+
+            var material = new Material(kezaMaterial);
+            material.SetTexture("_MainTex", SchoolUniform(KezaDiffuse, GeneratedFolder + "/Classmate Diffuse.png"));
+            material = SaveAsset(material, GeneratedFolder + "/Classmate Skin Tone.mat");
+
+            var root = new GameObject("Classmate");
+            var body = (GameObject)PrefabUtility.InstantiatePrefab(model);
+            body.name = "Model";
+            body.transform.SetParent(root.transform, false);
+            foreach (var r in body.GetComponentsInChildren<Renderer>())
+                r.sharedMaterials = Enumerable.Repeat(material, r.sharedMaterials.Length).ToArray();
+
+            var animator = body.GetComponent<Animator>();
+            if (animator == null) animator = body.AddComponent<Animator>();
+            animator.applyRootMotion = false;
+            animator.runtimeAnimatorController = greeting;
+
+            var size = FitHeight(root, body, KezaHeight * 0.97f);   // about Keza's height: a child of her age
+            AddPersonParts(root, size, "Classmate", false, sparkle, new Renderer[0]);
+            var keep = new SerializedObject(root.GetComponent<ARFigure>());
+            keep.FindProperty("keepOwnColours").boolValue = true;   // the uniform stays; only the skin takes a tone
+            keep.ApplyModifiedPropertiesWithoutUndo();
+            Save(root, ClassmatePrefabPath);
+        }
+
+        /// <summary>
+        /// Recolours Keza's texture into a school uniform: teal hair becomes
+        /// dark brown, the lilac top a light blue shirt, the magenta shorts
+        /// navy and the orange boots dark shoes. Skin (SkinWeight) is kept.
+        /// </summary>
+        static Texture2D SchoolUniform(string diffusePath, string outPath)
+        {
+            var texture = new Texture2D(2, 2);
+            texture.LoadImage(File.ReadAllBytes(diffusePath));
+            var pixels = texture.GetPixels32();
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                var p = pixels[i];
+                if (SkinWeight(p) > 0.5f) continue;
+                float h, s, v;
+                Color.RGBToHSV(p, out h, out s, out v);
+                Color c;
+                if (h > 0.42f && h < 0.58f && s > 0.2f) c = Color.HSVToRGB(0.07f, 0.5f, v * 0.22f + 0.03f);        // hair
+                else if (h > 0.78f && h < 0.97f && s >= 0.4f) c = Color.HSVToRGB(0.61f, 0.6f, v * 0.5f);            // shorts
+                else if (h > 0.7f && h < 0.99f && s < 0.4f && s > 0.04f) c = Color.HSVToRGB(0.57f, 0.38f, Mathf.Min(1f, v * 0.97f));   // top
+                else if (h > 0.03f && h < 0.14f && s > 0.45f) c = Color.HSVToRGB(0.08f, 0.35f, v * 0.3f);           // boots
+                else continue;
+                c.a = p.a / 255f;
+                pixels[i] = c;
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply();
+            File.WriteAllBytes(outPath, texture.EncodeToPNG());
+            Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(outPath);
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(outPath);
         }
 
         // ---------------------------------------------------------------

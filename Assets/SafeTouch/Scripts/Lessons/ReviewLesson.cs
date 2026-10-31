@@ -5,8 +5,6 @@ using SafeTouch.AR;
 using SafeTouch.Data;
 using SafeTouch.UI;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 
 namespace SafeTouch.Lessons
 {
@@ -15,28 +13,24 @@ namespace SafeTouch.Lessons
     /// lessons and brings back what the child learned, in four rounds.
     /// 1. Match the pairs (a card memory game: zones, secrets, and for ages
     ///    9-11 surprises and online strangers).
-    /// 2. Build STOP in AR: letter blocks fly up above Keza as the child
-    ///    picks each step in order.
+    /// 2. Grab STOP in AR: the letters hide around the room; the child walks
+    ///    up to each one in order and taps it. It flies above Keza with its
+    ///    meaning hanging under it.
     /// 3. My helping hand: the child's own trusted adults return and Keza
-    ///    walks to the one the child picks.
+    ///    walks to the one the child taps.
     /// 4. Safe places chase: the child picks home, school or playground;
     ///    someone walks towards Keza three times, a little faster each time.
-    ///    The child wins by saying NO out loud, tapping NO!, tapping the person, or walking Keza
-    ///    to a helper with the move buttons. Faster answers earn more stars
+    ///    The child wins by saying NO out loud, tapping NO!, tapping the person, or dragging Keza
+    ///    to a helper. Faster answers earn more stars
     ///    and the fastest time unlocks the "Quick and Safe" badge.
     /// It ends with an "I remember!" certificate.
     /// </summary>
     public class ReviewLesson : LessonBase
     {
-        static readonly string[] Letters = { "S", "T", "O", "P" };
-        static readonly string[] StepKeys = { "stop.s.meaning", "stop.t.meaning", "stop.o.meaning", "stop.p.meaning" };
-        static readonly string[] StepEnglish = { "Say no", "Tell a trusted adult", "Open up and explain", "Protect yourself" };
-
         static readonly float[] ChaseSpeeds = { 0.25f, 0.33f, 0.42f };   // metres per second
         static readonly float[] ChaseAngles = { 150f, 175f, 135f };
         const float HelperReach = 0.5f;   // Keza is safe when she is this close to a helper
 
-        readonly List<GameObject> blocks = new List<GameObject>();
         readonly List<GameObject> sceneProps = new List<GameObject>();
         readonly List<ARFigure> placeHelpers = new List<ARFigure>();
         readonly List<float> chaseTimes = new List<float>();
@@ -46,7 +40,7 @@ namespace SafeTouch.Lessons
         float chaseStart;
         bool chasing;
         List<TrustedAdult> helpers = new List<TrustedAdult>();
-        int score, max, nextLetter;
+        int score, max;
         bool firstTry;
         string helperName = "";
 
@@ -55,9 +49,8 @@ namespace SafeTouch.Lessons
         protected override void OnBegin()
         {
             score = 0;
-            nextLetter = 0;
             var pairs = ContentLibrary.ReviewPairs.Where(p => p.level <= (Older ? 2 : 1)).ToList();
-            max = pairs.Count + Letters.Length + 1 + 3 * ChaseSpeeds.Length;
+            max = pairs.Count + LetterHunt.Letters.Length + 1 + 3 * ChaseSpeeds.Length;
             chaseTimes.Clear();
             game.UI.ShowMenu("memory");
             game.UI.Memory.StartGame(pairs, (matched, turns) =>
@@ -70,77 +63,96 @@ namespace SafeTouch.Lessons
         protected override void OnEnd()
         {
             chasing = false;
-            foreach (var b in blocks) if (b != null) Destroy(b);
-            blocks.Clear();
+            if (hunt != null) hunt.Clear();
             foreach (var b in sceneProps) if (b != null) Destroy(b);
             sceneProps.Clear();
             if (chaser != null) Destroy(chaser.gameObject);
             chaser = null;
         }
 
-        // ---- Round 2: build STOP ----
+        // ---- Round 2: grab STOP ----
 
+        static readonly string[] StepWhy =
+        {
+            "Say NO in a clear, firm voice.",
+            "Tell a grown-up you trust.",
+            "Say what happened and how you felt.",
+            "Go somewhere safe, near people you trust.",
+        };
+        LetterHunt hunt;
+        float nextHintTime;
+
+        /// <summary>
+        /// The letters hide around the room (LetterHunt). The child moves to
+        /// them, or moves the guide there: by dragging, tapping a letter, the
+        /// arrow buttons, or the "Go to S" button.
+        /// </summary>
         void BuildStop()
         {
             game.UI.ShowMenu("lesson");
             Header(T("review.round2", "Round 2 of 4: build STOP"));
             Narrate("review_stop");
-            var angles = new[] { 140f, 170f, 200f, 230f }.OrderBy(a => Random.value).ToArray();
-            for (int i = 0; i < Letters.Length; i++)
-            {
-                var pos = game.AR.PointAroundCharacter(0.9f, angles[i]) + Vector3.up * 0.3f;
-                blocks.Add(game.AR.SpawnSign(Letters[i], Theme.Unsafe, pos));
-            }
-            AskLetter(T("review.stop.title", "Build the word STOP"),
-                T("review.stop.body", "The letters are scattered around Keza. Which step comes first?"));
-        }
-
-        void AskLetter(string heading, string body)
-        {
+            if (hunt == null) hunt = gameObject.AddComponent<LetterHunt>();
+            hunt.Begin(game, keza, Grabbed, WrongLetter);
             firstTry = true;
-            var options = new List<PromptOption>();
-            for (int i = nextLetter; i < Letters.Length; i++)
-            {
-                int pick = i;
-                options.Add(new PromptOption(T(StepKeys[i], StepEnglish[i]), Theme.Card, () => Pick(pick)));
-            }
-            Prompt(heading, body, Shuffle(options.ToArray()));
+            TouchHint(T("review.grab.touch", "Walk to the letter, or move {0} to it."));
+            AskForNext(T("review.grab.title", "Find S-T-O-P!"), T("review.grab.body", "Go to S first."));
         }
 
-        void Pick(int index)
+        /// <summary>A card with a "Go to S" button, and the arrow buttons, for the next letter.</summary>
+        void AskForNext(string title, string body)
         {
-            if (index != nextLetter)
+            string letter = LetterHunt.Letters[hunt.Next];
+            Prompt(title, body, new PromptOption(string.Format(T("hunt.go", "Go to {0}"), letter), Theme.Card, hunt.TakeGuideToNext));
+            MovePad(true);
+        }
+
+        void WrongLetter(int touched)
+        {
+            firstTry = false;
+            AskForNext(T("review.grab.notyet.title", "Not yet!"),
+                string.Format(T("review.grab.notyet.short", "First {0}. It's {1}."), LetterHunt.Letters[hunt.Next], hunt.Direction(hunt.Next)));
+        }
+
+        void Grabbed(int index)
+        {
+            if (firstTry) score++;
+            firstTry = true;
+            string title = string.Format(T("review.stop.got", "{0} is for {1}!"), LetterHunt.Letters[index], LetterHunt.Meaning(index));
+            string why = T("review.why." + LetterHunt.Letters[index].ToLowerInvariant(), StepWhy[index]);
+            if (!hunt.Done)
             {
-                firstTry = false;
-                Feedback(false, string.Format(T("review.stop.hint", "Not yet. The next letter is {0}. What does {0} stand for?"), Letters[nextLetter]), null);
+                hunt.Hunting = true;
+                AskForNext(title, why + "\n" + string.Format(T("review.grab.next.short", "Next: {0}."), LetterHunt.Letters[hunt.Next]));
                 return;
             }
-            if (firstTry) score++;
-            var block = blocks[index];
-            var cam = game.AR.CameraTransform;
-            var right = Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;
-            var target = keza.transform.position + Vector3.up * 0.85f + right * (index - 1.5f) * 0.23f;
-            StartCoroutine(Fly(block.transform, target));
-            keza.Bounce();
-            game.Audio.PlaySFX("correct");
-            nextLetter++;
-
-            string done = string.Format(T("review.stop.got", "{0} is for {1}!"), Letters[index], T(StepKeys[index], StepEnglish[index]));
-            if (nextLetter < Letters.Length)
-                AskLetter(done, T("review.stop.next", "What comes next?"));
-            else
-                Feedback(true, T("review.stop.done", "S-T-O-P is complete above Keza: Say no, Tell, Open up, Protect. Say it out loud together!"), HelpingHand);
+            MovePad(false);
+            TouchHint("");
+            Prompt(title, why);
+            hunt.GuideHome(null);   // back under the finished word
+            StartCoroutine(AfterSeconds(1.6f, () =>
+                Feedback(true, T("review.stop.done", "S-T-O-P is above Keza: Say no, Tell, Open up, Protect. Say it together!"), HelpingHand)));
         }
 
-        IEnumerator Fly(Transform block, Vector3 target)
+        IEnumerator AfterSeconds(float seconds, System.Action then)
         {
-            var start = block.position;
-            for (float t = 0f; t < 1f; t += Time.deltaTime * 1.6f)
+            yield return new WaitForSeconds(seconds);
+            if (Running) then();
+        }
+
+        protected override bool OnTap(ARTap tap)
+        {
+            if (hunt != null && hunt.HandleTap(tap)) return true;
+            var tapped = tap.Find<ARFigure>();
+            System.Action choose;
+            if (tapped != null && handChoices.TryGetValue(tapped, out choose)) { choose(); return true; }
+            // In the chase, tapping the person counts as saying "Stop!".
+            if (chasing && chaser != null && tap.Touched(chaser.gameObject))
             {
-                block.position = Vector3.Lerp(start, target, Mathf.SmoothStep(0f, 1f, t)) + Vector3.up * Mathf.Sin(t * Mathf.PI) * 0.15f;
-                yield return null;
+                Win(T("review.chase.tapped", "Keza tapped them and said STOP!"));
+                return true;
             }
-            block.position = target;
+            return false;
         }
 
         // ---- Round 3: my helping hand ----
@@ -161,21 +173,34 @@ namespace SafeTouch.Lessons
             }
 
             var options = new List<PromptOption>();
-            for (int i = 0; i < helpers.Count && i < 4; i++)
+            handChoices.Clear();
+            for (int i = 0; i < helpers.Count; i++)
             {
                 var figure = figures[i];
                 string name = helpers[i].name;
-                options.Add(new PromptOption(name, Theme.Card, () =>
+                System.Action choose = () =>
                 {
+                    if (handChoices.Count == 0) return;   // already chosen
+                    handChoices.Clear();
                     score++;
                     helperName = name;
+                    figure.Bounce();
                     keza.WalkTo(Vector3.Lerp(keza.transform.position, figure.transform.position, 0.6f), () =>
-                        Feedback(true, string.Format(T("review.hand.fb", "Keza goes to {0}. And if they don't listen, she tells the next helper on her hand."), name), PickPlace));
-                }));
+                    {
+                        ARFx.Burst(figure.transform.position + Vector3.up * 0.5f, Theme.Safe);
+                        Feedback(true, string.Format(T("review.hand.fb", "Keza goes to {0}. If they don't listen, Keza tells the next helper."), name), PickPlace);
+                    });
+                };
+                handChoices[figure] = choose;
+                if (i < 4) options.Add(new PromptOption(name, Theme.Card, () => choose()));
             }
+            // The helpers stand in the room: the child can tap one, or use the buttons.
+            TouchHint(T("review.hand.touch", "Tap a helper in the room."));
             Prompt(T("review.hand.title", "Your helpers are back!"),
-                T("review.hand.body", "Something is worrying Keza. Who can she go to?"), options.ToArray());
+                T("review.hand.body", "Keza is worried. Who can Keza go to?"), options.ToArray());
         }
+
+        readonly Dictionary<ARFigure, System.Action> handChoices = new Dictionary<ARFigure, System.Action>();
 
         // ---- Round 4: safe places chase ----
 
@@ -189,8 +214,7 @@ namespace SafeTouch.Lessons
         /// <summary>Clears round 2 and 3 objects so the chase starts with an empty room.</summary>
         void End3DRound()
         {
-            foreach (var b in blocks) if (b != null) Destroy(b);
-            blocks.Clear();
+            if (hunt != null) hunt.Clear();
             ClearFigures();
         }
 
@@ -228,6 +252,9 @@ namespace SafeTouch.Lessons
             }
             placeHelpers.Add(Spawn(names[0], colors[0], 0.8f, -115f, place == "home" ? "parent" : null));
             placeHelpers.Add(Spawn(names[1], colors[1], 0.8f, -50f));
+            // The child moves Keza to a helper, not the helper to Keza.
+            foreach (var helper in placeHelpers) game.AR.SetMovable(helper, false);
+            TouchHint(T("review.chase.touch", "Drag {0} to a helper, or tap the person who comes too close."));
             RunChase();
         }
 
@@ -277,9 +304,9 @@ namespace SafeTouch.Lessons
         {
             get
             {
-                return place == "home" ? T("places.home.tip", "Even someone Keza knows must stop when she says no.")
+                return place == "home" ? T("places.home.tip", "Even someone Keza knows must stop when Keza says no.")
                     : place == "school" ? T("places.school.tip", "At school, Keza can always go to a teacher.")
-                    : T("places.playground.tip", "Outside, Keza stays near people she trusts.");
+                    : T("places.playground.tip", "Outside, Keza stays near trusted people.");
             }
         }
 
@@ -297,7 +324,7 @@ namespace SafeTouch.Lessons
         {
             if (chaser != null) Destroy(chaser.gameObject);
             chaser = game.AR.SpawnFigure(ChaserName, new Color(0.55f, 0.6f, 0.68f), 1.5f, ChaseAngles[chaseIndex]);
-            game.AR.SetMovable(chaser, false);   // the move buttons are for Keza and the helpers, not the chaser
+            game.AR.SetMovable(chaser, false);   // the child can't simply drag the person away
             chaser.WalkSpeed = ChaseSpeeds[chaseIndex];
             chaseStart = Time.time;
             chasing = true;
@@ -305,8 +332,8 @@ namespace SafeTouch.Lessons
             bool listening = game.Voice != null && game.Voice.Available;
             Prompt(T("review.chase.title", "Someone is coming too close!"),
                 PlaceLine + " " + (listening
-                    ? T("review.chase.body.voice", "Shout NO out loud, tap the person, or walk Keza to a helper with the arrows.")
-                    : T("review.chase.body", "Say NO, tap the person, or walk Keza to a helper with the arrows.")),
+                    ? T("review.chase.body.voice", "Say NO, tap the person, or drag Keza to a helper.")
+                    : T("review.chase.body", "Tap NO, tap the person, or drag Keza to a helper.")),
                 new PromptOption(T("review.chase.no", "NO!"), Theme.Unsafe, () => Win(T("review.chase.said", "Keza said NO!"))));
 
             // A spoken NO wins the chase too; the time to it is what earns the stars.
@@ -321,6 +348,12 @@ namespace SafeTouch.Lessons
 
         void Update()
         {
+            if (Running && hunt != null && hunt.Hunting && !hunt.Done && Time.time >= nextHintTime)
+            {
+                // The step line keeps pointing to the next letter as the child walks and turns.
+                nextHintTime = Time.time + 0.5f;
+                Header(string.Format(T("review.grab.step", "Round 2 of 4: find {0} ({1})"), LetterHunt.Letters[hunt.Next], hunt.Direction(hunt.Next)));
+            }
             if (!Running || !chasing || chaser == null || keza == null) return;
             float elapsed = Time.time - chaseStart;
             Header(string.Format(T("review.chase.timer", "Chase {0} of 3  -  {1:0.0} s"), chaseIndex + 1, elapsed));
@@ -340,19 +373,6 @@ namespace SafeTouch.Lessons
                     Win(string.Format(T("review.chase.reached", "Keza reached {0}!"), helper.Label));
                     return;
                 }
-            }
-
-            // Tapping the person in the camera view counts as saying "Stop!".
-            var pointer = Pointer.current;
-            if (pointer != null && pointer.press.wasPressedThisFrame
-                && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
-            {
-                var screen = pointer.position.ReadValue();
-                RaycastHit hit;
-                var cam = Camera.main;
-                if (cam != null && Physics.Raycast(cam.ScreenPointToRay(new Vector3(screen.x, screen.y, 0f)), out hit, 10f)
-                    && hit.transform.IsChildOf(chaser.transform))
-                    Win(T("review.chase.tapped", "Keza tapped them and said STOP!"));
             }
         }
 
@@ -381,7 +401,7 @@ namespace SafeTouch.Lessons
         {
             chasing = false;
             if (game.Voice != null) game.Voice.Stop();
-            Feedback(false, T("review.chase.caught", "The person got into Keza's red zone. When someone comes too close: shout NO in a strong voice, move towards a trusted adult, and tell them. Let's try that chase again."), RunChase);
+            Feedback(false, T("review.chase.caught", "Too close! Say NO, go to a grown-up you trust, and tell them. Let's try again."), RunChase);
         }
 
         // ---- Certificate ----

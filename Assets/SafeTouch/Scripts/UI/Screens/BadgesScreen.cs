@@ -25,10 +25,10 @@ namespace SafeTouch.UI.Screens
             UIFactory.Label(list, Localization.T("badges.lessons"), Theme.Title, Theme.Ink, TextAnchor.MiddleLeft, true);
             foreach (var info in LessonInfo.All)
             {
-                int score = progress.quizScores.Count >= info.level ? progress.quizScores[info.level - 1] : 0;
-                string state = progress.IsLevelComplete(info.level)
-                    ? string.Format(Localization.T("badges.score"), score)
-                    : Localization.T("badges.notyet");
+                int score = progress.BestScore(info.level), max = progress.MaxScore(info.level);
+                string state = !progress.IsLevelComplete(info.level) ? Localization.T("badges.notyet")
+                    : max > 0 ? string.Format(Localization.T("badges.score.of", "{0} of {1} stars"), score, max)
+                    : string.Format(Localization.T("badges.score"), score);
                 UIFactory.Label(list, Localization.T(info.titleKey) + "  -  " + state, Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, false);
             }
 
@@ -37,6 +37,12 @@ namespace SafeTouch.UI.Screens
                     Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
 
             UIFactory.Label(list, Localization.T("home.badges"), Theme.Title, Theme.Ink, TextAnchor.MiddleLeft, true);
+            // Why the lessons and the game stay open: say what is left to win.
+            int left = game.Progress.BadgesToWin().Count;
+            UIFactory.Label(list, left == 0
+                    ? Localization.T("badges.all", "You won every badge! Well done.")
+                    : string.Format(Localization.T("badges.left", "{0} badges left to win. Play the lessons and games again to win them!"), left),
+                Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
             foreach (var badge in game.Progress.Badges)
             {
                 var card = UIFactory.Panel(list, badge.badgeId, badge.unlocked ? Theme.WithAlpha(Theme.Sun, 0.35f) : Theme.Card, true);

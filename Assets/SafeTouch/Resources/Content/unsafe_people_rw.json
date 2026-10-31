@@ -1,0 +1,14 @@
+{
+  "_note": "Kinyarwanda version of unsafe_people.json (same ids). FIRST DRAFT: to be checked by a native Kinyarwanda speaker.",
+  "items": [
+    { "adultId": "family",        "name": "Umuntu wo mu muryango wanjye", "category": "home",   "colorHex": "#E4574C" },
+    { "adultId": "family_friend", "name": "Inshuti y'umuryango",          "category": "home",   "colorHex": "#E4574C" },
+    { "adultId": "neighbour",     "name": "Umuturanyi",                   "category": "area",   "colorHex": "#E4574C" },
+    { "adultId": "older_child",   "name": "Umwana undusha imyaka",        "category": "area",   "colorHex": "#E4574C" },
+    { "adultId": "classmate",     "name": "Umunyeshuri twigana",          "category": "school", "colorHex": "#E4574C" },
+    { "adultId": "school_adult",  "name": "Umuntu mukuru wo ku ishuri",   "category": "school", "colorHex": "#E4574C" },
+    { "adultId": "stranger",      "name": "Umuntu ntazi",                 "category": "area",   "colorHex": "#E4574C" },
+    { "adultId": "online",        "name": "Umuntu wo kuri interineti",    "category": "area",   "colorHex": "#E4574C" },
+    { "adultId": "other",         "name": "Undi muntu",                   "category": "area",   "colorHex": "#E4574C" }
+  ]
+}

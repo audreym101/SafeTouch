@@ -48,7 +48,19 @@ namespace SafeTouch.UI
             scaler.referenceResolution = Reference;
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             // Narrower than 9:16 (most phones): fit the width. Wider (tablets): fit the height.
-            scaler.matchWidthOrHeight = width / height <= Reference.x / Reference.y ? 0f : 1f;
+            scaler.matchWidthOrHeight = FitsByWidth(width, height) ? 0f : 1f;
+        }
+
+        /// <summary>True for phones (9:16 or taller): the canvas keeps the full reference width.</summary>
+        public static bool FitsByWidth(float width, float height)
+        {
+            return width / height <= Reference.x / Reference.y;
+        }
+
+        /// <summary>The canvas scale this rule gives a screen, e.g. 1.0 for the Samsung A70 (1080 px wide).</summary>
+        public static float ScaleFactor(float width, float height)
+        {
+            return FitsByWidth(width, height) ? width / Reference.x : height / Reference.y;
         }
     }
 }
