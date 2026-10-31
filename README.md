@@ -14,7 +14,8 @@ A parent consents first, confirming by an emailed code. A grown-ups area, behind
 
 | | |
 |---|---|
-| **Walkthrough video** | <https://drive.google.com/file/d/1JzQpt8upAtpz01TeV0gTMEao6Yh_i4RG/view?usp=sharing> |
+| **Walkthrough video, part 1** | <https://drive.google.com/file/d/19HHc4-wqgsYxgK2y91JruxxLZXqG1i8U/view?usp=drivesdk> |
+| **Walkthrough video, part 2** | <https://drive.google.com/file/d/1JzQpt8upAtpz01TeV0gTMEao6Yh_i4RG/view?usp=sharing> |
 | **Technical report (PDF)** | <https://drive.google.com/file/d/1EdFF53G_4J6cSFVvZaDhoYj14elDZ1CL/view?usp=sharing> |
 | **GitHub repository** | <https://github.com/audreym101/SafeTouch> (branch `audrey`) |
 | **Earlier demo (initial build)** | <[https://youtu.be/FnD_9e-jiUc](https://drive.google.com/file/d/1JzQpt8upAtpz01TeV0gTMEao6Yh_i4RG/view?usp=sharing)> |
