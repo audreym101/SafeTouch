@@ -17,7 +17,7 @@ A parent consents first, confirming by an emailed code. A grown-ups area, behind
 | **Walkthrough video** | <https://drive.google.com/file/d/1JzQpt8upAtpz01TeV0gTMEao6Yh_i4RG/view?usp=sharing> |
 | **Technical report (PDF)** | *link to be added* |
 | **GitHub repository** | <https://github.com/audreym101/SafeTouch> (branch `audrey`) |
-| **Earlier demo (initial build)** | <https://youtu.be/FnD_9e-jiUc> |
+| **Earlier demo (initial build)** | <[https://youtu.be/FnD_9e-jiUc](https://drive.google.com/file/d/1JzQpt8upAtpz01TeV0gTMEao6Yh_i4RG/view?usp=sharing)> |
 | **Figma prototype** | [Open in Figma](https://www.figma.com/proto/LGF1ZxkHqCZH1Lswr6zrMm/Untitled?page-id=1%3A1521&node-id=1-2914&p=f&viewport=165%2C-166%2C0.17&t=y4xb4JWYI30hmsgq-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=1%3A2890&show-proto-sidebar=1) |
 | **Platform** | Android 8.0+ (API 26), ARM64. Camera mode needs an ARCore phone; other phones get the 3D playground |
 | **Built with** | Unity 6 LTS, AR Foundation, Google ARCore, C#; Node.js + Express API on Render with MongoDB Atlas |
