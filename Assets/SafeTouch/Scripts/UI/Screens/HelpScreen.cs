@@ -10,7 +10,7 @@ namespace SafeTouch.UI.Screens
         static readonly string[][] Steps =
         {
             new[] { "Tap \"Play the lessons\" and choose a lesson.", "Kanda \"Kina amasomo\" maze uhitemo isomo." },
-            new[] { "Point the phone at the floor. Tap to put Keza there.", "Erekeza telefoni hasi. Kanda kugira ngo Keza ahagarare aho." },
+            new[] { "Keza appears straight away. Tap + or - to make her bigger or smaller.", "Keza ahita agaragara. Kanda + cyangwa - ngo abe munini cyangwa muto." },
             new[] { "Listen to Keza, then tap the answer you think is right.", "Umva Keza, hanyuma ukande igisubizo utekereza ko ari cyo." },
             new[] { "When Keza asks, say \"NO!\" clearly, like you mean it.", "Keza nabikubaza, vuga \"OYA!\" neza, nk'ubivuga ukomeje." },
             new[] { "Win stars and badges. Try every lesson!", "Tsindira inyenyeri n'imidari. Gerageza amasomo yose!" },
