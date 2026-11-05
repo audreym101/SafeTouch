@@ -37,9 +37,64 @@ namespace SafeTouch.AR
             baseMaterial = opaque;
             SetUpCamera();
             BuildWorld();
-            ar.CharacterPlaced += character => lookHeight = HeightOf(character.gameObject) * 0.2f;   // aim low: Keza stands above the middle, clear of the lesson cards
+            ARFigure.SpeechScale = 2f;   // the view is further away than in the camera picture
+            ar.CharacterPlaced += Aim;
+            if (ar.HasCharacter) Aim(ar.Character);
             LateUpdate();   // the camera in place from the first frame, so Keza turns to face it
         }
+
+        void Aim(ARCharacter character)
+        {
+            lookHeight = HeightOf(character.gameObject) * 0.2f;   // aim low: Keza stands above the middle, clear of the lesson cards
+        }
+
+        /// <summary>Takes the playground away and gives the camera back its own settings (switching to the camera picture).</summary>
+        public void Teardown()
+        {
+            ar.CharacterPlaced -= Aim;
+            ARFigure.SpeechScale = 0f;
+            if (world != null) Destroy(world.gameObject);
+            foreach (var m in materials.Values) if (m != null) Destroy(m);
+            materials.Clear();
+            if (cam != null)
+            {
+                foreach (var b in switchedOff) if (b != null) b.enabled = true;
+                cam.clearFlags = saved.clearFlags;
+                cam.backgroundColor = saved.background;
+                cam.fieldOfView = saved.fieldOfView;
+                cam.nearClipPlane = saved.near;
+                cam.farClipPlane = saved.far;
+            }
+            switchedOff.Clear();
+            RenderSettings.fog = saved.fog;
+            RenderSettings.ambientMode = saved.ambientMode;
+            RenderSettings.ambientLight = saved.ambientLight;
+            if (madeSun && sun != null) Destroy(sun.gameObject);
+            else if (sun != null)
+            {
+                sun.color = saved.sunColor;
+                sun.intensity = saved.sunIntensity;
+                sun.shadows = saved.sunShadows;
+                sun.transform.rotation = saved.sunRotation;
+            }
+        }
+
+        // What the camera, the light and the fog were before the playground changed them.
+        struct Saved
+        {
+            public CameraClearFlags clearFlags;
+            public Color background, ambientLight, sunColor;
+            public float fieldOfView, near, far, sunIntensity;
+            public bool fog;
+            public UnityEngine.Rendering.AmbientMode ambientMode;
+            public LightShadows sunShadows;
+            public Quaternion sunRotation;
+        }
+
+        Saved saved;
+        readonly List<Behaviour> switchedOff = new List<Behaviour>();
+        Light sun;
+        bool madeSun;
 
         /// <summary>Makes Keza look bigger (more than 1) or smaller (less than 1).</summary>
         public void Zoom(float times)
@@ -77,11 +132,23 @@ namespace SafeTouch.AR
         void SetUpCamera()
         {
             if (cam == null) return;
+            saved.clearFlags = cam.clearFlags;
+            saved.background = cam.backgroundColor;
+            saved.fieldOfView = cam.fieldOfView;
+            saved.near = cam.nearClipPlane;
+            saved.far = cam.farClipPlane;
+            saved.fog = RenderSettings.fog;
+            saved.ambientMode = RenderSettings.ambientMode;
+            saved.ambientLight = RenderSettings.ambientLight;
             // The AR parts (camera picture, phone tracking) would show black or move the view: switch them off.
             foreach (var b in cam.GetComponents<Behaviour>())
             {
                 var type = b.GetType().Name;
-                if (type == "ARCameraBackground" || type == "ARCameraManager" || type == "TrackedPoseDriver") b.enabled = false;
+                if ((type == "ARCameraBackground" || type == "ARCameraManager" || type == "TrackedPoseDriver") && b.enabled)
+                {
+                    b.enabled = false;
+                    switchedOff.Add(b);
+                }
             }
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.6f, 0.84f, 0.97f);   // sky blue
@@ -97,11 +164,19 @@ namespace SafeTouch.AR
             RenderSettings.fogStartDistance = 20f;
             RenderSettings.fogEndDistance = 60f;
 
-            var sun = FindFirstObjectByType<Light>();
-            if (sun == null || sun.type != LightType.Directional)
+            sun = FindFirstObjectByType<Light>();
+            madeSun = sun == null || sun.type != LightType.Directional;
+            if (madeSun)
             {
                 sun = new GameObject("Sun light").AddComponent<Light>();
                 sun.type = LightType.Directional;
+            }
+            else
+            {
+                saved.sunColor = sun.color;
+                saved.sunIntensity = sun.intensity;
+                saved.sunShadows = sun.shadows;
+                saved.sunRotation = sun.transform.rotation;
             }
             sun.color = new Color(1f, 0.97f, 0.9f);
             sun.intensity = 1.1f;

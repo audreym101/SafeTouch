@@ -87,28 +87,39 @@ namespace SafeTouch.AR
         GameObject speech;
 
         /// <summary>
+        /// How big speech bubbles are. 0 (the camera picture): they follow the person's own size, as always.
+        /// More than 0 (the 3D world, seen from further away): this many times the normal bubble, for everyone alike.
+        /// </summary>
+        public static float SpeechScale = 0f;
+
+        /// <summary>
         /// Shows a speech bubble above the figure (what a visitor asks Keza in
         /// Bubble Guard). Lines wrap at about 18 characters to stay readable at
         /// arm's length; an empty text removes the bubble.
         /// </summary>
         public void Say(string text, Material background)
         {
+            var old = speech;
             if (speech != null) Destroy(speech);
+            speech = null;
             if (string.IsNullOrEmpty(text)) return;
 
+            // The top of the head; the old bubble is still there until the end of the frame, so skip it.
             float top = 0f;
             foreach (var r in GetComponentsInChildren<Renderer>())
-                if (r.GetComponent<TextMesh>() == null) top = Mathf.Max(top, r.bounds.max.y);
+                if (r.GetComponent<TextMesh>() == null && (old == null || !r.transform.IsChildOf(old.transform))) top = Mathf.Max(top, r.bounds.max.y);
             if (top <= 0f) top = transform.position.y + 0.7f;
 
             speech = new GameObject("Speech");
             speech.transform.SetParent(transform, true);
-            // Above the name label (which sits about 0.08 m over the head), not on top of it.
-            speech.transform.position = new Vector3(transform.position.x, top + 0.25f, transform.position.z);
+            if (SpeechScale > 0f) speech.transform.localScale = Vector3.one * (SpeechScale / Mathf.Max(transform.lossyScale.y, 0.0001f));
             speech.AddComponent<Billboard>();
 
             string wrapped = Wrap(text, 18);
             int lines = wrapped.Split('\n').Length;
+            // Above the name label (which sits about 0.08 m over the head), not on top of it; a bigger bubble sits higher.
+            float lift = SpeechScale > 0f ? 0.13f + (0.05f + 0.045f * lines) * speech.transform.lossyScale.y * 0.5f : 0.25f;
+            speech.transform.position = new Vector3(transform.position.x, top + lift, transform.position.z);
             var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Destroy(card.GetComponent<Collider>());
             card.transform.SetParent(speech.transform, false);

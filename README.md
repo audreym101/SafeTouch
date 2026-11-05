@@ -2,9 +2,9 @@
 
 **An Android app with a 3D guide character that teaches children aged 6 to 11 in Rwanda how to recognise personal boundaries, spot unsafe situations and get help from a trusted adult.**
 
-Keza, a friendly 3D guide, appears straight away in the phone's camera picture, standing in the child's room; no floor scanning is needed. If the phone cannot run AR, or the camera is refused, she appears on a 3D playground instead. With Keza the child works through four short lessons:
+SafeTouch is a 3D character app. Keza, a friendly 3D guide, appears straight away in her own 3D world; no camera and no floor scanning are needed. A switch in Settings shows her in the child's room through the phone's camera instead. With Keza the child works through four short lessons:
 - the personal space bubble
-- safe-or-unsafe scenario cards
+- safe-or-unsafe scenario cards, each played out first as a short 3D story (a car pulls up and a stranger offers sweets...), then acted out: the child chooses what Keza does and watches the safe choice happen
 - the STOP response (Say no, Tell, Openly explain, Protect yourself)
 - building a "helping hand" of trusted adults
 
@@ -20,7 +20,7 @@ A parent consents first, confirming by an emailed code. A grown-ups area, behind
 | **GitHub repository** | <https://github.com/audreym101/SafeTouch> (branch `audrey`) |
 | **Earlier demo (initial build)** | <[https://youtu.be/FnD_9e-jiUc](https://drive.google.com/file/d/1JzQpt8upAtpz01TeV0gTMEao6Yh_i4RG/view?usp=sharing)> |
 | **Figma prototype** | [Open in Figma](https://www.figma.com/proto/LGF1ZxkHqCZH1Lswr6zrMm/Untitled?page-id=1%3A1521&node-id=1-2914&p=f&viewport=165%2C-166%2C0.17&t=y4xb4JWYI30hmsgq-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=1%3A2890&show-proto-sidebar=1) |
-| **Platform** | Android 8.0+ (API 26), ARM64. Camera mode needs an ARCore phone; other phones get the 3D playground |
+| **Platform** | Android 8.0+ (API 26), ARM64. The 3D world runs on any of these phones; the optional camera mode needs an ARCore phone |
 | **Built with** | Unity 6 LTS, AR Foundation, Google ARCore, C#; Node.js + Express API on Render with MongoDB Atlas |
 
 ---
@@ -50,7 +50,7 @@ FR and NFR numbers are the requirements in the approved proposal (§3.3).
 | **FR1** Detect a horizontal surface through the camera | Put Keza on the real floor so the lesson happens in the child's own space | **Completed, then changed** (see *Scope changes*) | `AR/ARManager.cs` (`ViewMode`, `PlaceInCamera`, `SettleOnFloor`), `PlaneVisual.cs`, [docs/3d-mode.md](docs/3d-mode.md) |
 | **FR2** Place the character and move it | Let the child act out each situation | **Completed.** Keza appears in front of the phone. She and the visitors can be dragged, tapped or walked with arrow buttons. **+ / −** and pinch make her bigger or smaller, and **Bring Keza back** returns her to the picture | `ARManager.Nudge()`, `ARManager.ChangeSize()`, `AR/ARTouch.cs`, `UI/SizeButtons.cs` |
 | **FR3** Personal space bubble with 3 zones | Show "too close" as distance: red 0.3 m, yellow 0.6 m, green 0.9 m | **Completed.** Visitors walk in and the child decides what Keza does; a body map shows private parts on a clothed cartoon | `Lessons/PersonalSpaceBubbleLesson.cs`, `AR/BodyMap.cs` |
-| **FR4** Scenario cards with answer selection | Practise telling safe, uncomfortable and unsafe apart | **Completed.** 13 cards (7 for ages 6 to 8, all 13 for 9 to 11). Answers are glowing circles on the floor | `Lessons/ScenarioLesson.cs`, `Lessons/ChoiceCircles.cs`, `Resources/Content/scenarios.json` |
+| **FR4** Scenario cards with answer selection | Practise telling safe, uncomfortable and unsafe apart | **Completed.** 13 cards (7 for ages 6 to 8, all 13 for 9 to 11). Each card first plays as a 3D story with Keza; unsafe and uncomfortable cards end with acting out the safe choice ([docs/scenario-stories.md](docs/scenario-stories.md)). Answers are glowing circles on the floor | `Lessons/ScenarioLesson.cs`, `Lessons/ScenarioStories.cs`, `Lessons/ChoiceCircles.cs`, `Resources/Content/scenarios.json` |
 | **FR5** Feedback and explanations | Correct gently, never shame | **Completed.** Every answer is explained; ages 9 to 11 also get *Think deeper* | `ScenarioLesson.cs`, `UIManager.ShowFeedback()` |
 | **FR6** Interactive STOP framework | Rehearse the response in the body, not only read it | **Completed.** The child collects the S-T-O-P letters around the room, then acts out each step | `Lessons/StopFrameworkLesson.cs`, `Lessons/LetterHunt.cs` |
 | **FR7** Trusted adults placed in AR | Help the child name who to tell | **Completed.** Pick 2 to 8 roles, which stand in an arc around Keza | `Lessons/TrustedAdultsLesson.cs`, `UI/Screens/AdultsScreen.cs` |
@@ -77,9 +77,9 @@ Paths in the Evidence column are under `Assets/SafeTouch/Scripts/` unless they s
 
 - **Scanning the floor is now optional.**
   - Problem: finding a floor first was the slowest and least reliable step for young children. ARCore needs a textured, well-lit surface, and children waited on a grid before anything happened.
-  - Now: in **Camera** mode, the default, Keza appears in the camera picture at once. She settles onto the real floor once ARCore finds it in the background.
+  - Now: SafeTouch is a 3D character app. In **Playground** mode, the default, Keza appears at once in her 3D world, with no camera, which is the easiest way for young children to interact. In **Camera** mode (a switch in Settings), she appears in the camera picture at once and settles onto the real floor once ARCore finds it in the background.
   - The original scan-and-place flow is still there as **ScanFloor** mode, so FR1 is kept.
-  - **Playground** mode (3D, no camera) lets every lesson run on phones without ARCore, which also covers NFR2.
+  - The 3D world runs every lesson on phones without ARCore, which also covers NFR2.
 - **Parental consent and login were added.** The ethics review needs informed consent from a parent, and a record of what the parent agreed to. That required the backend.
 - **Voice, games and the kids' menu were added** to give young children more reasons to come back, and a simpler way to find their way around without reading much.
 
@@ -146,7 +146,7 @@ git checkout audrey
 6. **Run it:**
    * **In the Editor:** press **Play**. Without a phone, Keza appears on the 3D playground. For phone screen sizes, use **Window > General > Device Simulator** (a Samsung Galaxy A70 profile is in `Assets/SafeTouch/Devices`).
    * **On the phone:** connect it by USB, then **File > Build Profiles > Android > Build And Run**.
-7. **Choose how Keza is shown:** select **ARManager** and set **View Mode** to Camera (the default), Playground or ScanFloor. See [docs/3d-mode.md](docs/3d-mode.md).
+7. **Choose how Keza is shown:** in the app, **Settings > See Keza in my room (camera)** switches between the 3D world (the default) and the camera. Developers can also set **View Mode** on **ARManager** (ScanFloor there is always used). See [docs/3d-mode.md](docs/3d-mode.md).
 
 ### 3.4 Run the API
 

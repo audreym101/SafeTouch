@@ -9,7 +9,7 @@ After **Start**, and the login if one is needed, the app opens the **menu** ([Me
 | Play the lessons | the lesson map | no |
 | My badges | badges | no |
 | Keza's look | Keza's skin tone | no |
-| Settings | music on/off, tap sounds on/off, English / Kinyarwanda | no |
+| Settings | music on/off, tap sounds on/off, Keza in the 3D world or in the room (camera), letter size, English / Kinyarwanda | no |
 | How to play | five steps with big numbers | no |
 | About us | what SafeTouch is for, privacy, version | no (its Contact button: yes) |
 | Contact us | email the team, open the parent area, call a free helpline | **yes** |
@@ -47,7 +47,7 @@ All cartoons are drawn in code from circles ([Decor.cs](../Assets/SafeTouch/Scri
 
 - **Music:** a bouncy 17-second loop (marimba tune, ukulele-like chords, soft beat and shaker) that repeats with no gap. It is made on a background thread when the app starts, which takes well under a second.
 - **Tap sound:** every button makes a soft "pop".
-- **Other effects:** correct, try again, badge and place are short marimba notes.
+- **Other effects:** correct, try again, badge and place are short marimba notes. The scenario stories add a car engine and a friendly horn (`car`, `horn`).
 
 **When the music changes volume:**
 - It fades to silent while the microphone is listening, so the voice coach hears the child's "NO!" and not the tune.

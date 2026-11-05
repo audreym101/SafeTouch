@@ -19,8 +19,16 @@ namespace SafeTouch.AR
         /// <summary>How Keza is shown: in the camera picture (no scanning), on a 3D playground, or on a scanned floor.</summary>
         public enum ViewMode { Camera, Playground, ScanFloor }
 
-        [Tooltip("Camera (the default): the phone's camera picture with Keza standing in it at once, no scanning. Playground: a 3D lawn, no camera. ScanFloor: find a real floor or table first, then place Keza.")]
-        [SerializeField] ViewMode viewMode = ViewMode.Camera;
+        [Tooltip("Playground (the default): Keza in a 3D world, no camera. Camera: the phone's camera picture with Keza standing in it at once, no scanning. The child can switch between these two in Settings. ScanFloor: find a real floor or table first, then place Keza (always used when set here).")]
+        [SerializeField] ViewMode viewMode = ViewMode.Playground;
+
+        const string CameraKey = "view.camera";
+
+        /// <summary>The choice in Settings: Keza in the camera picture (true) or in the 3D world (false, the default). Kept on the phone.</summary>
+        public static bool CameraChosen
+        {
+            get { return PlayerPrefs.GetInt(CameraKey, 0) == 1; }
+        }
 
         [Header("Placement")]
         [SerializeField] GameObject characterPrefab;
@@ -98,6 +106,7 @@ namespace SafeTouch.AR
         {
             // Floors and tables only: walls and ceilings are never detected or used.
             if (planeManager != null) planeManager.requestedDetectionMode = PlaneDetectionMode.Horizontal;
+            if (viewMode != ViewMode.ScanFloor) viewMode = CameraChosen ? ViewMode.Camera : ViewMode.Playground;
             if (viewMode == ViewMode.Playground) StartPlayground();
             touch = GetComponent<ARTouch>();
             if (touch == null) touch = gameObject.AddComponent<ARTouch>();
@@ -147,6 +156,31 @@ namespace SafeTouch.AR
         // ---- Camera mode: the phone's camera picture, Keza in it at once, no scanning ----
 
         /// <summary>The 3D playground instead of the camera picture (also when the camera is refused or ARCore is missing).</summary>
+        /// <summary>
+        /// Settings: shows Keza in the camera picture (true) or in the 3D world (false), and remembers the
+        /// choice. Used outside lessons. In the camera picture Keza is placed again when the next lesson opens.
+        /// </summary>
+        public void SetCameraMode(bool camera)
+        {
+            PlayerPrefs.SetInt(CameraKey, camera ? 1 : 0);
+            PlayerPrefs.Save();
+            if (viewMode == ViewMode.ScanFloor) return;
+            viewMode = camera ? ViewMode.Camera : ViewMode.Playground;
+            CancelPlacement();
+            if (camera && Stage != null)
+            {
+                Stage.Teardown();
+                Destroy(Stage);
+                Stage = null;
+                ResetPlacement();
+            }
+            else if (!camera && Stage == null)
+            {
+                StartPlayground();
+                if (HasCharacter) PlaceCharacter(Stage.KezaPose);
+            }
+        }
+
         void StartPlayground()
         {
             if (Stage != null) return;
@@ -526,6 +560,8 @@ namespace SafeTouch.AR
         GameObject RolePrefabFor(string role, string label)
         {
             if (string.IsNullOrEmpty(role)) return null;
+            // Other children (a friend, a classmate, a cousin) use the child model, in their own clothes and skin tone.
+            if (role == "child") return characterPrefab;
             if (role == "parent")
             {
                 // "Mum or Dad": the same label always gets the same parent.
@@ -552,11 +588,33 @@ namespace SafeTouch.AR
                 ? Data.SkinTones.Get(kezaTone.ToneId)
                 : Data.SkinTones.ForName(label);
             GetOrAdd<SkinToneApplier>(go).SetTone(tone, false);
+            if (role == "child") DressChild(go, color);
             go.transform.position = PointAroundCharacter(radius, angleDegrees);
             if (anchorRoot != null) go.transform.SetParent(anchorRoot, true);
             figure.FaceTowards(character.transform.position);
             movable.Add(figure);
             return figure;
+        }
+
+        /// <summary>
+        /// Another child on the child model, so they never look like Keza's twin: the Skin Tone shader's
+        /// tint colours their clothes and hair in the role's colour, and its mask keeps their skin.
+        /// </summary>
+        static void DressChild(GameObject go, Color color)
+        {
+            var block = new MaterialPropertyBlock();
+            foreach (var r in go.GetComponentsInChildren<Renderer>())
+            {
+                if (r.GetComponent<TextMesh>() != null) continue;
+                var materials = r.sharedMaterials;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    if (materials[i] == null || !materials[i].HasProperty("_SkinMask")) continue;
+                    r.GetPropertyBlock(block, i);
+                    block.SetColor("_Color", Color.Lerp(color, Color.white, 0.3f));
+                    r.SetPropertyBlock(block, i);
+                }
+            }
         }
 
         // ---- Touch: the child moves people with a finger (ARTouch) ----

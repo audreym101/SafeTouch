@@ -1,11 +1,13 @@
-# How Keza is shown: camera, playground or scanned floor
+# How Keza is shown: 3D world, camera or scanned floor
 
-`ARManager` has a **View Mode** setting in the Inspector. **Camera** is the default.
+SafeTouch is a 3D character app: Keza appears in her own 3D world (**Playground**) by default, with no camera. In **Settings > See Keza in my room (camera)**, the child can switch to the camera picture instead, and back. The choice is kept on the phone and takes effect at once.
+
+Developers can also set **View Mode** on `ARManager` in the Inspector. **ScanFloor** set there is always used; otherwise the Settings choice decides between Playground and Camera.
 
 | View Mode | What the child sees | Camera needed? | Scanning? |
 |---|---|---|---|
-| **Camera** (default) | The phone's camera picture, with Keza standing in the room | yes | **no** |
-| **Playground** | A 3D lawn with trees, a house, flowers and clouds | no | no |
+| **Playground** (default) | A 3D lawn with trees, a house, flowers and clouds | no | no |
+| **Camera** (Settings switch) | The phone's camera picture, with Keza standing in the room | yes | **no** |
 | **ScanFloor** | The camera picture; the child finds a floor or table first, then taps Place | yes | yes |
 
 ## Camera mode: Keza in the room, no scanning
@@ -27,7 +29,7 @@
 
 **If the camera is refused, or the phone cannot run ARCore,** the app switches to the Playground by itself, so the child can still do every lesson. The Unity Editor without AR does the same.
 
-## Playground mode
+## Playground mode (the default)
 
 - Keza stands on a 3D lawn, and the phone's camera is never opened.
 - **+**, **−** and pinch move the 3D camera closer or further away (0.6× to 3.2×).
@@ -47,4 +49,5 @@ The original flow:
   - `SettleOnFloor`: drops her onto the floor once ARCore finds it.
   - `ChangeSize`: bigger or smaller, in every mode.
   - `StartPlayground`: the 3D lawn, also used as the fallback.
+  - `SetCameraMode`: the Settings switch between the 3D world and the camera picture. `Stage3D.Teardown` gives the camera back its own settings.
 - [SizeButtons.cs](../Assets/SafeTouch/Scripts/UI/SizeButtons.cs): the + / − buttons and the pinch.

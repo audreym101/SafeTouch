@@ -16,6 +16,11 @@ namespace SafeTouch.Lessons
     /// Unsafe" and a ring fills; staying there confirms the choice, and the
     /// card flies into the colour. Then the guide walks home for the next
     /// card. Every answer is saved for the pre/post evaluation.
+    ///
+    /// Before each question a short 3D story plays (ScenarioStories): the
+    /// child watches the situation happen, and can watch it again. After an
+    /// unsafe or uncomfortable card, the child chooses what Keza does next
+    /// and watches the safe choice play out. Only the sorting answer is saved.
     /// </summary>
     public class ScenarioLesson : LessonBase
     {
@@ -32,6 +37,7 @@ namespace SafeTouch.Lessons
         readonly List<string> basketNames = new List<string>();
         readonly List<GameObject> flyingCards = new List<GameObject>();
         GameObject card, picked, fillRing;
+        ScenarioStories stories;
         Vector3 home, lastGuidePosition;
         int candidate = -1;
         float stillSince;
@@ -46,6 +52,8 @@ namespace SafeTouch.Lessons
             int difficulty = Older ? 2 : 1;
             game.Scenarios.LoadScenarios(difficulty);
             home = keza.transform.position;
+            if (stories == null) stories = gameObject.AddComponent<ScenarioStories>();
+            stories.Setup(game, keza, (label, color, role) => Spawn(label, color, 1f, 0f, role));
             BuildBaskets();
             TouchHint(T("scenario.touch.step", "Move {0} onto a colour."));
             ShowCard();
@@ -54,6 +62,7 @@ namespace SafeTouch.Lessons
         protected override void OnEnd()
         {
             answering = false;
+            if (stories != null) stories.Clear();
             foreach (var b in baskets) if (b != null) Destroy(b);
             baskets.Clear();
             basketSpots.Clear();
@@ -99,6 +108,38 @@ namespace SafeTouch.Lessons
             if (s == null) { Finish(0, 0); return; }
             Header(string.Format(T("scenario.step", "Card {0} of {1}"), game.Scenarios.CurrentIndex + 1, game.Scenarios.Count));
             if (s.audioClip != null) game.Audio.PlayVoice(s.audioClip);
+            if (stories.Has(s.scenarioId)) PlayStory(s);
+            else AskQuestion(s);
+        }
+
+        /// <summary>The card's 3D story; the question comes when it ends, or at once with Skip.</summary>
+        void PlayStory(Data.Scenario s)
+        {
+            answering = false;
+            SetBaskets(false);
+            if (card != null) Destroy(card);
+            TouchHint("");
+            Coroutine run = null;
+            Prompt(s.title, T("story.watch", "Watch what happens."),
+                new PromptOption(T("story.skip", "Skip"), Theme.Card, () =>
+                {
+                    if (run != null) StopCoroutine(run);
+                    AskQuestion(s);
+                }));
+            run = StartCoroutine(StoryThenQuestion(s));
+        }
+
+        IEnumerator StoryThenQuestion(Data.Scenario s)
+        {
+            yield return stories.Play(s.scenarioId, home);
+            if (Running) AskQuestion(s);
+        }
+
+        void AskQuestion(Data.Scenario s)
+        {
+            if (answering) return;
+            SetBaskets(true);
+            TouchHint(T("scenario.touch.step", "Move {0} onto a colour."));
 
             // The card floats over the guide's home spot, in the room.
             if (card != null) Destroy(card);
@@ -106,11 +147,28 @@ namespace SafeTouch.Lessons
             if (game.AR.AnchorRoot != null) card.transform.SetParent(game.AR.AnchorRoot, true);
 
             // Just the question: the answer is a place in the room, not a button.
-            Prompt(s.title, s.GetQuestion());
+            if (stories.Has(s.scenarioId))
+                Prompt(s.title, s.GetQuestion(), new PromptOption(T("story.again", "Watch again"), Theme.Card, () => WatchAgain(s)));
+            else
+                Prompt(s.title, s.GetQuestion());
             lastGuidePosition = keza.transform.position;
             stillSince = Time.time;
             candidate = -1;
             answering = true;
+        }
+
+        void WatchAgain(Data.Scenario s)
+        {
+            if (!answering) return;
+            answering = false;
+            ClearPick();
+            stories.Clear();
+            keza.WalkTo(home, () => { if (Running) PlayStory(s); });
+        }
+
+        void SetBaskets(bool show)
+        {
+            foreach (var b in baskets) if (b != null) b.SetActive(show);
         }
 
         /// <summary>Tapping a colour sends the guide walking onto it.</summary>
@@ -197,7 +255,48 @@ namespace SafeTouch.Lessons
             string message = s.GetFeedback(Older, T("deeper", "Think deeper:"));
             if (!right)
                 message = string.Format(T("scenario.answer", "The answer is: {0}."), s.GetOptionText(s.correctAnswer)) + " " + message;
-            Feedback(right, message, NextCard);
+            Feedback(right, message, () => ActItOut(s));
+        }
+
+        /// <summary>After an unsafe or uncomfortable card: what should Keza do now? The safe choice plays out.</summary>
+        void ActItOut(Data.Scenario s)
+        {
+            if (!Running) return;
+            var act = stories.ActFor(s.scenarioId);
+            if (act == null) { NextCard(); return; }
+            SetBaskets(false);
+            if (card != null) Destroy(card);
+            // Back to the middle first, so the two choices lie around Keza where the story happened.
+            keza.WalkTo(home, () =>
+            {
+                if (!Running) return;
+                ChooseInRoom(string.Format(act.question, GuideName), s.title, Shuffle(
+                    new PromptOption(act.right, Theme.Safe, () => ActRight(act)),
+                    new PromptOption(act.wrong, Theme.Caution, () => Feedback(false, act.wrongNote, () => { }))));
+            });
+        }
+
+        void ActRight(ScenarioStories.ActOut act)
+        {
+            keza.Stop();
+            Prompt(string.Format(T("story.act.watch", "Watch {0}!"), GuideName), act.right);
+            if (!act.sayNo) { StartCoroutine(PlayThenPraise(act)); return; }
+            // Saying NO out loud first, like Keza, with the voice coach (or a NO button).
+            WarmUpVoice(() => SayNo(T("story.say_no.title", "Say NO!"),
+                T("story.say_no.body", "Say NO out loud, in a strong voice, like you mean it."),
+                T("story.say_no.button", "NO!"),
+                rating =>
+                {
+                    Prompt(string.Format(T("story.act.watch", "Watch {0}!"), GuideName), act.right);
+                    StartCoroutine(PlayThenPraise(act));
+                }));
+        }
+
+        IEnumerator PlayThenPraise(ScenarioStories.ActOut act)
+        {
+            yield return act.play();
+            if (!Running) yield break;
+            Feedback(true, act.praise, NextCard);
         }
 
         /// <summary>The card flies into the chosen colour and bursts there.</summary>
@@ -221,6 +320,7 @@ namespace SafeTouch.Lessons
         /// <summary>The guide walks home, then the next card appears.</summary>
         void NextCard()
         {
+            stories.Clear();
             if (game.Scenarios.IsLast)
             {
                 Finish(correct, game.Scenarios.Count);

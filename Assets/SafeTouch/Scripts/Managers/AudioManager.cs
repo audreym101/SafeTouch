@@ -55,6 +55,8 @@ namespace SafeTouch.Managers
             generated["tryagain"] = Clip("tryagain", Notes(new[] { 67, 64 }, 0.16f, 0.28f));
             generated["badge"] = Clip("badge", Notes(new[] { 72, 76, 79, 84, 88, 91 }, 0.08f, 0.3f));
             generated["place"] = Clip("place", Notes(new[] { 67, 72 }, 0.1f, 0.3f));
+            generated["car"] = Clip("car", Engine());
+            generated["horn"] = Clip("horn", Horn());
             UIFactory.ButtonPressed = () => PlaySFX("pop");
 
             musicSource = gameObject.AddComponent<AudioSource>();
@@ -107,7 +109,7 @@ namespace SafeTouch.Managers
             audioSource.PlayOneShot(clip);
         }
 
-        /// <summary>Plays "pop", "tap", "correct", "tryagain", "badge" or "place".</summary>
+        /// <summary>Plays "pop", "tap", "correct", "tryagain", "badge", "place", "car" or "horn".</summary>
         public void PlaySFX(string sfxName)
         {
             foreach (var clip in sfxClips)
@@ -146,6 +148,41 @@ namespace SafeTouch.Managers
                 phase += 2 * Math.PI * f / Rate;
                 float env = Mathf.Min(1f, t / 0.002f) * Mathf.Exp(-t / 0.022f);
                 data[i] = (float)Math.Sin(phase) * env * 0.4f;
+            }
+            return data;
+        }
+
+        /// <summary>A small car driving by: a soft engine hum that rises as it comes and fades out (2 seconds).</summary>
+        static float[] Engine()
+        {
+            var data = new float[(int)(Rate * 2f)];
+            double phase = 0;
+            var noise = new System.Random(7);
+            for (int i = 0; i < data.Length; i++)
+            {
+                float t = (float)i / Rate;
+                float f = Mathf.Lerp(70f, 105f, Mathf.Sin(Mathf.Clamp01(t / 2f) * Mathf.PI));
+                phase += 2 * Math.PI * f / Rate;
+                float hum = (float)(Math.Sin(phase) + 0.5 * Math.Sin(2 * phase) + 0.25 * Math.Sin(3 * phase));
+                float rumble = (float)(noise.NextDouble() * 2 - 1) * 0.15f;
+                float env = Mathf.Min(1f, t / 0.4f) * Mathf.Min(1f, (2f - t) / 0.6f);
+                data[i] = (hum * 0.6f + rumble) * env * 0.14f;
+            }
+            return data;
+        }
+
+        /// <summary>A friendly "beep beep": two short chords, soft at the edges.</summary>
+        static float[] Horn()
+        {
+            var data = new float[(int)(Rate * 0.5f)];
+            for (int i = 0; i < data.Length; i++)
+            {
+                float t = (float)i / Rate;
+                float local = t < 0.25f ? t : t - 0.25f;
+                if (local > 0.16f) continue;
+                float env = Mathf.Min(1f, local / 0.01f) * Mathf.Min(1f, (0.16f - local) / 0.03f);
+                float v = Mathf.Sin(2f * Mathf.PI * 415f * t) + 0.8f * Mathf.Sin(2f * Mathf.PI * 523f * t);
+                data[i] = Mathf.Clamp(v * 1.4f, -1f, 1f) * env * 0.18f;
             }
             return data;
         }
