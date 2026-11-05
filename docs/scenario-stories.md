@@ -7,9 +7,11 @@ In lesson 2, **Safe or Unsafe?**, every card starts as a short 3D story with Kez
 1. **The story plays.** People walk in and talk in speech bubbles (read aloud when read-aloud is on). The card shows **Skip**, which jumps straight to the question.
 2. **The question.** The three colours appear on the floor as before (Safe, Uncomfortable, Unsafe), and the child moves Keza onto one. The card shows **Watch again**, which replays the story. This answer is the one saved for the evaluation, exactly as before.
 3. **Feedback**, as before.
-4. **Act it out** (unsafe and uncomfortable cards only). *What should Keza do now?* Two answers lie on the floor as circles: the safe one and a tempting one.
+4. **How does Keza feel?** The child taps *Happy*, *Uh-oh, uneasy* or *Scared*, and Keza shows the feeling. Safe touch feels good; an "uh-oh" feeling inside is the body's warning, the first sign that something is not right. A happy answer to an unsafe story gets a gentle note: some tricks, like sweets or presents, feel nice at first. This is practice and is not saved.
+5. **Act it out** (unsafe and uncomfortable cards only). *What should Keza do now?* Two answers lie on the floor as circles: the safe one and a tempting one.
     - The tempting one gets a gentle "Let's think again" note, and the child tries again.
-    - The safe one plays out. For the car story, the child first says NO out loud with the voice coach (or taps NO), then Keza runs to Mum and the car drives away.
+    - The safe one plays out. For the car story, the child first says NO out loud with the voice coach (or taps NO).
+    - **The child gets Keza to safety.** Whenever Keza runs to Mum or goes to tell her, a green ring glows under Mum and the child drags Keza there, or taps Mum. After 10 seconds Keza goes by herself, so no child is ever stuck. In the car story, the stranger drives away as Keza runs.
     - Act-it-out choices are practice: they are not saved.
 
 ## The stories
@@ -36,7 +38,7 @@ Nothing in the stories is graphic. The words match the cards, which the content 
 
 - [ScenarioStories.cs](../Assets/SafeTouch/Scripts/Lessons/ScenarioStories.cs) holds the stories and the act-outs.
   - The props are built from simple shapes, like the playground: a car, a road, a bench, a fence, a school board, a health-centre sign, phones, sweets and a gift.
-  - The people are the same figures as in the other lessons.
+  - The people are the same figures as in the other lessons. Other children are children: the friend uses the girl model in her own colours, and the cousins and the classmate are boys built like the boy helper.
   - Everything is placed in metres from Keza, in front of the phone's view, so it works in the 3D world and in camera mode.
 - [ScenarioLesson.cs](../Assets/SafeTouch/Scripts/Lessons/ScenarioLesson.cs) runs a card: story, question, feedback, act-out.
 - The words are `story.*` keys.

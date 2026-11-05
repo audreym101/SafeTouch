@@ -24,6 +24,9 @@ namespace SafeTouch.UI
         }
 
         public static float Scale { get { return Scales[Step]; } }
+
+        /// <summary>For words in the 3D world (name tags, speech bubbles, floating labels): 1 at the default letter size.</summary>
+        public static float WorldScale { get { return Scale / Scales[DefaultStep]; } }
     }
 
     /// <summary>
@@ -58,11 +61,21 @@ namespace SafeTouch.UI
         {
             Vector2Int s;
             // A new text, or one the screen has resized itself since: its size now is the designed size.
-            if (!sizes.TryGetValue(t, out s) || t.fontSize != s.y) s.x = t.fontSize;
+            bool known = sizes.TryGetValue(t, out s);
+            if (!known || t.fontSize != s.y) s.x = t.fontSize;
             s.y = Mathf.RoundToInt(s.x * scale);
             if (t.fontSize != s.y) t.fontSize = s.y;
             sizes[t] = s;
+            // Words always fit their box, whatever the letter size and the screen: on a button, and on a
+            // screen too full for big letters, they shrink just enough instead of running into the next thing.
+            if (!known && t.GetComponentInParent<InputField>() == null) UIFactory.FitInside(t);
+            if (t.resizeTextForBestFit)
+            {
+                t.resizeTextMaxSize = s.y;
+                t.resizeTextMinSize = Mathf.Max(12, Mathf.RoundToInt(s.y * 0.5f));
+            }
         }
+
 
         /// <summary>Drops texts that no longer exist (lists that were rebuilt).</summary>
         void Forget()

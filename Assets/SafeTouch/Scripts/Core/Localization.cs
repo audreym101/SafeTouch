@@ -23,14 +23,33 @@ namespace SafeTouch.Core
         /// <summary>The guide's default name, used in all the written text.</summary>
         public const string DefaultName = "Keza";
 
-        /// <summary>The guide's name: the first name or nickname the child typed, or "Keza".</summary>
+        /// <summary>The boy guide's name when the child does not type one (a Rwandan boy's name).</summary>
+        public const string BoyName = "Ganza";
+
+        /// <summary>True when the child picked the boy helper.</summary>
+        public static bool BoyGuide { get; private set; }
+
+        /// <summary>The helper's name when the child types none: Keza, or Ganza for the boy.</summary>
+        public static string GuideDefaultName { get { return BoyGuide ? BoyName : DefaultName; } }
+
+        /// <summary>The guide's name: the first name or nickname the child typed, or the helper's own name.</summary>
         public static string CharacterName { get; private set; } = DefaultName;
+
+        static string typedName = "";
 
         /// <summary>Gives the guide the child's name; every text then says it instead of "Keza".</summary>
         public static void SetCharacterName(string name)
         {
-            name = CleanName(name);
-            CharacterName = string.IsNullOrEmpty(name) ? DefaultName : name;
+            typedName = CleanName(name);
+            CharacterName = string.IsNullOrEmpty(typedName) ? GuideDefaultName : typedName;
+            if (Changed != null) Changed();
+        }
+
+        /// <summary>The girl or the boy helper: a helper without a typed name takes their own name.</summary>
+        public static void SetGuide(bool boy)
+        {
+            BoyGuide = boy;
+            CharacterName = string.IsNullOrEmpty(typedName) ? GuideDefaultName : typedName;
             if (Changed != null) Changed();
         }
 

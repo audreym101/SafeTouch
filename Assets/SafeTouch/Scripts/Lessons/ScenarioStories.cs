@@ -98,6 +98,7 @@ namespace SafeTouch.Lessons
             props.Clear();
             other = friend = null;
             car = held = null;
+            goal = null;
             if (guide != null)
             {
                 guide.WalkSpeed = guideSpeed;
@@ -149,7 +150,7 @@ namespace SafeTouch.Lessons
 
         IEnumerator Tickling()
         {
-            other = Actor(T("story.cousin", "Cousin"), Cousin, 1.5f, 0.2f, "child");
+            other = Actor(T("story.cousin", "Cousin"), Cousin, 1.5f, 0.2f, "boy");
             yield return Walk(other, At(0.3f, 0.05f), 0.6f);
             yield return Line(other, T("story.S02.1", "Tickle, tickle, tickle!"));
             FxAnimator.Shake(guide.gameObject);
@@ -210,7 +211,7 @@ namespace SafeTouch.Lessons
         IEnumerator TooClose()
         {
             Board(At(-0.95f, 1.25f));
-            other = Actor(T("story.classmate", "Classmate"), Classmate, 1.4f, 0.4f, "child");
+            other = Actor(T("story.classmate", "Classmate"), Classmate, 1.4f, 0.4f, "boy");
             yield return Walk(other, At(0.17f, 0.02f), 0.5f);
             yield return Line(guide, T("story.S06.1", "Can you move back, please?"));
             yield return Line(other, T("story.S06.2", "No. I want to stand right here."));
@@ -268,7 +269,7 @@ namespace SafeTouch.Lessons
 
         IEnumerator PicturesOnAPhone()
         {
-            other = Actor(T("story.older_cousin", "Older cousin"), Theme.Hex("#C0504D"), 1.4f, 0.3f, "child");
+            other = Actor(T("story.older_cousin", "Older cousin"), Theme.Hex("#C0504D"), 1.4f, 0.3f, "boy");
             other.transform.localScale *= 1.2f;   // a few years older than Keza
             yield return Walk(other, At(0.45f, 0.1f), 0.45f);
             held = SmallPhone(other);
@@ -410,10 +411,10 @@ namespace SafeTouch.Lessons
             var mum = Actor(T("story.mum", "Mum"), Mum, -0.9f, -0.2f, "parent");
             guide.Bounce();
             yield return Line(guide, T("story.S05.no", "NO! I don't know you!"));
-            guide.WalkSpeed = 0.9f;
-            var run = Walk(guide, At(-0.62f, -0.15f), 0.9f);
             if (other != null && car != null) StartCoroutine(LeaveInTheCar());
-            yield return run;
+            // The child gets Keza to Mum: quick!
+            yield return ReachSafety(mum, 0.9f, T("story.run.title", "Run to Mum!"),
+                T("story.run.body", "Quick! Help {0} run to Mum: drag {0}, or tap Mum."));
             guide.FaceTowards(mum.transform.position);
             guide.Bounce();
             mum.Bounce();
@@ -496,12 +497,73 @@ namespace SafeTouch.Lessons
         {
             var mum = Actor(T("story.mum", "Mum"), Mum, -1.5f, 0.1f, "parent");
             StartCoroutine(Walk(mum, At(-0.85f, -0.2f), 0.6f));
-            yield return Walk(guide, At(-0.58f, -0.12f), 0.55f);
+            // The child takes Keza to Mum.
+            yield return ReachSafety(mum, 0.55f, T("story.reach.title", "Go and tell Mum!"),
+                T("story.reach.body", "Help {0} get to Mum: drag {0}, or tap Mum."));
             guide.FaceTowards(mum.transform.position);
             yield return Line(guide, tell);
             mum.Bounce();
             game.Audio.PlaySFX("correct");
             yield return Line(mum, T("story.mum.thanks", "Thank you for telling me. You did the right thing."));
+        }
+
+        // ---- The child helps: taking Keza to a safe grown-up ----
+
+        /// <summary>Set by the lesson: puts words on the card (heading, body) while the child helps.</summary>
+        public Action<string, string> Ask;
+
+        ARFigure goal;   // the grown-up the child is taking Keza to, while that is happening
+
+        /// <summary>
+        /// A tap while Keza needs to reach a safe grown-up: on the grown-up, or on the floor near them,
+        /// sends Keza running there. Returns true when the tap was used.
+        /// </summary>
+        public bool HandleTap(ARTap tap)
+        {
+            if (goal == null) return false;
+            bool onGoal = tap.Find<ARFigure>() == goal
+                || (tap.hasFloor && Vector3.ProjectOnPlane(tap.floor - goal.transform.position, Vector3.up).magnitude < 0.5f);
+            if (!onGoal) return false;
+            guide.WalkTo(BesideGoal(), null);
+            return true;
+        }
+
+        Vector3 BesideGoal()
+        {
+            var offset = Vector3.ProjectOnPlane(guide.transform.position - goal.transform.position, Vector3.up);
+            if (offset.sqrMagnitude < 0.0001f) offset = right;
+            return goal.transform.position + offset.normalized * 0.26f;
+        }
+
+        /// <summary>
+        /// A glowing ring under the safe grown-up; the child drags Keza there or taps the grown-up.
+        /// If nothing happens for 10 seconds, Keza goes there by herself, so no child is ever stuck.
+        /// </summary>
+        IEnumerator ReachSafety(ARFigure safe, float speed, string heading, string body)
+        {
+            if (safe == null) yield break;
+            goal = safe;
+            guide.WalkSpeed = speed;
+            var ring = ARFx.FloorQuad("Safe ring", ARFx.Ring, Theme.Safe, 0.45f);
+            ring.transform.SetParent(safe.transform, false);
+            ring.transform.localPosition = Vector3.up * 0.006f / Mathf.Max(safe.transform.lossyScale.y, 0.0001f);
+            ring.transform.localScale = Vector3.one * 0.45f / Mathf.Max(safe.transform.lossyScale.y, 0.0001f);
+            ring.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            FxAnimator.Pulse(ring);
+            if (Ask != null) Ask(heading, string.Format(body, Localization.CharacterName));
+            float start = Time.time;
+            while (safe != null && guide != null
+                && Vector3.ProjectOnPlane(guide.transform.position - safe.transform.position, Vector3.up).magnitude > 0.34f)
+            {
+                if (Time.time - start > 10f && !guide.IsMoving) guide.WalkTo(BesideGoal(), null);
+                yield return null;
+            }
+            goal = null;
+            if (ring != null) Destroy(ring);
+            if (guide == null) yield break;
+            guide.Stop();
+            ARFx.Burst(guide.transform.position + Vector3.up * 0.4f, Theme.Safe);
+            game.Audio.PlaySFX("correct");
         }
 
         // ---- People, speech and movement ----

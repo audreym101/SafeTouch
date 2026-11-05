@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace SafeTouch.UI.Screens
 {
     /// <summary>
-    /// "Keza's look": the child picks Keza's skin tone. When Keza is already
+    /// "Keza's look": the child picks a girl (Keza) or a boy (Ganza) helper, and their skin tone. When Keza is already
     /// in the room the camera shows through and the change plays on her in
     /// AR (a colour blend and a sparkle); otherwise a drawn face previews it.
     /// Seeing a guide who looks like them helps children feel the lessons
@@ -33,6 +33,10 @@ namespace SafeTouch.UI.Screens
             var cardRt = (RectTransform)card.transform;
             UIFactory.Column(cardRt, 24f, 44);
             card.gameObject.AddComponent<LayoutElement>();
+            // A girl (Keza) or a boy (Ganza) helper; the other one appears in the same spot.
+            var helpers = UIFactory.Row(cardRt, "Helpers", Theme.Gap, Theme.TouchTarget);
+            girl = UIFactory.Button(helpers.transform, "", Theme.Card, Theme.Ink, () => { game.SetGuide(false); OnShow(); });
+            boy = UIFactory.Button(helpers.transform, "", Theme.Card, Theme.Ink, () => { game.SetGuide(true); OnShow(); });
             toneName = UIFactory.Label(cardRt, "", Theme.Title, Theme.Ink, TextAnchor.MiddleCenter, true);
             BuildSwatches(cardRt);
             hint = UIFactory.Label(cardRt, "", Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
@@ -41,7 +45,7 @@ namespace SafeTouch.UI.Screens
             done = UIFactory.Button(buttons.transform, "", Theme.Primary, Color.white, () => ui.ShowMenu(ui.CameFrom("menu", "home")));
         }
 
-        Button done, rename;
+        Button done, rename, girl, boy;
         readonly Image[] swatches = new Image[SkinTones.All.Length];
 
         /// <summary>One big round button per tone; the chosen one gets a dark ring.</summary>
@@ -101,6 +105,10 @@ namespace SafeTouch.UI.Screens
             TitleText.text = Localization.T("look.title", "Keza's look");
             UIFactory.SetButtonLabel(done, Localization.T("look.done", "Done"));
             UIFactory.SetButtonLabel(rename, Localization.T("look.rename", "Change my name"));
+            UIFactory.SetButtonLabel(girl, string.Format(Localization.T("name.helper.girl", "A girl: {0}"), Localization.DefaultName));
+            UIFactory.SetButtonLabel(boy, string.Format(Localization.T("name.helper.boy", "A boy: {0}"), Localization.BoyName));
+            girl.image.color = Localization.BoyGuide ? Theme.Card : Theme.Sun;
+            boy.image.color = Localization.BoyGuide ? Theme.Sun : Theme.Card;
             bool inRoom = game.AR.HasCharacter;
             preview.gameObject.SetActive(!inRoom);
             Root.GetComponent<Image>().color = inRoom ? Theme.Clear : Theme.Sky;   // no camera picture yet: not a black screen

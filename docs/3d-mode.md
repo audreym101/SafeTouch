@@ -1,6 +1,6 @@
 # How Keza is shown: 3D world, camera or scanned floor
 
-SafeTouch is a 3D character app: Keza appears in her own 3D world (**Playground**) by default, with no camera. In **Settings > See Keza in my room (camera)**, the child can switch to the camera picture instead, and back. The choice is kept on the phone and takes effect at once.
+SafeTouch is a 3D character app: Keza appears in her own 3D world (**Playground**) by default, with no camera. In **Settings > See my helper in my room (camera)**, the child can switch to the camera picture instead, and back. The choice is kept on the phone and takes effect at once.
 
 Developers can also set **View Mode** on `ARManager` in the Inspector. **ScanFloor** set there is always used; otherwise the Settings choice decides between Playground and Camera.
 

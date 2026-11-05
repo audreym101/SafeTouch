@@ -207,6 +207,7 @@ namespace SafeTouch.EditorTools
             yield return shot("17-help", () => ui.ShowMenu("help"));
             yield return shot("18-about", () => ui.ShowMenu("about"));
             yield return shot("19-contact", () => ui.ShowMenu("contact"));
+            yield return shot("20-name", () => ui.ShowMenu("name"));
         }
 
         /// <summary>Lays everything out (layout groups need a few passes in edit mode).</summary>

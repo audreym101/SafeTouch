@@ -34,7 +34,7 @@ namespace SafeTouch.UI.Screens
             for (int i = 0; i < letterButtons.Length; i++)
             {
                 int step = i;
-                letterButtons[i] = UIFactory.Button(sizes.transform, "A", Theme.Card, Theme.Ink, () => { TextSize.Step = step; OnShow(); });
+                letterButtons[i] = UIFactory.Button(sizes.transform, "A", Theme.Card, Theme.Ink, () => { TextSize.Step = step; RefreshNameTag(); OnShow(); });
                 letterButtons[i].GetComponentInChildren<Text>().fontSize = 40 + i * 16;
             }
             languageTitle = UIFactory.Label(col, "", Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
@@ -50,10 +50,10 @@ namespace SafeTouch.UI.Screens
             TitleText.text = L("Settings", "Igenamiterere");
             musicTitle.text = L("Music", "Umuziki");
             soundsTitle.text = L("Sounds when you tap", "Amajwi iyo ukanze");
-            cameraTitle.text = L("See Keza in my room (camera)", "Reba Keza mu cyumba cyanjye (kamera)");
+            cameraTitle.text = L("See my helper in my room (camera)", "Reba umufasha wanjye mu cyumba cyanjye (kamera)");
             cameraNote.text = ARManager.CameraChosen
-                ? L("Keza stands in your room, through the phone's camera.", "Keza ahagarara mu cyumba cyawe, unyuze kuri kamera ya telefoni.")
-                : L("Keza plays in her 3D world. The camera is not used.", "Keza akinira mu isi ye ya 3D. Kamera ntikoreshwa.");
+                ? L("Your helper stands in your room, through the phone's camera.", "Umufasha wawe ahagarara mu cyumba cyawe, unyuze kuri kamera ya telefoni.")
+                : L("Your helper plays in a 3D world. The camera is not used.", "Umufasha wawe akinira mu isi ya 3D. Kamera ntikoreshwa.");
             Switch(cameraView, ARManager.CameraChosen);
             lettersTitle.text = L("Letter size", "Ingano y'inyuguti");
             for (int i = 0; i < letterButtons.Length; i++)
@@ -66,6 +66,12 @@ namespace SafeTouch.UI.Screens
             Switch(sounds, game.Audio.SoundsOn);
             english.image.color = Localization.Language == "en" ? Theme.Sun : Theme.Card;
             kinyarwanda.image.color = Localization.Language == "rw" ? Theme.Sun : Theme.Card;
+        }
+
+        /// <summary>The name over the guide's head follows the new letter size at once.</summary>
+        void RefreshNameTag()
+        {
+            if (game.AR.Character != null) game.AR.Character.SetName(Localization.CharacterName);
         }
 
         /// <summary>An on/off button: green and "On", or white and "Off".</summary>

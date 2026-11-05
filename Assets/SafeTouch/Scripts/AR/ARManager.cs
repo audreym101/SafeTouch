@@ -32,6 +32,8 @@ namespace SafeTouch.AR
 
         [Header("Placement")]
         [SerializeField] GameObject characterPrefab;
+        [Tooltip("Optional: a boy model for the boy guide. Empty: a boy built from simple shapes (BoyModel).")]
+        [SerializeField] GameObject boyPrefab;
         [SerializeField] GameObject figurePrefab;
         [Tooltip("Optional people built from the models; each name always gets the same one. Empty: figurePrefab for everyone.")]
         [SerializeField] GameObject[] figureVariants = new GameObject[0];
@@ -472,11 +474,43 @@ namespace SafeTouch.AR
             return true;
         }
 
+        bool boyGuide;
+
+        /// <summary>The helper the child picked: a boy (true) or Keza, a girl (false).</summary>
+        public bool BoyGuide { get { return boyGuide; } }
+
+        /// <summary>
+        /// Picks the girl or the boy helper. If one is already in the room, the other takes their place
+        /// at the same spot (only outside lessons: the look and name screens).
+        /// </summary>
+        public void SetGuide(bool boy)
+        {
+            if (boy == boyGuide) return;
+            boyGuide = boy;
+            if (character == null) return;
+            var pose = new Pose(character.transform.position, character.transform.rotation);
+            ClearMovable();
+            if (anchorRoot != null) Destroy(anchorRoot.gameObject);
+            else Destroy(character.gameObject);
+            character = null;
+            anchorRoot = null;
+            PlaceCharacter(pose);
+        }
+
+        GameObject NewGuide()
+        {
+            if (!boyGuide) return Instantiate(characterPrefab);
+            if (boyPrefab != null) return Instantiate(boyPrefab);
+            float scale = characterPrefab != null ? characterPrefab.transform.localScale.y : 1f;
+            return BoyModel.Build(opaqueMaterial, scale);
+        }
+
         public void PlaceCharacter(Pose pose)
         {
             if (character == null)
             {
-                var go = Instantiate(characterPrefab, pose.position, Quaternion.identity);
+                var go = NewGuide();
+                go.transform.SetPositionAndRotation(pose.position, Quaternion.identity);
                 character = GetOrAdd<ARCharacter>(go);
             }
             else
@@ -576,8 +610,10 @@ namespace SafeTouch.AR
         /// <summary>Spawns a figure (visitor or trusted adult) at a point around Keza. role picks a model, e.g. "parent".</summary>
         public ARFigure SpawnFigure(string label, Color color, float radius, float angleDegrees, string role = null)
         {
-            var prefab = RolePrefabFor(role, label) ?? FigurePrefabFor(label);
-            var go = Instantiate(prefab);
+            // "boy": another boy in a story, built like the boy guide.
+            var go = role == "boy"
+                ? BoyModel.Build(opaqueMaterial, characterPrefab != null ? characterPrefab.transform.localScale.y : 1f)
+                : Instantiate(RolePrefabFor(role, label) ?? FigurePrefabFor(label));
             var figure = GetOrAdd<ARFigure>(go);
             // Clothes in the role's colour, so the roles can be told apart; skin, eyes and hair keep their look.
             figure.Setup(label, color, opaqueMaterial);
@@ -589,6 +625,7 @@ namespace SafeTouch.AR
                 : Data.SkinTones.ForName(label);
             GetOrAdd<SkinToneApplier>(go).SetTone(tone, false);
             if (role == "child") DressChild(go, color);
+            if (role == "boy") BoyModel.Dress(go, color);
             go.transform.position = PointAroundCharacter(radius, angleDegrees);
             if (anchorRoot != null) go.transform.SetParent(anchorRoot, true);
             figure.FaceTowards(character.transform.position);

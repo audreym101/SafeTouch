@@ -70,6 +70,9 @@ Music and tap sounds can each be switched off in **Settings**. The choice is kep
 
 The choice is kept on the phone. [TextSize.cs](../Assets/SafeTouch/Scripts/UI/TextSize.cs) applies it to every text in the app, including lists and messages a screen makes later.
 
+- **Words always fit their buttons.** On every button the words shrink as much as needed (never below about half size) to stay inside it, at any letter size and on any phone or tablet (`UIFactory.FitInside`).
+- **Words in the 3D world follow the setting too:** name tags, speech bubbles and floating labels get bigger or smaller with it. They always turn to face the camera, from any angle.
+
 ## App icon
 
 The icon is a white shield on a sky-blue square, holding a raised yellow hand with a red heart in its palm. It has no words, so it reads at any size.

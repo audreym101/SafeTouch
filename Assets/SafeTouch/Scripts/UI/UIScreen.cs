@@ -69,6 +69,7 @@ namespace SafeTouch.UI
                 }
                 TitleText = UIFactory.Label(bar.transform, title ?? "", Theme.Title, Theme.Ink, TextAnchor.MiddleLeft, true);
                 TitleText.GetComponent<UnityEngine.UI.LayoutElement>().flexibleWidth = 1f;
+                UIFactory.FitInside(TitleText);   // a long title shrinks to fit the bar instead of spilling over the screen
             }
             return col;
         }

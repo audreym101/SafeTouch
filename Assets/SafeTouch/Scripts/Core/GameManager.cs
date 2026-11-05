@@ -201,7 +201,10 @@ namespace SafeTouch.Core
         {
             progress = progressManager.Load();
             ageGroup = progress.ageGroup;
+            bool boy = progress.guide == "boy";
+            Localization.SetGuide(boy);
             Localization.SetCharacterName(progress.childName);
+            if (arManager != null) arManager.SetGuide(boy);
             if (arManager != null && arManager.Character != null) arManager.Character.SetName(Localization.CharacterName);
             if (readAloud != null) readAloud.AutoRead = progress.readAloud;
             if (voiceCoach != null)
@@ -344,6 +347,22 @@ namespace SafeTouch.Core
             progressManager.ResetAll();
             LoadProgress();
             uiManager.ShowMenu("splash");
+        }
+
+        /// <summary>
+        /// The child picked the girl or the boy helper. A helper without a typed name takes their own
+        /// name (Keza or Ganza); if the helper is in the room, the other one appears in their place.
+        /// </summary>
+        public void SetGuide(bool boy)
+        {
+            progressManager.SetGuide(boy);
+            Localization.SetGuide(boy);
+            arManager.SetGuide(boy);
+            if (arManager.Character != null)
+            {
+                arManager.Character.SetName(Localization.CharacterName);
+                arManager.Character.Bounce();
+            }
         }
 
         /// <summary>The child picked a new look for Keza. If she is in the room, the change plays there too.</summary>

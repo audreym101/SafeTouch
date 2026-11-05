@@ -29,6 +29,9 @@ namespace SafeTouch.AR
         [Tooltip("Keep the model's own textured clothes instead of tinting them with the role colour (e.g. Mum and Dad).")]
         [SerializeField] bool keepOwnColours;
 
+        /// <summary>For people built in code (the boy): keep their own clothes colours; Setup only names them.</summary>
+        public bool KeepOwnColours { set { keepOwnColours = value; } }
+
         void Start()
         {
             // A soft shadow under the feet makes the person stand on the real floor.
@@ -41,12 +44,25 @@ namespace SafeTouch.AR
             if (nameLabel != null) nameLabel.gameObject.SetActive(show);
         }
 
+        float nameSize;   // the name tag's letter size as designed, before the Settings letter size
+
+        /// <summary>Gives a figure built in code (the boy guide) its name tag.</summary>
+        public void UseNameLabel(TextMesh label)
+        {
+            nameLabel = label;
+            nameSize = 0f;
+        }
+
         /// <summary>Changes the name over the person's head (Keza takes the child's chosen name).</summary>
         public void SetName(string label)
         {
             Label = label;
             name = label;
-            if (nameLabel != null) nameLabel.text = label;
+            if (nameLabel == null) return;
+            nameLabel.text = label;
+            // The name tag follows the letter size chosen in Settings.
+            if (nameSize <= 0f) nameSize = nameLabel.characterSize;
+            nameLabel.characterSize = nameSize * UI.TextSize.WorldScale;
         }
 
         // Materials that keep their own look: skin (the skin tone sets it), eyes, hair, glasses.
@@ -112,13 +128,15 @@ namespace SafeTouch.AR
 
             speech = new GameObject("Speech");
             speech.transform.SetParent(transform, true);
-            if (SpeechScale > 0f) speech.transform.localScale = Vector3.one * (SpeechScale / Mathf.Max(transform.lossyScale.y, 0.0001f));
+            // Bigger letters in Settings make the bubble bigger too.
+            float size = UI.TextSize.WorldScale * (SpeechScale > 0f ? SpeechScale / Mathf.Max(transform.lossyScale.y, 0.0001f) : 1f);
+            speech.transform.localScale = Vector3.one * size;
             speech.AddComponent<Billboard>();
 
             string wrapped = Wrap(text, 18);
             int lines = wrapped.Split('\n').Length;
             // Above the name label (which sits about 0.08 m over the head), not on top of it; a bigger bubble sits higher.
-            float lift = SpeechScale > 0f ? 0.13f + (0.05f + 0.045f * lines) * speech.transform.lossyScale.y * 0.5f : 0.25f;
+            float lift = SpeechScale > 0f ? 0.13f + (0.05f + 0.045f * lines) * speech.transform.lossyScale.y * 0.5f : 0.25f * UI.TextSize.WorldScale;
             speech.transform.position = new Vector3(transform.position.x, top + lift, transform.position.z);
             var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Destroy(card.GetComponent<Collider>());

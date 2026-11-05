@@ -18,9 +18,10 @@ namespace SafeTouch.Lessons
     /// card. Every answer is saved for the pre/post evaluation.
     ///
     /// Before each question a short 3D story plays (ScenarioStories): the
-    /// child watches the situation happen, and can watch it again. After an
+    /// child watches the situation happen, and can watch it again. After each
+    /// card the child says how Keza feels (happy, uh-oh or scared). After an
     /// unsafe or uncomfortable card, the child chooses what Keza does next
-    /// and watches the safe choice play out. Only the sorting answer is saved.
+    /// and helps the safe choice play out. Only the sorting answer is saved.
     /// </summary>
     public class ScenarioLesson : LessonBase
     {
@@ -54,6 +55,7 @@ namespace SafeTouch.Lessons
             home = keza.transform.position;
             if (stories == null) stories = gameObject.AddComponent<ScenarioStories>();
             stories.Setup(game, keza, (label, color, role) => Spawn(label, color, 1f, 0f, role));
+            stories.Ask = (heading, body) => { Prompt(heading, body); TouchHint(body); };
             BuildBaskets();
             TouchHint(T("scenario.touch.step", "Move {0} onto a colour."));
             ShowCard();
@@ -174,6 +176,7 @@ namespace SafeTouch.Lessons
         /// <summary>Tapping a colour sends the guide walking onto it.</summary>
         protected override bool OnTap(ARTap tap)
         {
+            if (stories != null && stories.HandleTap(tap)) return true;   // taking Keza to a safe grown-up
             if (!answering || !tap.hasFloor) return false;
             int i = BasketAt(tap.floor, BasketSize * 0.75f);
             if (i < 0) return false;
@@ -255,7 +258,53 @@ namespace SafeTouch.Lessons
             string message = s.GetFeedback(Older, T("deeper", "Think deeper:"));
             if (!right)
                 message = string.Format(T("scenario.answer", "The answer is: {0}."), s.GetOptionText(s.correctAnswer)) + " " + message;
-            Feedback(right, message, () => ActItOut(s));
+            Feedback(right, message, () => AskFeeling(s));
+        }
+
+        /// <summary>
+        /// "How does Keza feel?" Happy, uneasy or scared. Safe touch feels good; an "uh-oh" feeling inside
+        /// is the body's warning, the first sign that something is not right. Practice only: not saved.
+        /// </summary>
+        void AskFeeling(Data.Scenario s)
+        {
+            if (!Running) return;
+            SetBaskets(false);
+            if (card != null) Destroy(card);
+            bool safe = s.correctAnswer == "A";
+            Prompt(string.Format(T("feel.question", "How does {0} feel?"), GuideName), s.title,
+                new PromptOption(T("feel.happy", "Happy"), Theme.Safe, () => Felt(s, 0, safe)),
+                new PromptOption(T("feel.uneasy", "Uh-oh, uneasy"), Theme.Caution, () => Felt(s, 1, safe)),
+                new PromptOption(T("feel.scared", "Scared"), Theme.Unsafe, () => Felt(s, 2, safe)));
+        }
+
+        /// <summary>Keza shows the feeling; then a word on why, and on to acting it out.</summary>
+        void Felt(Data.Scenario s, int feeling, bool safe)
+        {
+            bool happy = feeling == 0;
+            keza.SayFor(happy ? T("feel.happy.say", "I feel happy!")
+                : feeling == 1 ? T("feel.uneasy.say", "I have an uh-oh feeling...")
+                : T("feel.scared.say", "I feel scared!"), game.AR.OpaqueMaterial, 3f);
+            if (happy)
+            {
+                keza.Bounce();
+                ARFx.Burst(keza.transform.position + Vector3.up * 0.45f, Theme.Sun);
+            }
+            else FxAnimator.Shake(keza.gameObject);
+
+            if (happy == safe)
+            {
+                game.Audio.PlaySFX("correct");
+                string why = safe
+                    ? T("feel.safe.right", "Yes! This touch feels good: {0} feels happy and safe.")
+                    : T("feel.unsafe.right", "Yes. That uh-oh feeling inside is your body's warning. Always listen to it!");
+                Prompt(string.Format(T("feel.question", "How does {0} feel?"), GuideName), string.Format(why, GuideName),
+                    new PromptOption(T("continue", "Continue"), Theme.Primary, () => ActItOut(s)));
+                return;
+            }
+            string note = safe
+                ? T("feel.safe.think", "Here {0} likes it and feels safe. But if a touch ever feels wrong, that feeling matters.")
+                : T("feel.unsafe.think", "Some tricks feel nice at first, like sweets or a present. But deep inside, {0} has an uh-oh feeling. Listen to it!");
+            Feedback(false, string.Format(note, GuideName), () => AskFeeling(s));
         }
 
         /// <summary>After an unsafe or uncomfortable card: what should Keza do now? The safe choice plays out.</summary>

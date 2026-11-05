@@ -1,4 +1,15 @@
-# Keza's look: skin tones
+# Keza's look: girl or boy helper, and skin tones
+
+## A girl or a boy helper
+
+The helper carries the child's name, so the child picks one like them: **a girl, Keza**, or **a boy, Ganza** (a Rwandan boy's name). They pick on the name screen after consent, and can change it any time in **Keza's look**; the other helper then appears in the same spot.
+
+- If the child types their own name, the helper carries it either way. If they skip, the helper is Keza or Ganza, and every text uses that name.
+- Ganza is built from simple shapes in [BoyModel.cs](../Assets/SafeTouch/Scripts/AR/BoyModel.cs), the same height as Keza: short hair, a blue T-shirt, shorts, trainers and a smile. His skin parts take the skin tone the child picks, like Keza's.
+- To use a modelled boy instead, set **Boy Prefab** on `ARManager`.
+- The choice stays on the phone and is never synced (consent terms version 1.4).
+
+## Skin tones
 
 Children choose Keza's skin tone on **Home → Keza's look**, so the guide can look like them or a friend. Every visitor and helper in the lessons also gets a tone from the same palette, so each lesson shows a mix of people.
 

@@ -125,6 +125,7 @@ namespace SafeTouch.AR
         /// </summary>
         public static GameObject Label(string text, Vector3 position, Color accent, float scale = 1f)
         {
+            scale *= UI.TextSize.WorldScale;   // follows the letter size chosen in Settings
             var root = new GameObject("Label");
             root.transform.position = position;
             root.AddComponent<Billboard>();

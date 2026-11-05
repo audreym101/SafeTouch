@@ -629,6 +629,24 @@
     { "key": "story.S13.wrong_note", "value": "Ntugomba gusoma umuntu, n'iyo yaba uwo mu muryango. Kuzunguza ikiganza cyangwa guhuza ibiganza ni indamukanyo nziza." },
     { "key": "story.S13.praise", "value": "Ni byiza! Ni wowe uhitamo uko usuhuza." },
     { "key": "story.S13.wave", "value": "Muraho Marume! Duhuze ibiganza?" },
-    { "key": "story.S13.ok", "value": "Yego, duhuze ibiganza!" }
+    { "key": "story.S13.ok", "value": "Yego, duhuze ibiganza!" },
+    { "key": "feel.question", "value": "{0} yumva ameze ate?" },
+    { "key": "feel.happy", "value": "Yishimye" },
+    { "key": "feel.uneasy", "value": "Yumva hari ikitagenda neza" },
+    { "key": "feel.scared", "value": "Afite ubwoba" },
+    { "key": "feel.happy.say", "value": "Ndishimye!" },
+    { "key": "feel.uneasy.say", "value": "Numva hari ikitagenda neza..." },
+    { "key": "feel.scared.say", "value": "Mfite ubwoba!" },
+    { "key": "feel.safe.right", "value": "Yego! Uku gukorwaho ni kwiza: {0} yishimye kandi atekanye." },
+    { "key": "feel.unsafe.right", "value": "Yego. Kumva hari ikitagenda neza ni umuburo w'umubiri wawe. Buri gihe ujye ubyitaho!" },
+    { "key": "feel.safe.think", "value": "Hano {0} biramushimisha kandi yumva atekanye. Ariko niba gukorwaho kwigeze kukubangamira, uko wumva ni ingenzi." },
+    { "key": "feel.unsafe.think", "value": "Amayeri amwe abanza gushimisha, nka bombo cyangwa impano. Ariko imbere muri we, {0} yumva hari ikitagenda neza. Ujye ubyitaho!" },
+    { "key": "story.run.title", "value": "Irukira kuri Mama!" },
+    { "key": "story.run.body", "value": "Vuba! Fasha {0} kwirukira kuri Mama: kurura {0}, cyangwa ukande kuri Mama." },
+    { "key": "story.reach.title", "value": "Genda ubwire Mama!" },
+    { "key": "story.reach.body", "value": "Fasha {0} kugera kuri Mama: kurura {0}, cyangwa ukande kuri Mama." },
+    { "key": "name.helper", "value": "Hitamo umufasha wawe" },
+    { "key": "name.helper.girl", "value": "Umukobwa: {0}" },
+    { "key": "name.helper.boy", "value": "Umuhungu: {0}" }
   ]
 }

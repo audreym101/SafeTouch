@@ -5,7 +5,8 @@ using UnityEngine.UI;
 namespace SafeTouch.UI.Screens
 {
     /// <summary>
-    /// "What's your name?" The child types a first name or a nickname, and
+    /// First the helper: a girl (Keza) or a boy (Ganza), so the child can pick one
+    /// like them; the choice stays on this phone. Then "What's your name?" The child types a first name or a nickname, and
     /// the guide in the room takes it: the lessons then talk about "Amani's
     /// bubble" instead of "Keza's", so they are about the child. Skipping
     /// keeps "Keza". The name stays on this phone, is never sent, and is
@@ -14,9 +15,9 @@ namespace SafeTouch.UI.Screens
     /// </summary>
     public class NameScreen : UIScreen
     {
-        Text question, note, preview;
+        Text helperQuestion, question, note, preview;
         InputField field;
-        Button ok, skip;
+        Button ok, skip, girl, boy;
         string returnTo;
 
         public override string Name { get { return "name"; } }
@@ -24,7 +25,12 @@ namespace SafeTouch.UI.Screens
         protected override void BuildContent(RectTransform root)
         {
             var col = StandardColumn(root, "", Back);
-            UIFactory.Spacer(col, 0.4f);
+            // First the helper: a girl (Keza) or a boy (Ganza), so the child can pick one like them.
+            helperQuestion = UIFactory.Label(col, "", Theme.Title, Theme.Ink, TextAnchor.MiddleCenter, true);
+            var helpers = UIFactory.Row(col, "Helpers", Theme.Gap, Theme.TouchTarget);
+            girl = UIFactory.Button(helpers.transform, "", Theme.Card, Theme.Ink, () => { game.SetGuide(false); OnShow(); });
+            boy = UIFactory.Button(helpers.transform, "", Theme.Card, Theme.Ink, () => { game.SetGuide(true); OnShow(); });
+            UIFactory.Spacer(col, 0.3f);
             question = UIFactory.Label(col, "", Theme.Display, Theme.Ink, TextAnchor.MiddleCenter, true);
 
             // A name tag: the guide's name in big letters as the child types it.
@@ -60,14 +66,20 @@ namespace SafeTouch.UI.Screens
             var saved = game.Progress.GetData().childName;
             if (string.IsNullOrEmpty(field.text) && !string.IsNullOrEmpty(saved)) field.text = saved;
             UIFactory.SetButtonLabel(ok, Localization.T("name.ok", "That's me!"));
-            UIFactory.SetButtonLabel(skip, string.Format(Localization.T("name.skip", "Skip: call my helper {0}"), Localization.DefaultName));
+            UIFactory.SetButtonLabel(skip, string.Format(Localization.T("name.skip", "Skip: call my helper {0}"), Localization.GuideDefaultName));
+            helperQuestion.text = Localization.T("name.helper", "Pick your helper");
+            UIFactory.SetButtonLabel(girl, string.Format(Localization.T("name.helper.girl", "A girl: {0}"), Localization.DefaultName));
+            UIFactory.SetButtonLabel(boy, string.Format(Localization.T("name.helper.boy", "A boy: {0}"), Localization.BoyName));
+            bool isBoy = Localization.BoyGuide;
+            girl.image.color = isBoy ? Theme.Card : Theme.Sun;
+            boy.image.color = isBoy ? Theme.Sun : Theme.Card;
             UpdatePreview();
         }
 
         void UpdatePreview()
         {
             var clean = Localization.CleanName(field.text);
-            preview.text = string.IsNullOrEmpty(clean) ? Localization.DefaultName : clean;
+            preview.text = string.IsNullOrEmpty(clean) ? Localization.GuideDefaultName : clean;
             ok.interactable = clean.Length > 0;
         }
 

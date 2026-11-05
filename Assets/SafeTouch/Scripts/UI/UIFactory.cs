@@ -176,9 +176,23 @@ namespace SafeTouch.UI
 
             var text = Label(img.transform, label, Theme.Body, textColor, TextAnchor.MiddleCenter, true);
             Stretch((RectTransform)text.transform);
-            ((RectTransform)text.transform).offsetMin = new Vector2(24f, 0f);
-            ((RectTransform)text.transform).offsetMax = new Vector2(-24f, 0f);
+            ((RectTransform)text.transform).offsetMin = new Vector2(24f, 8f);
+            ((RectTransform)text.transform).offsetMax = new Vector2(-24f, -8f);
+            FitInside(text);
             return button;
+        }
+
+        /// <summary>
+        /// The words always fit inside their box: at any letter size (Settings) and on any screen they
+        /// shrink as much as needed, never below about half size, instead of spilling over the edge.
+        /// TextSizer keeps the largest size in step with the letter size.
+        /// </summary>
+        public static void FitInside(Text text)
+        {
+            text.resizeTextForBestFit = true;
+            text.resizeTextMaxSize = text.fontSize;
+            text.resizeTextMinSize = Mathf.Max(12, Mathf.RoundToInt(text.fontSize * 0.5f));
+            text.verticalOverflow = VerticalWrapMode.Truncate;
         }
 
         /// <summary>

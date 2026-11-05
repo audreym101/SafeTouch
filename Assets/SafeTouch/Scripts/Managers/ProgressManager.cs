@@ -219,6 +219,13 @@ namespace SafeTouch.Managers
             Save();
         }
 
+        /// <summary>The helper the child picked: a boy or a girl (Keza). Stays on this phone.</summary>
+        public void SetGuide(bool boy)
+        {
+            progress.guide = boy ? "boy" : "girl";
+            Save();
+        }
+
         public void SetVoiceEnabled(bool on)
         {
             progress.voiceEnabled = on;
