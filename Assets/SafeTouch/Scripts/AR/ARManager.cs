@@ -66,6 +66,9 @@ namespace SafeTouch.AR
 
         public event Action<ARCharacter> CharacterPlaced;
 
+        /// <summary>True only when the child finds a floor and taps Place (ScanFloor); otherwise the helper appears by itself.</summary>
+        public bool ScansFloor { get { return viewMode == ViewMode.ScanFloor; } }
+
         /// <summary>True while the phone's camera picture is used; false on the 3D playground.</summary>
         public bool UsesAR { get { return Stage == null; } }
 
@@ -487,6 +490,36 @@ namespace SafeTouch.AR
         {
             if (boy == boyGuide) return;
             boyGuide = boy;
+            ReplaceGuide();
+        }
+
+        [Header("Ages 9 to 11 (Guardian path)")]
+        [Tooltip("The girl helper for ages 9 to 11 (SafeTouch > 8 makes it from a downloaded model). Empty: the same as 6 to 8.")]
+        [SerializeField] GameObject olderGirlPrefab;
+        [Tooltip("The boy helper for ages 9 to 11. Empty: the same as 6 to 8.")]
+        [SerializeField] GameObject olderBoyPrefab;
+        [Tooltip("People for ages 9 to 11: visitors, helpers and the people in the stories. Empty: the same as 6 to 8.")]
+        [SerializeField] GameObject[] olderFigureVariants = new GameObject[0];
+
+        bool older;
+
+        /// <summary>True on the 9 to 11 path, which can have its own, more lifelike, characters.</summary>
+        public bool Older { get { return older; } }
+
+        /// <summary>
+        /// The age path: "9-11" uses the 9 to 11 characters where they have been set, "6-8" the others.
+        /// A helper already in the room is swapped at the same spot (only outside lessons).
+        /// </summary>
+        public void SetAgeGroup(string ageGroup)
+        {
+            bool isOlder = ageGroup == "9-11";
+            if (isOlder == older) return;
+            older = isOlder;
+            ReplaceGuide();
+        }
+
+        void ReplaceGuide()
+        {
             if (character == null) return;
             var pose = new Pose(character.transform.position, character.transform.rotation);
             ClearMovable();
@@ -497,12 +530,21 @@ namespace SafeTouch.AR
             PlaceCharacter(pose);
         }
 
-        GameObject NewGuide()
+        GameObject GirlPrefab { get { return older && olderGirlPrefab != null ? olderGirlPrefab : characterPrefab; } }
+
+        GameObject BoyPrefab { get { return older && olderBoyPrefab != null ? olderBoyPrefab : boyPrefab; } }
+
+        /// <summary>A boy: the boy model for this age if there is one, otherwise one built from shapes.</summary>
+        GameObject NewBoy()
         {
-            if (!boyGuide) return Instantiate(characterPrefab);
-            if (boyPrefab != null) return Instantiate(boyPrefab);
+            if (BoyPrefab != null) return Instantiate(BoyPrefab);
             float scale = characterPrefab != null ? characterPrefab.transform.localScale.y : 1f;
             return BoyModel.Build(opaqueMaterial, scale);
+        }
+
+        GameObject NewGuide()
+        {
+            return boyGuide ? NewBoy() : Instantiate(GirlPrefab);
         }
 
         public void PlaceCharacter(Pose pose)
@@ -567,7 +609,8 @@ namespace SafeTouch.AR
             // The modelled people only: the simple figure (capsule and spheres) stands in
             // just when no model has been built, even if an older scene still lists it.
             var choices = new List<GameObject>();
-            foreach (var v in figureVariants) if (v != null && v != figurePrefab) choices.Add(v);
+            var people = older && olderFigureVariants.Length > 0 ? olderFigureVariants : figureVariants;   // 9 to 11: their own people, if set
+            foreach (var v in people) if (v != null && v != figurePrefab) choices.Add(v);
             if (choices.Count == 0) return figurePrefab != null ? figurePrefab : characterPrefab;
             uint hash = 2166136261;   // FNV-1a, stable between runs (like SkinTones.ForName)
             foreach (char c in label ?? "") { hash ^= c; hash *= 16777619; }
@@ -595,7 +638,7 @@ namespace SafeTouch.AR
         {
             if (string.IsNullOrEmpty(role)) return null;
             // Other children (a friend, a classmate, a cousin) use the child model, in their own clothes and skin tone.
-            if (role == "child") return characterPrefab;
+            if (role == "child") return GirlPrefab;
             if (role == "parent")
             {
                 // "Mum or Dad": the same label always gets the same parent.
@@ -612,7 +655,7 @@ namespace SafeTouch.AR
         {
             // "boy": another boy in a story, built like the boy guide.
             var go = role == "boy"
-                ? BoyModel.Build(opaqueMaterial, characterPrefab != null ? characterPrefab.transform.localScale.y : 1f)
+                ? NewBoy()
                 : Instantiate(RolePrefabFor(role, label) ?? FigurePrefabFor(label));
             var figure = GetOrAdd<ARFigure>(go);
             // Clothes in the role's colour, so the roles can be told apart; skin, eyes and hair keep their look.

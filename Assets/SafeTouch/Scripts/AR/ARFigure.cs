@@ -203,6 +203,8 @@ namespace SafeTouch.AR
         /// <summary>A small hop, used for waving, saying "No!" and celebrating.</summary>
         public void Bounce()
         {
+            var motion = GetComponent<BoyMotion>();
+            if (motion != null) motion.Wave();   // the boy built in code waves as he hops
             // Model characters with a greeting clip wave; the simple figures hop.
             var animator = GetComponentInChildren<Animator>();
             if (animator != null && animator.runtimeAnimatorController != null && HasTrigger(animator, GreetTrigger))

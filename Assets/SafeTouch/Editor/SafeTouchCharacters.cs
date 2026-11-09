@@ -742,6 +742,170 @@ namespace SafeTouch.EditorTools
         // Shared
         // ---------------------------------------------------------------
 
+        // ---------------------------------------------------------------
+        // Ages 9 to 11: characters from downloaded models
+        // ---------------------------------------------------------------
+
+        /// <summary>Where to put downloaded models for the 9 to 11 (Guardian) path.</summary>
+        public const string OlderModels = Models + "/Ages 9-11";
+        const string OlderPrefabs = PrefabFolder + "/Ages 9-11";
+        const string OlderGirlPath = OlderPrefabs + "/Girl.prefab";
+        const string OlderBoyPath = OlderPrefabs + "/Boy.prefab";
+        const float OlderChildHeight = 0.62f;   // 9 to 11 year olds stand a little taller than Keza (0.55 m)
+
+        /// <summary>
+        /// Turns the models in Models/Ages 9-11 into the characters of the 9 to 11 (Guardian) path, and sets them
+        /// on ARManager in the scene. The 6 to 8 (Explorer) path keeps its own characters.
+        ///   - a file or folder name with "girl": the girl helper; with "boy": the boy helper;
+        ///   - any other model: one of the people (visitors, trusted adults, the people in the stories).
+        /// Each is scaled to its height, stood on the floor, centred, and given a name tag, a touch area and the
+        /// skin tone. Movement scripts and physics that came with a download are taken off. Models with
+        /// animations get an idle (a clip named "idle", or the first) and, if a clip is named wave, greet or hello,
+        /// a greeting for when the helper says hi.
+        /// </summary>
+        [MenuItem("SafeTouch/8. Make Ages 9-11 Characters From Downloaded Models", priority = 8)]
+        public static void BuildOlder()
+        {
+            EnsureFolder(OlderModels);
+            EnsureFolder(OlderPrefabs);
+            EnsureFolder(GeneratedFolder);
+            var sparkle = AssetDatabase.LoadAssetAtPath<Material>(SparkleMaterial);
+            bool girl = false, boy = false;
+            int people = 0;
+            foreach (var guid in AssetDatabase.FindAssets("t:GameObject", new[] { OlderModels }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (model == null || model.GetComponentsInChildren<Renderer>(true).Length == 0) continue;
+                string lower = path.Substring(OlderModels.Length).ToLowerInvariant();
+                bool isGirl = lower.Contains("girl"), isBoy = !isGirl && lower.Contains("boy");
+                if ((isGirl && girl) || (isBoy && boy))
+                {
+                    Debug.LogWarning("[SafeTouch] More than one " + (isGirl ? "girl" : "boy") + " model in " + OlderModels + "; skipped " + path);
+                    continue;
+                }
+                string label = isGirl ? "Keza" : isBoy ? "Ganza" : Path.GetFileNameWithoutExtension(path);
+                string outPath = isGirl ? OlderGirlPath : isBoy ? OlderBoyPath : OlderPrefabs + "/Person " + (++people) + ".prefab";
+                BuildFromModel(path, model, label, isGirl || isBoy ? OlderChildHeight : AdultHeight, isGirl || isBoy, sparkle, outPath);
+                girl |= isGirl;
+                boy |= isBoy;
+            }
+            AssetDatabase.SaveAssets();
+
+            // Put them on ARManager in the scene, if it has been built.
+            if (File.Exists(SceneFile))
+            {
+                var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(SceneFile);
+                var ar = Object.FindFirstObjectByType<ARManager>();
+                if (ar != null)
+                {
+                    SetOlder(ar);
+                    UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+                    UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
+                }
+            }
+            Debug.Log("[SafeTouch] Ages 9-11: " + (girl ? "girl helper, " : "no girl model, ") + (boy ? "boy helper, " : "no boy model, ")
+                + people + " people. Put downloaded models in " + OlderModels + " and run this again to change them.");
+        }
+
+        const string SceneFile = "Assets/SafeTouch/Scenes/SafeTouch.unity";
+
+        /// <summary>Sets the 9 to 11 characters that have been built on ARManager (missing ones stay empty: 6 to 8's are used).</summary>
+        public static void SetOlder(ARManager ar)
+        {
+            SetField(ar, "olderGirlPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(OlderGirlPath));
+            SetField(ar, "olderBoyPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(OlderBoyPath));
+            var people = AssetDatabase.FindAssets("t:Prefab Person", new[] { OlderPrefabs })
+                .Select(g => AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(g)))
+                .Where(p => p != null).Cast<Object>().ToArray();
+            SetArray(ar, "olderFigureVariants", people);
+        }
+
+        static void BuildFromModel(string path, GameObject model, string label, float height, bool isGuide, Material sparkle, string outPath)
+        {
+            var clips = LoopIdle(path);
+            var root = new GameObject(label);
+            var body = (GameObject)PrefabUtility.InstantiatePrefab(model);
+            body.name = "Model";
+            body.transform.SetParent(root.transform, false);
+
+            // A download may come with its own controller, physics or camera scripts: SafeTouch moves people itself.
+            foreach (var c in body.GetComponentsInChildren<Component>(true))
+                if (c is Rigidbody || c is CharacterController || c is Camera || c is AudioListener || c is MonoBehaviour)
+                    Object.DestroyImmediate(c);
+
+            var animator = body.GetComponentInChildren<Animator>();
+            var controller = ModelController(clips, label);
+            if (controller != null)
+            {
+                if (animator == null) animator = body.AddComponent<Animator>();
+                animator.runtimeAnimatorController = controller;
+            }
+            if (animator != null) animator.applyRootMotion = false;   // the idle never walks them off their spot
+
+            var size = FitHeight(root, body, height);
+            if (clips.Length == 0 && size.x > size.y * 0.9f)   // animated models are stored in a T-pose: that is fine
+                Debug.LogWarning("[SafeTouch] " + path + " is wider than a person: it may hold more than one person, or stand in a T-pose. Use a model of one person, standing.");
+            AddPersonParts(root, size, label, isGuide, sparkle, new Renderer[0]);
+            Save(root, outPath);
+        }
+
+        /// <summary>The model's animation clips, with "idle" and "walk" clips set to loop.</summary>
+        static AnimationClip[] LoopIdle(string path)
+        {
+            var importer = AssetImporter.GetAtPath(path) as ModelImporter;
+            if (importer != null && importer.importAnimation)
+            {
+                var settings = importer.clipAnimations.Length > 0 ? importer.clipAnimations : importer.defaultClipAnimations;
+                bool changed = false;
+                foreach (var s in settings)
+                {
+                    string n = s.name.ToLowerInvariant();
+                    if ((n.Contains("idle") || n.Contains("walk")) && !s.loopTime) { s.loopTime = true; changed = true; }
+                }
+                if (changed)
+                {
+                    importer.clipAnimations = settings;
+                    importer.SaveAndReimport();
+                }
+            }
+            return AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview__")).ToArray();
+        }
+
+        /// <summary>
+        /// Idle (the clip named "idle", or the first) and, when a clip is named wave, greet or hello, a greeting on
+        /// ARFigure.GreetTrigger. A model with only a greeting stands still on its first frame, like Keza. None: no clips.
+        /// </summary>
+        static RuntimeAnimatorController ModelController(AnimationClip[] clips, string label)
+        {
+            if (clips.Length == 0) return null;
+            var idle = clips.FirstOrDefault(c => c.name.ToLowerInvariant().Contains("idle")) ?? clips[0];
+            var greet = clips.FirstOrDefault(c => { var n = c.name.ToLowerInvariant(); return n.Contains("wave") || n.Contains("greet") || n.Contains("hello"); });
+
+            string path = GeneratedFolder + "/" + label + " Ages 9-11.controller";
+            AssetDatabase.DeleteAsset(path);
+            var controller = AnimatorController.CreateAnimatorControllerAtPath(path);
+            var machine = controller.layers[0].stateMachine;
+            var idleState = machine.AddState("Idle");
+            idleState.motion = idle;
+            if (greet == idle) idleState.speed = 0f;   // only a greeting clip: stand on its first frame
+            machine.defaultState = idleState;
+            if (greet == null) return controller;
+
+            controller.AddParameter(ARFigure.GreetTrigger, AnimatorControllerParameterType.Trigger);
+            var greetState = machine.AddState("Greet");
+            greetState.motion = greet;
+            var toGreet = idleState.AddTransition(greetState);
+            toGreet.AddCondition(AnimatorConditionMode.If, 0f, ARFigure.GreetTrigger);
+            toGreet.hasExitTime = false;
+            toGreet.duration = 0.1f;
+            var back = greetState.AddTransition(idleState);
+            back.hasExitTime = true;
+            back.exitTime = 0.95f;
+            back.duration = 0.2f;
+            return controller;
+        }
+
         /// <summary>Scales root so the visible model is height tall, feet on the floor, centred. Returns the unscaled size.</summary>
         static Vector3 FitHeight(GameObject root, GameObject body, float height)
         {

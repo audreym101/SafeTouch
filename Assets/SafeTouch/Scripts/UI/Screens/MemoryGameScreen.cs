@@ -45,9 +45,12 @@ namespace SafeTouch.UI.Screens
             UIFactory.FixedHeight(hint, 170f);
             var row = UIFactory.Row(col, "Counter row", Theme.Gap, 110f);
             counter = UIFactory.Label(row.transform, "", Theme.Label, Theme.Muted, TextAnchor.MiddleLeft, true);
-            counter.GetComponent<LayoutElement>().flexibleWidth = 2f;
+            counter.GetComponent<LayoutElement>().flexibleWidth = 1f;
             read = UIFactory.Button(row.transform, "Read to me", Theme.Card, Theme.Ink, () => game.ReadToMe(hint.text));
             read.GetComponentInChildren<Text>().fontSize = Theme.Label;
+            var readSize = read.GetComponent<LayoutElement>();
+            readSize.minWidth = readSize.preferredWidth = 330f;   // room for "Read to me" on one line, not a squashed box
+            readSize.flexibleWidth = 0f;
             grid = UIFactory.Rect(col, "Cards");
             grid.gameObject.AddComponent<LayoutElement>().flexibleHeight = 1f;
             layout = grid.gameObject.AddComponent<GridLayoutGroup>();

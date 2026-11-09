@@ -53,8 +53,68 @@ namespace SafeTouch.UI
             if (Time.unscaledTime < next && Mathf.Approximately(applied, scale)) return;
             next = Time.unscaledTime + 0.25f;
             applied = scale;
-            foreach (var t in GetComponentsInChildren<Text>(true)) Apply(t, scale);
+            rows.Clear();
+            foreach (var t in GetComponentsInChildren<Text>(true))
+            {
+                Apply(t, scale);
+                GrowButton(t, scale);
+            }
+            foreach (var row in rows) Set(row.Key, row.Value);
             if (sizes.Count > 3000) Forget();
+        }
+
+        // Buttons and button rows as the screens made them (their height), and what each row needs this time.
+        readonly Dictionary<LayoutElement, float> designed = new Dictionary<LayoutElement, float>();
+        readonly Dictionary<LayoutElement, float> rows = new Dictionary<LayoutElement, float>();
+        static readonly TextGenerator Measure = new TextGenerator();
+
+        /// <summary>
+        /// Buttons grow with their words: when the words need more room than the button has (two lines at a
+        /// big letter size), the button grows to fit them, up to 1.6 times its designed height. A row of buttons
+        /// grows with its tallest button. On a screen too full for that, the layout gives back the room and the words shrink.
+        /// </summary>
+        void GrowButton(Text t, float scale)
+        {
+            var parent = t.transform.parent;
+            // Only words laid straight onto a button: cards with their own layout size themselves.
+            if (parent == null || parent.GetComponent<Button>() == null || parent.GetComponent<LayoutGroup>() != null || !t.isActiveAndEnabled) return;
+            var button = parent.GetComponent<LayoutElement>();
+            if (button == null || button.preferredHeight <= 0f) return;
+
+            // The words at full size, on as many lines as they need in the button's width, plus padding.
+            var box = t.rectTransform.rect;
+            float words = 0f;
+            if (box.width > 1f && !string.IsNullOrEmpty(t.text))
+            {
+                var settings = t.GetGenerationSettings(new Vector2(box.width, 0f));
+                settings.resizeTextForBestFit = false;
+                settings.fontSize = t.fontSize;
+                words = Measure.GetPreferredHeight(t.text, settings) / t.pixelsPerUnit + 34f;
+            }
+            float own = Designed(button);
+            // Only as tall as the words need: growing for every letter size would squeeze the rest of a full screen.
+            float wanted = Mathf.Clamp(words, own, own * 1.6f);
+            Set(button, wanted);
+
+            // A row of buttons (or the button with its neighbours) grows with its tallest one.
+            var row = parent.parent != null ? parent.parent.GetComponent<LayoutElement>() : null;
+            if (row == null || row.preferredHeight <= 0f || parent.parent.GetComponent<HorizontalLayoutGroup>() == null) return;
+            float rowOwn = Designed(row);
+            float rowWanted = Mathf.Clamp(wanted, rowOwn, rowOwn * 1.6f);
+            float before;
+            if (!rows.TryGetValue(row, out before) || rowWanted > before) rows[row] = rowWanted;
+        }
+
+        float Designed(LayoutElement le)
+        {
+            float h;
+            if (!designed.TryGetValue(le, out h)) designed[le] = h = le.preferredHeight;
+            return h;
+        }
+
+        static void Set(LayoutElement le, float height)
+        {
+            if (le != null && Mathf.Abs(le.preferredHeight - height) > 0.5f) le.preferredHeight = height;
         }
 
         void Apply(Text t, float scale)
@@ -83,6 +143,9 @@ namespace SafeTouch.UI
             var gone = new List<Text>();
             foreach (var t in sizes.Keys) if (t == null) gone.Add(t);
             foreach (var t in gone) sizes.Remove(t);
+            var old = new List<LayoutElement>();
+            foreach (var le in designed.Keys) if (le == null) old.Add(le);
+            foreach (var le in old) designed.Remove(le);
         }
     }
 }

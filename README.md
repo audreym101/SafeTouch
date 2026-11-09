@@ -68,6 +68,7 @@ FR and NFR numbers are the requirements in the approved proposal (§3.3).
 | Kids' menu, cartoons, music and letter size *(added)* | Make the app easy to find your way in, and inviting | **Completed.** Menu hub, round fonts, cartoon animals, generated music and pop sounds, three letter sizes, read-aloud | `UI/Screens/MenuScreen.cs`, `UI/Decor.cs`, `Managers/AudioManager.cs`, `UI/TextSize.cs`, `Voice/ReadAloud.cs`, [docs/menu-and-sound.md](docs/menu-and-sound.md) |
 | Keza's look (six skin tones) | Children see someone like themselves | **Completed** | `AR/SkinToneApplier.cs`, `Shaders/SkinTone.shader`, [docs/skin-tones.md](docs/skin-tones.md) |
 | Girl or boy helper *(added)* | Boys see a helper like them too | **Completed.** The child picks Keza (a girl) or Ganza (a boy) on the name screen or in Keza's look; consent terms 1.4 | `AR/BoyModel.cs`, `UI/Screens/NameScreen.cs`, [docs/skin-tones.md](docs/skin-tones.md) |
+| Lifelike characters for ages 9 to 11 *(added)* | Older children take the lessons more seriously with characters who look like them | **Ready, waiting for the models.** A menu command turns downloaded models into the 9 to 11 helpers and people; until then that path uses the 6 to 8 characters | `Editor/SafeTouchCharacters.cs` (`BuildOlder`), `AR/ARManager.cs` (`SetAgeGroup`) |
 | Optional anonymous progress sync | Totals for the evaluation | **Completed, off by default.** Only a grown-up can switch it on | `Services/CloudSyncService.cs`, `backend/src/app.js` |
 | Recorded Kinyarwanda narration | Children who cannot read yet | **Partial.** The phone's own text-to-speech reads English. Kinyarwanda voices are missing on most phones | `Voice/ReadAloud.cs`, [docs/assets.md](docs/assets.md) |
 | Expert content review and pilot with children | Validate the content and measure learning | **Not yet done.** Planned after the ethics approval | [docs/deployment-plan.md](docs/deployment-plan.md) |
@@ -148,6 +149,7 @@ git checkout audrey
    * **In the Editor:** press **Play**. Without a phone, Keza appears on the 3D playground. For phone screen sizes, use **Window > General > Device Simulator** (a Samsung Galaxy A70 profile is in `Assets/SafeTouch/Devices`).
    * **On the phone:** connect it by USB, then **File > Build Profiles > Android > Build And Run**.
 7. **Choose how Keza is shown:** in the app, **Settings > See my helper in my room (camera)** switches between the 3D world (the default) and the camera. Developers can also set **View Mode** on **ARManager** (ScanFloor there is always used). See [docs/3d-mode.md](docs/3d-mode.md).
+8. *(Optional)* **Lifelike characters for ages 9 to 11:** put downloaded models in `Assets/SafeTouch/Models/Ages 9-11` ("girl" and "boy" in the names for the helpers) and run **SafeTouch > 8. Make Ages 9-11 Characters From Downloaded Models**. See [docs/skin-tones.md](docs/skin-tones.md#ages-9-to-11-their-own-more-lifelike-characters).
 
 ### 3.4 Run the API
 

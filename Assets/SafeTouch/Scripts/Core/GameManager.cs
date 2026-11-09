@@ -149,6 +149,7 @@ namespace SafeTouch.Core
             ageGroup = age;
             progressManager.SetAgeGroup(age);
             if (voiceCoach != null) voiceCoach.PrepareForAge(age);
+            arManager.SetAgeGroup(age);   // 9 to 11 can have their own characters
             uiManager.ShowMenu("menu");
         }
 
@@ -175,6 +176,7 @@ namespace SafeTouch.Core
             progressManager.SwitchPath(age);
             ageGroup = age;
             if (voiceCoach != null) voiceCoach.PrepareForAge(age);
+            arManager.SetAgeGroup(age);
         }
 
         /// <summary>Opens a lesson. Places Keza first if she is not in the room yet.</summary>
@@ -205,6 +207,7 @@ namespace SafeTouch.Core
             Localization.SetGuide(boy);
             Localization.SetCharacterName(progress.childName);
             if (arManager != null) arManager.SetGuide(boy);
+            if (arManager != null) arManager.SetAgeGroup(ageGroup);
             if (arManager != null && arManager.Character != null) arManager.Character.SetName(Localization.CharacterName);
             if (readAloud != null) readAloud.AutoRead = progress.readAloud;
             if (voiceCoach != null)

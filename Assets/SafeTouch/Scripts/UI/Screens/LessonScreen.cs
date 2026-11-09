@@ -205,6 +205,7 @@ namespace SafeTouch.UI.Screens
         {
             UIFactory.SetButtonLabel(replay, Localization.T("lesson.replay"));
             UIFactory.SetButtonLabel(movePlace, Localization.T("lesson.place", "Place again"));
+            movePlace.gameObject.SetActive(game.AR.UsesAR);   // in the 3D world the helper never leaves the playground
             stripe.color = LessonInfo.For(Mathf.Max(1, game.CurrentLevel)).color;
             SetHint(touchHint);
         }

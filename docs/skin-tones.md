@@ -7,6 +7,33 @@ The helper carries the child's name, so the child picks one like them: **a girl,
 - If the child types their own name, the helper carries it either way. If they skip, the helper is Keza or Ganza, and every text uses that name.
 - Ganza is built from simple shapes in [BoyModel.cs](../Assets/SafeTouch/Scripts/AR/BoyModel.cs), the same height as Keza: short hair, a blue T-shirt, shorts, trainers and a smile. His skin parts take the skin tone the child picks, like Keza's.
 - To use a modelled boy instead, set **Boy Prefab** on `ARManager`.
+- Ganza has a child's real proportions (his head about a fifth of his height), a friendly face with a smile, and jointed arms and legs. [BoyMotion.cs](../Assets/SafeTouch/Scripts/AR/BoyMotion.cs) moves him without animation files: he steps, swings his arms and bobs when he walks or runs, breathes and looks about when he stands, and waves when he says hello.
+
+## Ages 9 to 11: their own, more lifelike characters
+
+The 9 to 11 (Guardian) path can have its own characters, made from models you download. The 6 to 8 (Explorer) path keeps Keza, Ganza and its own people.
+
+**1. Download.** Good models are:
+- one person, standing, facing forward;
+- an FBX file, or a Unity prefab with its textures;
+- free to use in an app (for example CC0, or a Mixamo character). Keep a note of where each came from in [assets.md](assets.md).
+- With an **Idle** animation (and a **Wave**), they move; without one, they stand still. On Mixamo, download the character with the "Idle" animation, "With Skin".
+
+**2. Put them in** `Assets/SafeTouch/Models/Ages 9-11`:
+- a file or folder with **girl** in its name becomes the girl helper;
+- one with **boy** in its name becomes the boy helper;
+- any other model becomes one of the **people**: visitors, trusted adults and the people in the stories.
+
+**3. In Unity, run SafeTouch > 8. Make Ages 9-11 Characters From Downloaded Models.** For each model it:
+- scales it (children 0.62 m, a little taller than Keza; grown-ups 0.78 m), stands it on the floor and centres it;
+- adds the name tag, the touch area and the skin tone (the skin tone works when the skin has its own material with "skin" in its name);
+- takes off movement scripts, physics and cameras that came with the download;
+- makes an animator: the clip named "idle" (or the first one) loops, and a clip named wave, greet or hello plays when the helper says hi;
+- saves the prefabs in `Prefabs/Ages 9-11` and sets them on `ARManager` in the scene (**Older Girl Prefab**, **Older Boy Prefab**, **Older Figure Variants**). Rebuilding the scene keeps them.
+
+It warns if a model looks wider than one person (two people in one file, or a T-pose without animations). Run it again whenever you add or change a model.
+
+**4. In the app**, a child on the 9 to 11 path sees these characters; switching path in the lesson map swaps the helper at once. Anything not set falls back to the 6 to 8 character.
 - The choice stays on the phone and is never synced (consent terms version 1.4).
 
 ## Skin tones

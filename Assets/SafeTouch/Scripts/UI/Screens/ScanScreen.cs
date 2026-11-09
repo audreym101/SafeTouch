@@ -74,7 +74,7 @@ namespace SafeTouch.UI.Screens
             // Before the camera is on, the card is solid so the screen isn't a confusing black.
             bool cameraOn = s == ARManager.ARStatus.Searching || s == ARManager.ARStatus.TooSmall || s == ARManager.ARStatus.Ready;
             Root.GetComponent<Image>().color = cameraOn ? Theme.Clear : Theme.Sky;
-            place.gameObject.SetActive(cameraOn);
+            place.gameObject.SetActive(cameraOn && game.AR.ScansFloor);   // without scanning the helper appears by itself
             place.interactable = s == ARManager.ARStatus.Ready;
 
             switch (s)
@@ -110,7 +110,9 @@ namespace SafeTouch.UI.Screens
                     Set(T("scan.small.title", "Found it! Keep going..."), SizeLine(), null);
                     break;
                 default:
-                    Set(T("scan.ready.title", "Big enough!"), T("scan.found", "Found it! Tap the button to place Keza."), null);
+                    // Without scanning, the helper appears by itself in a moment: there is no button to tap.
+                    if (!game.AR.ScansFloor) Set(T("scan.preparing", "Getting the camera ready..."), "", null);
+                    else Set(T("scan.ready.title", "Big enough!"), T("scan.found", "Found it! Tap the button to place Keza."), null);
                     break;
             }
         }

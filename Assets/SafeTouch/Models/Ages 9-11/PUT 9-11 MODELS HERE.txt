@@ -1,0 +1,16 @@
+Models for the 9 to 11 (Guardian) path go in this folder. The 6 to 8 path keeps Keza and its own people.
+
+1. Put each downloaded model here (an .fbx file, or a Unity prefab with its textures).
+   - A file or folder with "girl" in its name becomes the girl helper.
+   - One with "boy" in its name becomes the boy helper.
+   - Any other model becomes one of the people: visitors, trusted adults and the people in the stories.
+2. In Unity: SafeTouch > 8. Make Ages 9-11 Characters From Downloaded Models.
+   Each model is scaled (children 0.62 m, grown-ups 0.78 m), stood on the floor, and given a name tag,
+   a touch area and the skin tone. Movement scripts and physics from the download are taken off.
+3. Build the app as usual. A child on the 9 to 11 path now sees these characters.
+
+Good models: a human, standing upright and facing forward (+Z), with a free licence that allows use in an app
+(for example CC0, or Mixamo characters). An "Idle" animation (and a "Wave") makes them move; without one they
+stand still. Skin tones work when the skin has its own material with "skin" in its name.
+
+Full notes: docs/skin-tones.md and docs/scenario-stories.md.

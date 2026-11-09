@@ -70,6 +70,7 @@ Music and tap sounds can each be switched off in **Settings**. The choice is kep
 
 The choice is kept on the phone. [TextSize.cs](../Assets/SafeTouch/Scripts/UI/TextSize.cs) applies it to every text in the app, including lists and messages a screen makes later.
 
+- **Buttons grow with their words.** When the words need more room than a button has (two lines at a big letter size), the button grows to fit them, up to 1.6 times its height. A row of buttons grows with its tallest one.
 - **Words always fit their buttons.** On every button the words shrink as much as needed (never below about half size) to stay inside it, at any letter size and on any phone or tablet (`UIFactory.FitInside`).
 - **Words in the 3D world follow the setting too:** name tags, speech bubbles and floating labels get bigger or smaller with it. They always turn to face the camera, from any angle.
 
