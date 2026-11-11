@@ -472,6 +472,38 @@
     { "key": "parent.consent.who", "value": "Given by {0}, {1}." },
     { "key": "parent.consent.confirm", "value": "Confirm the code now" },
     { "key": "parent.consent.withdraw", "value": "Withdraw consent and delete data" },
-    { "key": "parent.consent.withdraw.confirm", "value": "Tap again: delete my details and my child's progress" }
+    { "key": "parent.consent.withdraw.confirm", "value": "Tap again: delete my details and my child's progress" },
+    {
+      "key": "lesson1.title.older",
+      "value": "My Boundaries"
+    },
+    {
+      "key": "lesson1.summary.older",
+      "value": "Place people, name your body, online too"
+    },
+    {
+      "key": "lesson2.title.older",
+      "value": "Spot the Red Flag"
+    },
+    {
+      "key": "lesson2.summary.older",
+      "value": "Find the trick in each story"
+    },
+    {
+      "key": "lesson3.title.older",
+      "value": "My Speak-Up Plan"
+    },
+    {
+      "key": "lesson3.summary.older",
+      "value": "Match each moment to S-T-O-P"
+    },
+    {
+      "key": "lesson4.title.older",
+      "value": "My Safety Network"
+    },
+    {
+      "key": "lesson4.summary.older",
+      "value": "Pick helpers and what to say"
+    }
   ]
 }

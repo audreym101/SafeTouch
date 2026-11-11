@@ -75,6 +75,7 @@ namespace SafeTouch.AR
             r.sharedMaterial = Unlit(color, texture);
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             r.receiveShadows = false;
+            quad.AddComponent<OwnedMaterial>();
             return quad;
         }
 
@@ -112,6 +113,7 @@ namespace SafeTouch.AR
                 dot.transform.position = position;
                 dot.transform.localScale = Vector3.one * Random.Range(0.025f, 0.05f);
                 dot.GetComponent<Renderer>().sharedMaterial = Unlit(Color.Lerp(color, Color.white, Random.value * 0.5f), SoftDot);
+                dot.AddComponent<OwnedMaterial>();
                 dot.AddComponent<Billboard>();
                 var fx = dot.AddComponent<FxAnimator>();
                 fx.velocity = Random.onUnitSphere * Random.Range(0.25f, 0.6f) + Vector3.up * 0.3f;
@@ -121,11 +123,11 @@ namespace SafeTouch.AR
 
         /// <summary>
         /// A rounded white card with words on it, floating in the room and
-        /// always turned to the phone. Lines wrap at about 20 characters.
+        /// always turned to the phone. Lines wrap at about 18 characters.
         /// </summary>
         public static GameObject Label(string text, Vector3 position, Color accent, float scale = 1f)
         {
-            scale *= UI.TextSize.WorldScale;   // follows the letter size chosen in Settings
+            scale *= UI.TextSize.WorldScale * LabelScale;   // follows the letter size chosen in Settings
             var root = new GameObject("Label");
             root.transform.position = position;
             root.AddComponent<Billboard>();
@@ -134,7 +136,7 @@ namespace SafeTouch.AR
             var content = new GameObject("Content").transform;
             content.SetParent(root.transform, false);
 
-            string wrapped = Wrap(text, 20);
+            string wrapped = Wrap(text, 18);
             int lines = wrapped.Split('\n').Length;
             int longest = 0;
             foreach (var line in wrapped.Split('\n')) longest = Mathf.Max(longest, line.Length);
@@ -142,11 +144,13 @@ namespace SafeTouch.AR
             var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Object.Destroy(card.GetComponent<Collider>());
             card.transform.SetParent(content, false);
-            card.transform.localScale = new Vector3(Mathf.Clamp(0.03f + longest * 0.0175f, 0.14f, 0.42f), 0.045f + 0.042f * lines, 1f) * scale;
+            // Wide enough for the words: a line of letters is about 0.021 m a letter at this size.
+            card.transform.localScale = new Vector3(Mathf.Clamp(0.05f + longest * 0.021f, 0.14f, 0.46f), 0.045f + 0.042f * lines, 1f) * scale;
             // Draw order for see-through things: body dots (3100), then the card, its stripe, and the words on top.
             var cardMaterial = Unlit(new Color(1f, 1f, 1f, 0.94f));
             cardMaterial.renderQueue = 3120;
             card.GetComponent<Renderer>().sharedMaterial = cardMaterial;
+            card.AddComponent<OwnedMaterial>();
 
             var stripe = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Object.Destroy(stripe.GetComponent<Collider>());
@@ -156,6 +160,7 @@ namespace SafeTouch.AR
             var stripeMaterial = Unlit(accent);
             stripeMaterial.renderQueue = 3121;
             stripe.GetComponent<Renderer>().sharedMaterial = stripeMaterial;
+            stripe.AddComponent<OwnedMaterial>();
 
             var label = new GameObject("Text");
             label.transform.SetParent(content, false);
@@ -173,6 +178,9 @@ namespace SafeTouch.AR
             content.gameObject.AddComponent<FxAnimator>().Play(FxAnimator.Kind.PopIn, 0.25f);
             return root;
         }
+
+        /// <summary>How big floating labels are drawn: 1 in the camera picture; the 3D world, seen from further away, sets more (Stage3D).</summary>
+        public static float LabelScale = 1f;
 
         static Material textMaterial;
 
@@ -212,6 +220,20 @@ namespace SafeTouch.AR
                 }
             }
             return result.ToString();
+        }
+    }
+
+    /// <summary>
+    /// For an object made with its own material (a floor quad, a sparkle, a label card): the material goes when the
+    /// object goes. Without it every tap ripple and sparkle would leave a material behind, and a long session
+    /// would slowly fill the phone's memory.
+    /// </summary>
+    public class OwnedMaterial : MonoBehaviour
+    {
+        void OnDestroy()
+        {
+            var r = GetComponent<Renderer>();
+            if (r != null && r.sharedMaterial != null) Destroy(r.sharedMaterial);
         }
     }
 
@@ -278,7 +300,8 @@ namespace SafeTouch.AR
             if (rend == null) return;
             var c = baseColor;
             c.a = baseColor.a * Mathf.Clamp01(alpha);
-            rend.material.color = c;
+            // The effects' quads each have their own material (FloorQuad, Burst): change it, don't copy it every frame.
+            rend.sharedMaterial.color = c;
         }
 
         /// <summary>Starts a looping pulse on obj; returns the animator so it can be stopped (Destroy).</summary>

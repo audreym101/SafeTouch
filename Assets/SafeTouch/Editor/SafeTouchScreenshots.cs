@@ -174,10 +174,32 @@ namespace SafeTouch.EditorTools
             {
                 ui.ShowMenu("lesson");
                 Call(game.Voice, "Awake");
-                game.Voice.Enabled = false;   // no microphone in the Editor capture: shows the "didn't hear you" result
+                // A record of 64 on the NO power meter; the capture never saves one.
+                var panel = (VoicePanel)typeof(SafeTouch.UI.Screens.LessonScreen).GetField("voice", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(ui.Lesson);
+                panel.Record = () => 64;
+                panel.KeepRecord = power => false;
+                panel.PlaySound = null;
+                game.Voice.Enabled = false;   // no microphone in the Editor capture: shows the "microphone is off" message
                 ui.Lesson.ShowVoice(Localization.T("stop.s.title", "S: Say NO"),
                     Localization.T("stop.s.voice", "Say \"NO!\" out loud, clearly, so the person knows you mean it. Keza is listening!"),
                     game.Voice, null);
+            });
+            yield return shot("07b-no-power", () =>
+            {
+                // A loud NO that beats the record, shown on the NO power meter (a made-up rating: nothing is saved).
+                ui.ShowMenu("lesson");
+                var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+                var panel = (VoicePanel)typeof(SafeTouch.UI.Screens.LessonScreen).GetField("voice", flags).GetValue(ui.Lesson);
+                panel.Record = () => 64;
+                panel.KeepRecord = power => true;
+                panel.PlaySound = null;
+                game.Voice.Enabled = false;
+                ui.Lesson.ShowVoice(Localization.T("stop.s.title", "S: Say NO"),
+                    Localization.T("stop.s.voice", "Say \"NO!\" out loud, clearly, so the person knows you mean it. Keza is listening!"),
+                    game.Voice, null);
+                typeof(VoicePanel).GetField("waiting", flags).SetValue(panel, true);
+                var loud = new SafeTouch.Voice.NoRating { stars = 3, loud = true, steady = true, brief = true, loudnessDb = 23f, tip = SafeTouch.Voice.NoTip.Strong };
+                typeof(VoicePanel).GetMethod("OnResult", flags).Invoke(panel, new object[] { loud });
             });
             yield return shot("08-memory", () =>
             {

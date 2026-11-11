@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using SafeTouch.AR;
 using SafeTouch.Data;
 using SafeTouch.UI;
@@ -22,6 +23,12 @@ namespace SafeTouch.Lessons
     /// card the child says how Keza feels (happy, uh-oh or scared). After an
     /// unsafe or uncomfortable card, the child chooses what Keza does next
     /// and helps the safe choice play out. Only the sorting answer is saved.
+    ///
+    /// Each age group plays its own deck (ScenarioManager), and ages 9 to 11
+    /// play it differently: "Spot the Red Flag". While the story plays they
+    /// tap Red flag! the moment something feels wrong, and a red flag goes up
+    /// over the warning sign. After sorting, instead of the feelings step,
+    /// they name the trick: a secret, a gift, a stranger, pressure, or none.
     /// </summary>
     public class ScenarioLesson : LessonBase
     {
@@ -42,7 +49,7 @@ namespace SafeTouch.Lessons
         Vector3 home, lastGuidePosition;
         int candidate = -1;
         float stillSince;
-        bool answering;
+        bool answering, flagSpotted;
         int correct;
 
         public override int Level { get { return 2; } }
@@ -55,7 +62,7 @@ namespace SafeTouch.Lessons
             home = keza.transform.position;
             if (stories == null) stories = gameObject.AddComponent<ScenarioStories>();
             stories.Setup(game, keza, (label, color, role) => Spawn(label, color, 1f, 0f, role));
-            stories.Ask = (heading, body) => { Prompt(heading, body); TouchHint(body); };
+            stories.Ask = (heading, body) => { Prompt(heading, body); TouchHint(""); };   // the words are in the question at the top
             BuildBaskets();
             TouchHint(T("scenario.touch.step", "Move {0} onto a colour."));
             ShowCard();
@@ -65,6 +72,7 @@ namespace SafeTouch.Lessons
         {
             answering = false;
             if (stories != null) stories.Clear();
+            if (game.AR.Stage != null) game.AR.Stage.ClearStoryTime();   // back to the day, or the night the child chose
             foreach (var b in baskets) if (b != null) Destroy(b);
             baskets.Clear();
             basketSpots.Clear();
@@ -94,7 +102,8 @@ namespace SafeTouch.Lessons
                 ring.transform.position = spot + Vector3.up * 0.006f;
                 ring.transform.SetParent(basket.transform, true);
                 FxAnimator.Pulse(ring);
-                var label = ARFx.Label(names[i], spot + Vector3.up * 0.2f, colors[i], 0.9f);
+                // The middle colour's word stands higher, so the three words never touch.
+                var label = ARFx.Label(names[i], spot + Vector3.up * (i == 1 ? 0.34f : 0.2f), colors[i], 0.9f);
                 label.transform.SetParent(basket.transform, true);
                 if (game.AR.AnchorRoot != null) basket.transform.SetParent(game.AR.AnchorRoot, true);
                 baskets.Add(basket);
@@ -121,14 +130,45 @@ namespace SafeTouch.Lessons
             SetBaskets(false);
             if (card != null) Destroy(card);
             TouchHint("");
+            flagSpotted = false;
             Coroutine run = null;
-            Prompt(s.title, T("story.watch", "Watch what happens."),
-                new PromptOption(T("story.skip", "Skip"), Theme.Card, () =>
-                {
-                    if (run != null) StopCoroutine(run);
-                    AskQuestion(s);
-                }));
+            System.Action skip = () =>
+            {
+                if (run != null) StopCoroutine(run);
+                AskQuestion(s);
+            };
+            WatchPrompt(s, skip);
             run = StartCoroutine(StoryThenQuestion(s));
+        }
+
+        /// <summary>Ages 6 to 8: watch, or skip. Ages 9 to 11: also a Red flag! button, for the moment something feels wrong.</summary>
+        void WatchPrompt(Data.Scenario s, System.Action skip)
+        {
+            var skipButton = new PromptOption(T("story.skip", "Skip"), Theme.Card, skip);
+            if (!Older || flagSpotted)
+            {
+                Prompt(s.title, flagSpotted ? T("redflag.spotted", "Red flag spotted!") : T("story.watch", "Watch what happens."), skipButton);
+                return;
+            }
+            Prompt(s.title, T("redflag.watch", "Watch. Tap Red flag! when something feels wrong."),
+                new PromptOption(T("redflag.button", "Red flag!"), Theme.Unsafe, () => RedFlag(s, skip)), skipButton);
+        }
+
+        /// <summary>Right after the warning sign shows, a red flag goes up over it; too early, the child keeps watching.</summary>
+        void RedFlag(Data.Scenario s, System.Action skip)
+        {
+            if (!Running || flagSpotted) return;
+            if (!stories.RedFlagUp)
+            {
+                game.Audio.PlaySFX("tap");
+                game.UI.ShowToast(T("redflag.notyet", "Not yet. Keep watching!"));
+                return;
+            }
+            flagSpotted = true;
+            stories.PlantFlag();
+            game.Audio.PlaySFX("correct");
+            game.UI.ShowToast(T("redflag.spotted", "Red flag spotted!"));
+            WatchPrompt(s, skip);
         }
 
         IEnumerator StoryThenQuestion(Data.Scenario s)
@@ -258,7 +298,82 @@ namespace SafeTouch.Lessons
             string message = s.GetFeedback(Older, T("deeper", "Think deeper:"));
             if (!right)
                 message = string.Format(T("scenario.answer", "The answer is: {0}."), s.GetOptionText(s.correctAnswer)) + " " + message;
-            Feedback(right, message, () => AskFeeling(s));
+            Feedback(right, message, () => { if (Older) AskTrick(s); else AskFeeling(s); });
+        }
+
+        // ---- Ages 9 to 11: what's the trick? ----
+
+        static readonly string[] Tricks = { "secret", "gift", "stranger", "pressure", "none" };
+
+        /// <summary>
+        /// "What's the trick?" The child names the warning sign in the story (or sees there is none), so they can
+        /// spot it in real life. Three answers: the right one, "No trick" (or another trick on a safe card) and one
+        /// more. Practice only: not saved.
+        /// </summary>
+        void AskTrick(Data.Scenario s)
+        {
+            if (!Running) return;
+            SetBaskets(false);
+            if (card != null) Destroy(card);
+            TouchHint("");
+            string right = TrickOf(s);
+            var picks = new List<string> { right, right == "none" ? Tricks[Random.Range(0, 4)] : "none" };
+            picks.Add(Tricks.Where(t => !picks.Contains(t)).OrderBy(t => Random.value).First());
+            Prompt(T("trick.question", "What's the trick?"), s.title,
+                Shuffle(picks.Select(t => new PromptOption(TrickLabel(t), TrickColour(t), () => ChoseTrick(s, t, right))).ToArray()));
+        }
+
+        static string TrickOf(Data.Scenario s)
+        {
+            if (!string.IsNullOrEmpty(s.trick) && System.Array.IndexOf(Tricks, s.trick) >= 0) return s.trick;
+            return s.correctAnswer == "A" ? "none" : "secret";
+        }
+
+        void ChoseTrick(Data.Scenario s, string chosen, string right)
+        {
+            if (chosen != right)
+            {
+                Feedback(false, T("trick.again", "Look again: what did they ask for, or offer?"), () => AskTrick(s));
+                return;
+            }
+            Feedback(true, TrickWhy(right), () => ActItOut(s));
+        }
+
+        static string TrickLabel(string trick)
+        {
+            switch (trick)
+            {
+                case "secret": return T("card.trick.secret", "A secret");
+                case "gift": return T("card.trick.gift", "A gift");
+                case "stranger": return T("card.trick.stranger", "A stranger");
+                case "pressure": return T("card.trick.pressure", "Pressure");
+                default: return T("card.trick.none", "No trick");
+            }
+        }
+
+        // One colour per kind of trick, the same on every card, so the colour never gives the answer away.
+        static Color TrickColour(string trick)
+        {
+            switch (trick)
+            {
+                case "secret": return Theme.Hex("#7A5CC7");
+                case "gift": return Theme.Hex("#C77A1E");
+                case "stranger": return Theme.Primary;
+                case "pressure": return Theme.Hex("#2BA3A0");
+                default: return Theme.Safe;
+            }
+        }
+
+        static string TrickWhy(string trick)
+        {
+            switch (trick)
+            {
+                case "secret": return T("trick.secret.why", "A secret! Safe people never ask you to hide touching, photos or gifts. Tell a grown-up.");
+                case "gift": return T("trick.gift.why", "A gift with a catch! Presents that come with a secret or a favour are a trick.");
+                case "stranger": return T("trick.stranger.why", "A stranger! Someone you don't know, online or in person, never asks you to come, send or show.");
+                case "pressure": return T("trick.pressure.why", "Pressure! \"You must\" and \"just a little\" push you. Your body, your choice.");
+                default: return T("trick.none.why", "No trick here. They asked first, and you could say no.");
+            }
         }
 
         /// <summary>
@@ -270,10 +385,11 @@ namespace SafeTouch.Lessons
             if (!Running) return;
             SetBaskets(false);
             if (card != null) Destroy(card);
+            TouchHint("");   // the colours are gone: "move onto a colour" no longer applies
             bool safe = s.correctAnswer == "A";
             Prompt(string.Format(T("feel.question", "How does {0} feel?"), GuideName), s.title,
                 new PromptOption(T("feel.happy", "Happy"), Theme.Safe, () => Felt(s, 0, safe)),
-                new PromptOption(T("feel.uneasy", "Uh-oh, uneasy"), Theme.Caution, () => Felt(s, 1, safe)),
+                new PromptOption(T("feel.uneasy", "Uh-oh"), Theme.Caution, () => Felt(s, 1, safe)),
                 new PromptOption(T("feel.scared", "Scared"), Theme.Unsafe, () => Felt(s, 2, safe)));
         }
 

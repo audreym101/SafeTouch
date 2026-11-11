@@ -17,6 +17,11 @@ namespace SafeTouch.Lessons
     /// makes them feel unsafe or worried? Their parent can see the answer
     /// (Grown-ups > My child). Choices are saved on the phone as role ids
     /// only, and the unsafe answer is never synced.
+    ///
+    /// Ages 9 to 11 play their own module, "My Safety Network": at least three
+    /// helpers, one of them from outside the family (school or the community),
+    /// so there is always someone else to tell; then they choose the words
+    /// that get help fastest, instead of who to tell first.
     /// </summary>
     public class TrustedAdultsLesson : LessonBase
     {
@@ -146,15 +151,24 @@ namespace SafeTouch.Lessons
             if (part != null) part.localScale = size;
         }
 
+        const int NetworkMinimum = 3;   // ages 9 to 11
+
+        /// <summary>True when one of the invited helpers is from outside the family (school or the community).</summary>
+        bool HasOutsider { get { return invited.Any(f => people[f].category != "home"); } }
+
         void RefreshPicking()
         {
             Header(string.Format(T("adults.step", "{0} helpers around Keza"), invited.Count));
-            var options = invited.Count >= AdultsScreen.Minimum
+            bool ready = Older ? invited.Count >= NetworkMinimum && HasOutsider : invited.Count >= AdultsScreen.Minimum;
+            var options = ready
                 ? new[] { new PromptOption(T("adults.pick.done", "Done!"), Theme.Safe, PlaceAdults) }
                 : new PromptOption[0];
-            Prompt(T("adults.pick.title", "Who do you trust?"),
-                invited.Count >= AdultsScreen.Minimum ? T("adults.pick.more", "Tap more, or press Done.") : T("adults.pick.body", "Tap at least 2 grown-ups."),
-                options);
+            string body;
+            if (ready) body = T("adults.pick.more", "Tap more, or press Done.");
+            else if (!Older) body = T("adults.pick.body", "Tap at least 2 grown-ups.");
+            else if (invited.Count >= NetworkMinimum) body = T("adults.g.outsider", "Add one helper outside your family, like a teacher or a nurse.");
+            else body = T("adults.g.pick.body", "Tap at least 3 helpers. One must be outside your family.");
+            Prompt(Older ? T("adults.g.pick.title", "Build your safety network") : T("adults.pick.title", "Who do you trust?"), body, options);
         }
 
         /// <summary>Invites a grown-up into the helping hand, or sends them back out.</summary>
@@ -210,6 +224,7 @@ namespace SafeTouch.Lessons
                 helpers[figure] = people[figure];
             }
             helperCount = chosen.Count;
+            if (Older) { AskWords(); return; }
 
             // The helpers stand around the guide: the child taps one (or a button).
             TouchHint(T("adults.first.touch", "Tap a helper in the room."));
@@ -256,6 +271,36 @@ namespace SafeTouch.Lessons
             score = System.Math.Min(count, AdultsScreen.HelpingHand);
             string msg = string.Format(T("adults.first.fb", "Great! Keza tells {0}. If they don't listen, Keza tells the next one."), adult.name);
             Feedback(true, msg, AskUnsafe);
+        }
+
+        /// <summary>
+        /// Ages 9 to 11: the words that get help fastest. Clear words, not hints: grown-ups can't guess.
+        /// </summary>
+        void AskWords()
+        {
+            helpers.Clear();   // no "who first" tap in this module
+            TouchHint("");
+            Header(T("adults.g.words.step", "What to say"));
+            bool firstTry = true;
+            Prompt(T("adults.g.words.title", "What will Keza say?"),
+                T("adults.g.words.body", "Keza goes to a helper. Which words get help fastest?"),
+                Shuffle(
+                    new PromptOption(T("adults.g.words.right", "\"I need your help.\""), Theme.Primary, () =>
+                    {
+                        score = System.Math.Min(helperCount, AdultsScreen.HelpingHand - 1) + (firstTry ? 1 : 0);
+                        keza.Bounce();
+                        Feedback(true, T("adults.g.words.fb", "Clear words get help. Then say what happened and how you felt. If nobody listens, call 116, for free."), AskUnsafe);
+                    }),
+                    new PromptOption(T("adults.g.words.nevermind", "\"Never mind.\""), Theme.Hex("#7A5CC7"), () =>
+                    {
+                        firstTry = false;
+                        Feedback(false, T("adults.g.words.nevermindfb", "Keza doesn't have to hide it. Helpers want to know."), null);
+                    }),
+                    new PromptOption(T("adults.g.words.guess", "\"Guess what...\""), Theme.Hex("#2BA3A0"), () =>
+                    {
+                        firstTry = false;
+                        Feedback(false, T("adults.g.words.guessfb", "Grown-ups can't guess. Clear words work best."), null);
+                    })));
         }
 
         /// <summary>Not scored, and "nobody" is a fine answer.</summary>

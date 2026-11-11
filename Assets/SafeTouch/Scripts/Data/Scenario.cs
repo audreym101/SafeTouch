@@ -12,7 +12,7 @@ namespace SafeTouch.Data
     public class Scenario
     {
         public string scenarioId;
-        public int level;               // 1 = everyone, 2 = ages 9-11 only
+        public int level;               // 1 = the ages 6-8 deck, 2 = the ages 9-11 deck (they share no cards)
         public string title;
         public string question;
         public string optionA = "Safe";
@@ -22,6 +22,8 @@ namespace SafeTouch.Data
         public string feedback;
         public string deeper;           // extra "think deeper" explanation shown to ages 9-11
         public string audioClipName;    // looked up in Resources/Audio/Voice (optional)
+        public bool night;              // the story happens after dark: the 3D world turns to night while it plays
+        public string trick;            // ages 9-11: the warning sign to name ("secret", "gift", "stranger", "pressure" or "none")
 
         [NonSerialized] public AudioClip audioClip;
 

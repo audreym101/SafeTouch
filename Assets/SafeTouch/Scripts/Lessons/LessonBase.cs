@@ -46,16 +46,21 @@ namespace SafeTouch.Lessons
         ChoiceCircles choice;
 
         /// <summary>
-        /// Asks a question whose answers are circles on the floor around the
-        /// guide (see ChoiceCircles) instead of buttons. The arrow buttons
-        /// appear too, to walk the guide there.
+        /// Asks a question whose answers are places on the floor around the
+        /// guide, each with a solid coloured sign (see ChoiceCircles). The card
+        /// shows the same answers as big buttons in the same colours; a button
+        /// sends the guide walking onto its answer. The arrow buttons appear
+        /// too, to walk the guide there.
         /// </summary>
         protected void ChooseInRoom(string heading, string body, params PromptOption[] options)
         {
-            Prompt(heading, body);
+            ClearChoice();
             if (choice == null) choice = gameObject.AddComponent<ChoiceCircles>();
             choice.enabled = true;
             choice.Show(game, keza, options);
+            var buttons = new PromptOption[choice.Count];
+            for (int i = 0; i < buttons.Length; i++) buttons[i] = choice.ButtonFor(i);
+            game.UI.Lesson.ShowPrompt(heading, body, buttons);   // not Prompt: that would clear the answers just shown
             MovePad(true);
             TouchHint(T("choice.touch", "Move {0} onto your answer."));
         }
@@ -117,7 +122,7 @@ namespace SafeTouch.Lessons
 
         protected string Title
         {
-            get { return Localization.T(LessonInfo.For(Level).titleKey); }
+            get { return LessonInfo.For(Level).Title(Older); }
         }
 
         protected void Header(string step)

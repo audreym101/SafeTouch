@@ -5,9 +5,15 @@
 The helper carries the child's name, so the child picks one like them: **a girl, Keza**, or **a boy, Ganza** (a Rwandan boy's name). They pick on the name screen after consent, and can change it any time in **Keza's look**; the other helper then appears in the same spot.
 
 - If the child types their own name, the helper carries it either way. If they skip, the helper is Keza or Ganza, and every text uses that name.
-- Ganza is built from simple shapes in [BoyModel.cs](../Assets/SafeTouch/Scripts/AR/BoyModel.cs), the same height as Keza: short hair, a blue T-shirt, shorts, trainers and a smile. His skin parts take the skin tone the child picks, like Keza's.
+- **Keza and Ganza look like real children**, like the classmate. Both are made from the same lifelike child model by **SafeTouch > 10. Build Lifelike Keza, Ganza and Family** ([SafeTouchCharacters.cs](../Assets/SafeTouch/Editor/SafeTouchCharacters.cs)):
+  - **Keza:** dark hair, a yellow top, denim shorts and brown boots, instead of teal hair and pink clothes.
+  - **Ganza:** his hair is cut short (the model's bob is lifted to just above the ears and shaped to his head), with black hair, a green top, khaki shorts and dark trainers.
+  - Both wave with the model's greeting, and their skin takes the tone the child picks.
+  - The bunny with crossed-out eyes printed on the model's top is painted out.
+  - The same command builds the classmate, Mum, Dad and the dog, and puts them all on ARManager in the scene.
+- Without those prefabs, Ganza falls back to simple shapes ([BoyModel.cs](../Assets/SafeTouch/Scripts/AR/BoyModel.cs)), the same height as Keza: short hair, a blue T-shirt, shorts, trainers and a smile.
 - To use a modelled boy instead, set **Boy Prefab** on `ARManager`.
-- Ganza has a child's real proportions (his head about a fifth of his height), a friendly face with a smile, and jointed arms and legs. [BoyMotion.cs](../Assets/SafeTouch/Scripts/AR/BoyMotion.cs) moves him without animation files: he steps, swings his arms and bobs when he walks or runs, breathes and looks about when he stands, and waves when he says hello.
+- The simple-shapes Ganza has a child's real proportions (his head about a fifth of his height), a friendly face with a smile, and jointed arms and legs. [BoyMotion.cs](../Assets/SafeTouch/Scripts/AR/BoyMotion.cs) moves him without animation files: he steps, swings his arms and bobs when he walks or runs, breathes and looks about when he stands, and waves when he says hello.
 
 ## Ages 9 to 11: their own, more lifelike characters
 

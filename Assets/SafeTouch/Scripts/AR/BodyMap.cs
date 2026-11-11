@@ -19,9 +19,10 @@ namespace SafeTouch.AR
     /// "My body" in lesson 1: glowing dots on the guide's body, by colour.
     ///   green  - hands and shoulders: a high-five or a pat can be okay, if the child wants it
     ///   yellow - face and hair: people ask first
-    ///   red    - the parts a swimsuit covers: private
-    /// Only dots on a clothed, cartoon character are shown: nothing
-    /// anatomical. The dots sit on the model's bones when it has a Mixamo
+    ///   red    - the parts a swimsuit covers: private, each shown with its
+    ///            name (gentle words for 6 to 8, the proper words for 9 to 11; see PersonalSpaceBubbleLesson.BodySpots)
+    /// Only dots on a clothed, cartoon character are shown: the names are
+    /// words, nothing anatomical is drawn. The dots sit on the model's bones when it has a Mixamo
     /// skeleton (so they follow the greeting wave) and at body proportions on
     /// the simple figure.
     /// </summary>
@@ -72,6 +73,13 @@ namespace SafeTouch.AR
                 Destroy(m.gameObject);
             }
             markers.Clear();
+        }
+
+        /// <summary>Takes the names off the dots (for "Find it!", where the child names the parts).</summary>
+        public void HideLabels()
+        {
+            foreach (var m in markers)
+                if (m != null && m.label != null) { Destroy(m.label); m.label = null; }
         }
 
         /// <summary>Marks a dot as seen: it stops pulsing and shows its words in a card beside it.</summary>

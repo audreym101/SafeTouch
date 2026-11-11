@@ -2,7 +2,7 @@
   "_note": "Kinyarwanda version of parent_resources.json (same ids). First draft for review by a native speaker and the content experts. Phone numbers must be re-confirmed with NCDA / RIB before the evaluation sessions.",
   "items": [
     { "resourceId": "talk1", "section": "talk", "title": "Koresha amazina nyayo y'ibice by'umubiri",
-      "body": "Abana bazi amagambo nyayo bashobora gusobanura ibyababayeho. Vuga imyanya y'ibanga utuje, nk'uko uvuga inkokora cyangwa ivi." },
+      "body": "Abana bazi amagambo nyayo bashobora gusobanura ibyababayeho. Vuga imyanya y'ibanga utuje, nk'uko uvuga inkokora cyangwa ivi. Mu isomo rya 1, abana b'imyaka 6 kugeza ku 8 bumva amagambo yoroheje (imyanya y'ibanga, ikibuno, igituza); abana b'imyaka 9 kugeza ku 11 bumva amazina nyayo: igitsina gore, igitsina gabo, amabya, amabere, ikibuno n'aho wituma. Ni amagambo gusa: porogaramu ntigaragaza amashusho y'imyanya y'ibanga." },
     { "resourceId": "talk2", "section": "talk", "title": "Ibitunguranye, si amabanga",
       "body": "Sobanura itandukaniro: igitunguranye kirashimisha kandi kivugwa vuba (nk'impano y'isabukuru). Ibanga rituma umuntu ahangayika rigomba kuvugwa buri gihe." },
     { "resourceId": "talk_voice", "section": "talk", "title": "Mwitoze hamwe kuvuga OYA ikomeye",

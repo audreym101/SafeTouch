@@ -147,6 +147,8 @@ namespace SafeTouch.Data
         public string who;       // "child" for a child visitor (the Classmate model); empty for an adult
         public string text;      // shown in the visitor's speech bubble
         public string explain;   // shown after the child answers
+        public string prop;      // what the visitor brings: sweets, phone, money, box, ball, puppy, or car (drives up); empty for nothing
+        public string trick;     // the trick an unsafe visitor uses, named after a NO (see BubbleGuardGame.TrickName)
     }
 
     /// <summary>One part of the terms and privacy notice on the consent page.</summary>

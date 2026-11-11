@@ -140,6 +140,9 @@ namespace SafeTouch.UI
         /// <summary>True while the screen showing lets the 3D view (or the camera picture) show through.</summary>
         public bool CameraShowing { get { return active != null && active.CameraVisibleNow; } }
 
+        /// <summary>True while a lesson (or Bubble Guard) is on screen: it has its own closer and further buttons.</summary>
+        public bool LessonShowing { get { return active != null && active == Lesson; } }
+
         string previous;
 
         /// <summary>

@@ -17,6 +17,11 @@ namespace SafeTouch.Lessons
     /// get faster as the game goes on, and Keza has three hearts.
     /// Saying NO to a safe request never costs a heart: children may always
     /// say no.
+    /// Visitors bring what their trick needs (sweets, money, a phone, a puppy,
+    /// a box, a car pulling up), so the child sees the trick coming; after a
+    /// NO the trick is named ("Trick spotted: bribe!"). Ages 9 to 11 meet more
+    /// tricks: a fake message from Mum, fake praise, game coins for photos,
+    /// "everyone does it", being taken somewhere alone.
     /// </summary>
     public class BubbleGuardGame : LessonBase
     {
@@ -26,6 +31,7 @@ namespace SafeTouch.Lessons
         const float PauseBetweenVisitors = 2.4f;
 
         readonly List<GuardRequest> deck = new List<GuardRequest>();
+        ScenarioStories props;   // what each visitor brings
         GuardRequest current;
         ARFigure visitor;
         int index, hearts, score, maxScore;
@@ -47,9 +53,11 @@ namespace SafeTouch.Lessons
 
             deck.Clear();
             deck.AddRange(ContentLibrary.GuardRequests
-                .Where(r => r.level <= (Older ? 2 : 1))
+                .Where(r => r.level == (Older ? 2 : 1))   // each age group its own visitors and tricks
                 .OrderBy(r => Random.value)
-                .Take(Older ? 10 : 8));
+                .Take(Older ? 12 : 8));
+            if (props == null) props = gameObject.AddComponent<ScenarioStories>();
+            props.Setup(game, keza, (label, color, role) => Spawn(label, color, 1f, 0f, role));
             maxScore = deck.Count;
             if (Listening) maxScore += deck.Count(r => !r.safe);   // a strong-voice bonus is possible on each unsafe visitor
 
@@ -73,9 +81,15 @@ namespace SafeTouch.Lessons
             });
         }
 
+        protected override void OnEnd()
+        {
+            if (props != null) props.Clear();
+        }
+
         void NextVisitor()
         {
             ClearFigures();
+            if (props != null) props.Clear();
             StartListening();
             if (index >= deck.Count || hearts <= 0) { EndGame(); return; }
             current = deck[index];
@@ -87,8 +101,10 @@ namespace SafeTouch.Lessons
                 current.who == "child" ? "child" : null);
             game.AR.SetMovable(visitor, false);
             visitor.WalkSpeed = Mathf.Lerp(SlowSpeed, FastSpeed, progress);
+            props.Bring(current.prop, visitor);
             visitor.Say(current.text, game.AR.OpaqueMaterial);
             answering = true;
+            heardHint = -1;
             ShowStatus();
             Prompt("\"" + current.text + "\"",
                 Listening ? T("game.ask.voice", "Is that okay? If not, say NO out loud!") : T("game.ask", "Is that okay?"),
@@ -101,9 +117,21 @@ namespace SafeTouch.Lessons
             Header(string.Format(T("game.status", "Visitor {0} of {1}  |  Hearts {2}  |  Score {3}"), index, deck.Count, hearts, score));
         }
 
+        int heardHint = -1;   // which listening line shows: 0 listening, 1 hearing (changed only when it changes)
+
         void Update()
         {
             if (!Running || !answering || visitor == null || keza == null) return;
+            // The microphone is on: the line above the card says so, and "I hear you!" while the child speaks.
+            if (Listening && game.Voice.Listening)
+            {
+                int now = game.Voice.Hearing ? 1 : 0;
+                if (now != heardHint)
+                {
+                    heardHint = now;
+                    TouchHint(now == 1 ? T("voice.hearing.you", "I hear you!") : T("game.listening", "Listening: say NO out loud!"));
+                }
+            }
             var toKeza = Vector3.ProjectOnPlane(keza.transform.position - visitor.transform.position, Vector3.up);
             float distance = toKeza.magnitude;
 
@@ -111,7 +139,7 @@ namespace SafeTouch.Lessons
             if (!current.safe && distance <= PersonalSpaceBubbleLesson.RedRadius) { TooClose(); return; }
 
             visitor.FaceTowards(keza.transform.position);
-            visitor.transform.position += toKeza.normalized * visitor.WalkSpeed * Time.deltaTime;
+            visitor.MoveBy(toKeza.normalized * visitor.WalkSpeed * Time.deltaTime);
         }
 
         /// <summary>voice is the spoken try that answered, or null for a tap.</summary>
@@ -126,6 +154,8 @@ namespace SafeTouch.Lessons
             {
                 score++;
                 keza.Bounce();
+                // A spoken NO: Keza says she heard it, so the child knows the app heard them.
+                if (voice != null && voice.Heard) keza.SayFor(T("voice.heard.keza", "I heard your NO!"), game.AR.OpaqueMaterial, 2f);
                 result = T("game.result.no", "They walked away!");
                 if (voice != null && voice.stars == 3)
                 {
@@ -133,14 +163,24 @@ namespace SafeTouch.Lessons
                     result = T("game.result.strong", "Strong voice bonus! They walked away fast.");
                 }
                 else if (voice != null) result += " " + VoiceTips.For(voice.tip);
+                string trick = TrickName(current.trick);
+                if (trick != null)
+                {
+                    result += "\n" + string.Format(T("game.trick", "Trick spotted: {0}!"), trick);
+                    ShowTrick(trick);
+                }
                 game.Audio.PlaySFX("correct");
+                Jolt(0.25f);
                 LeaveFast();
             }
             else if (!current.safe)
             {
                 hearts--;
                 result = T("game.result.missed", "That one was not okay.");
+                string trick = TrickName(current.trick);
+                if (trick != null) result += "\n" + string.Format(T("game.trick.missed", "It was a trick: {0}."), trick);
                 game.Audio.PlaySFX("tryagain");
+                Jolt(0.6f);
                 LeaveFast();
             }
             else if (!saidNo)
@@ -158,10 +198,48 @@ namespace SafeTouch.Lessons
             Explain(result);
         }
 
+        /// <summary>The trick's name in the child's language, or null when the visitor uses none.</summary>
+        string TrickName(string trick)
+        {
+            switch (trick)
+            {
+                case "secret": return T("trick.secret", "a secret");
+                case "bribe": return T("trick.bribe", "a bribe");
+                case "lure": return T("trick.lure", "a lure");
+                case "fake": return T("trick.fake", "a fake message");
+                case "flattery": return T("trick.flattery", "fake praise");
+                case "threat": return T("trick.threat", "a threat");
+                case "online": return T("trick.online", "an online trick");
+                case "pressure": return T("trick.pressure", "pressure");
+                case "alone": return T("trick.alone", "getting you alone");
+                case "game": return T("trick.game", "a touching game");
+                default: return null;
+            }
+        }
+
+        /// <summary>The trick's name pops up over the visitor in red, then fades away with them.</summary>
+        void ShowTrick(string trick)
+        {
+            if (visitor == null) return;
+            float top = visitor.transform.position.y + 0.7f;   // over the head, whatever the model
+            foreach (var r in visitor.GetComponentsInChildren<Renderer>())
+                if (r.GetComponent<TextMesh>() == null) top = Mathf.Max(top, r.bounds.max.y + 0.2f);
+            var label = ARFx.Label(trick.ToUpperInvariant(), new Vector3(visitor.transform.position.x, top, visitor.transform.position.z), Theme.Unsafe, game.AR.UsesAR ? 1f : 2.2f);
+            FxAnimator.Pulse(label);
+            ARFx.Burst(visitor.transform.position + Vector3.up * 0.4f, Theme.Unsafe);
+            Destroy(label, 1.8f);
+        }
+
+        void Jolt(float strength)
+        {
+            if (game.AR.Stage != null) game.AR.Stage.Shake(strength);
+        }
+
         void TooClose()
         {
             answering = false;
             hearts--;
+            Jolt(0.6f);
             visitor.Say(null, null);
             game.Audio.PlaySFX("tryagain");
             LeaveFast();

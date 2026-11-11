@@ -32,7 +32,22 @@ namespace SafeTouch.Voice
 
         public bool IsCapturing { get { return loop != null && Microphone.IsRecording(device); } }
 
-        public static bool HasDevice { get { return Microphone.devices.Length > 0; } }
+        /// <summary>
+        /// True when the phone has a microphone. On Android the list of microphones can be empty until the
+        /// child's grown-up has allowed the app to use it, so before that every phone counts as having one:
+        /// the permission is asked when a lesson first listens, and StartCapture checks for a real one.
+        /// Without this, a lesson could quietly show the NO button and never listen at all.
+        /// </summary>
+        public static bool HasDevice
+        {
+            get
+            {
+#if UNITY_ANDROID && !UNITY_EDITOR
+                if (!Permission.HasUserAuthorizedPermission(Permission.Microphone)) return true;
+#endif
+                return Microphone.devices.Length > 0;
+            }
+        }
 
         /// <summary>
         /// Asks Android for the microphone the first time a lesson needs it.

@@ -475,6 +475,8 @@ MonoBehaviour:
   audioSource: {fileID: 0}
   voiceClips: []
   sfxClips: []
+  musicClip: {fileID: 0}
+  musicVolume: 0.22
 --- !u!82 &271273760
 AudioSource:
   m_ObjectHideFlags: 0
@@ -584,7 +586,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c77dba030f2d0b74685194164ff5d378, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  viewMode: 1
   characterPrefab: {fileID: 3625209000386868064, guid: 3348e5b631c27084e8d2d3d7c9bebdf7, type: 3}
+  boyPrefab: {fileID: 640410775355884079, guid: 01f9ebe62c7ebd94e981f02ce0776c55, type: 3}
   figurePrefab: {fileID: 8629029568517302985, guid: 51146ae8d0d802940aa211bcdff499ee, type: 3}
   figureVariants:
   - {fileID: 1497517813875553622, guid: 558f597cafbd14a44bc5a77209aeddb5, type: 3}
@@ -598,7 +602,22 @@ MonoBehaviour:
   opaqueMaterial: {fileID: 2100000, guid: 81b025fd2801a9b4c86dffe91b28c640, type: 2}
   transparentMaterial: {fileID: 2100000, guid: 0170cd72626c1694683dd23c1adac65a, type: 2}
   editorFloorFallback: 1
-  rolePrefabs: []
+  olderGirlPrefab: {fileID: 0}
+  olderBoyPrefab: {fileID: 0}
+  olderFigureVariants:
+  - {fileID: 7896456241297223647, guid: bc355e1b832ef9a4bb56c5c18167db81, type: 3}
+  - {fileID: 6120220381480515108, guid: 91f90635370614c4d9551b5b753e140d, type: 3}
+  - {fileID: 321019633204798678, guid: 75e82415226315543afcb8afcaa130cc, type: 3}
+  - {fileID: 7308195590860156329, guid: 61846434484cfbd46bb790a6f847f03d, type: 3}
+  - {fileID: 2350967597877233745, guid: 426ba71c515b2544d9f837fc0ce1b1ca, type: 3}
+  - {fileID: 5461979458751139471, guid: 169fce555106ce446805456f8b698243, type: 3}
+  rolePrefabs:
+  - role: mum
+    prefab: {fileID: 2666099273092067657, guid: 41f2dddf2707615439d67cc2ff29e08d, type: 3}
+  - role: dad
+    prefab: {fileID: 8583116252589898437, guid: c26b4e886673b7847b2e8f34c2435e64, type: 3}
+  - role: child
+    prefab: {fileID: 2532597565789588185, guid: 969160691aa516c4a88bd9797933672d, type: 3}
 --- !u!114 &271273762
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -622,6 +641,7 @@ MonoBehaviour:
   cloudSync: {fileID: 271273756}
   voiceCoach: {fileID: 271273753}
   consent: {fileID: 271273755}
+  readAloud: {fileID: 0}
   lessons:
   - {fileID: 882589052}
   - {fileID: 882589051}

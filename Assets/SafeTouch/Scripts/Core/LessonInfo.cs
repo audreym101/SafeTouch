@@ -24,6 +24,21 @@ namespace SafeTouch.Core
         public static readonly LessonInfo Game =
             new LessonInfo { level = 6, titleKey = "game.title", summaryKey = "game.summary", color = Theme.Hex("#7A5CC7") };
 
+        /// <summary>
+        /// The lesson's name on a path. Ages 9 to 11 play their own module of each lesson ("My Boundaries",
+        /// "Spot the Red Flag"...), named by the key with ".older"; a lesson without one keeps its name.
+        /// </summary>
+        public string Title(bool older)
+        {
+            return older ? Localization.T(titleKey + ".older", Localization.T(titleKey)) : Localization.T(titleKey);
+        }
+
+        /// <summary>The lesson's one-line summary on a path (".older" for ages 9 to 11, as Title).</summary>
+        public string Summary(bool older)
+        {
+            return older ? Localization.T(summaryKey + ".older", Localization.T(summaryKey)) : Localization.T(summaryKey);
+        }
+
         public static LessonInfo For(int level)
         {
             if (level == Game.level) return Game;

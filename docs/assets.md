@@ -19,7 +19,11 @@ Every asset below exists to serve one of the four learning goals: recognising pe
 | **The chaser figure** | Placeholder (grey figure prefab with a tap collider) | Final: the same neutral adult model, never scary | Memory Quest chase: a calm, non-threatening person to practise saying NO to, which keeps the game within NFR5 (not frightening). |
 
 | **Skin tone shader and skin mask** | In build (`Shaders/SkinTone.shader`; mask generated from Keza's texture) | Written for SafeTouch | Lets the child give Keza any of six skin tones while her clothes, hair and eyes stay the same (see `docs/skin-tones.md`). |
-| **Models not used** | Kept in `Models/` but left out of the app | `character (1).fbx` (a cigar-smoking caricature), `character.fbx` (the same girl as Keza without animation) and `the-mill` | Not suitable for a children's safety app, or not needed by any lesson. |
+| **The 3D world: forest house and pine trees** | In build: `Models/forest-house`, merged into one mesh (one draw call) with its trees split out to plant around the lawn, by `SafeTouch > 9. Build 3D World From Downloaded Models` | Sketchfab download "Forest House". **Licence to confirm** on its Sketchfab page before release (CC-BY needs a credit line here) | The park behind Keza: something real to look at, so the 3D world feels like a place |
+| **Classroom** | In build: `Models/school-classroom`, as a stage set (front wall and roof off, desks moved to the sides, sun through the windows). Textures limited to 1024 px; the roof's textures were left out | Sketchfab download "The Japanese School Classroom". **Licence to confirm** | The stories at school (too close, high five, a friend's worry) happen in a real classroom |
+| **Scanned people (6)** | In build: `Models/lowpoly-people`, the detailed copy of each person, with photo texture and normal map. They chat in the distance of the park and are the visitors and strangers of the 9 to 11 path (`Prefabs/Ages 9-11/Scan person N`) | Sketchfab download "WIP lowpoly people 2". **Licence to confirm** | Older children take the situations more seriously with real-looking grown-ups |
+| **Sky and film look** | In build: `Resources/Looks/Sky.mat` (Unity's procedural sky) and `Resources/Looks/Cinematic.shader` | Written for SafeTouch | A cinematic look: tone curve, colour grade and vignette, in one cheap pass |
+| **Models not used** | Kept in `Models/` but left out of the app | `character (1).fbx` (a cigar-smoking caricature), `character.fbx` (the same girl as Keza without animation) and `the-mill`. The downloaded "Evan Afton" (fhc-crying-child) was not added at all: it is a fan model of a character from the horror game *Five Nights at Freddy's*, owned by its creator, and not right for this app | Not suitable for a children's safety app, or not needed by any lesson. |
 
 ## 2D and interface assets
 
@@ -48,7 +52,7 @@ Every asset below exists to serve one of the four learning goals: recognising pe
 | **Memory Quest pairs** (6 word and meaning pairs) | In build, draft for expert review | `Resources/Content/review.json` | The end game's match round: recalling the ideas, rather than re-reading them, helps children remember them. |
 | **8 badges** (including Strong Voice and Bubble Guard) | In build | `Resources/Content/badges.json` | Progress and motivation (FR8). |
 | **Parent guides, warning signs, Rwandan helplines** | In build, numbers to re-confirm with NCDA and RIB before the pilot | `Resources/Content/parent_resources.json` | FR9. Connects the app to the existing child-protection system (Child Helpline 116, Isange One Stop Centre 3029, RIB 166, Police 112). |
-| **Bubble Guard requests** (14 safe and unsafe things visitors ask) | In build, draft for expert review | `Resources/Content/guard_requests.json` | The game's content, kept as data so experts can change it without code. |
+| **Bubble Guard requests** (24 safe and unsafe things visitors ask, with what they bring and the trick they use) | In build, draft for expert review | `Resources/Content/guard_requests.json` | The game's content, kept as data so experts can change it without code. |
 | **Interface text, English and Kinyarwanda** | English complete; Kinyarwanda started | `Resources/Content/strings_en.json`, `strings_rw.json` | FR10. Missing Kinyarwanda keys fall back to English. |
 
 ## Tools used to make assets

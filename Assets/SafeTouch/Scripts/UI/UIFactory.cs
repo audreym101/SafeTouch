@@ -168,6 +168,11 @@ namespace SafeTouch.UI
             button.onClick.AddListener(() => { if (ButtonPressed != null) ButtonPressed(); });
             if (onClick != null) button.onClick.AddListener(() => onClick());
             img.gameObject.AddComponent<Squish>();   // the button squashes a little under the finger and springs back
+            // A darker edge under every button, so it looks solid, like a key you can press.
+            var edge = img.gameObject.AddComponent<Shadow>();
+            edge.effectColor = Color.Lerp(background, new Color(0.08f, 0.1f, 0.18f, 1f), 0.4f);
+            edge.effectDistance = new Vector2(0f, -6f);
+            edge.useGraphicAlpha = true;
 
             var le = img.gameObject.AddComponent<LayoutElement>();
             le.minHeight = Theme.TouchTarget;
@@ -175,6 +180,13 @@ namespace SafeTouch.UI
             le.flexibleWidth = 1f;
 
             var text = Label(img.transform, label, Theme.Body, textColor, TextAnchor.MiddleCenter, true);
+            if (textColor.grayscale > 0.8f)
+            {
+                // Light words stand out from the button's colour with a soft dark shadow.
+                var lift = text.gameObject.AddComponent<Shadow>();
+                lift.effectColor = new Color(0f, 0f, 0f, 0.3f);
+                lift.effectDistance = new Vector2(0f, -2f);
+            }
             Stretch((RectTransform)text.transform);
             ((RectTransform)text.transform).offsetMin = new Vector2(24f, 8f);
             ((RectTransform)text.transform).offsetMax = new Vector2(-24f, -8f);

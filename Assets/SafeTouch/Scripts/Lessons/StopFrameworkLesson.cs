@@ -14,8 +14,11 @@ namespace SafeTouch.Lessons
     ///   T - Tell a trusted adult: the answers are circles on the floor.
     ///   O - Openly explain what happened: answer circles again.
     ///   P - Protect yourself: walk the guide to the glowing safe place.
-    /// Ages 9 to 11 get "think deeper" notes and a fifth step: keep telling
-    /// until someone helps.
+    /// Ages 9 to 11 play their own module, "My Speak-Up Plan": no letters to
+    /// collect. Four moments come one after another ("Someone says it's just
+    /// a game", "The teacher asks what happened"...) and the child picks the
+    /// STOP step each one needs; the step's practice follows, with "think
+    /// deeper" notes. Then a fifth step: keep telling until someone helps.
     /// </summary>
     public class StopFrameworkLesson : LessonBase
     {
@@ -52,7 +55,7 @@ namespace SafeTouch.Lessons
                 new PromptOption(T("stop.intro.go", "Let's STOP it"), Theme.Primary, () =>
                 {
                     visitor.Say(null, null);
-                    WarmUpVoice(StartHunt);
+                    WarmUpVoice(Older ? (System.Action)StartPlan : StartHunt);
                 }));
         }
 
@@ -114,11 +117,67 @@ namespace SafeTouch.Lessons
             game.UI.ShowFeedback(title, why, FeedbackTone.Correct, step);
         }
 
-        /// <summary>After a step, the next letter; after P, the end.</summary>
+        /// <summary>After a step, the next letter (the next moment, for 9 to 11); after P, the end.</summary>
         void NextLetter()
         {
-            if (hunt.Done) { if (Older) KeepTelling(); else Finish(score, 4); return; }
+            if (Older)
+            {
+                planStep++;
+                if (planStep < LetterHunt.Letters.Length) AskStep(); else KeepTelling();
+                return;
+            }
+            if (hunt.Done) { Finish(score, 4); return; }
             WaitForLetter();
+        }
+
+        // ---- Ages 9 to 11: which step is this moment? ----
+
+        static readonly string[] Moments =
+        {
+            "Someone tries to touch Keza and says it's just a game.",
+            "Keza got away. Somebody needs to know.",
+            "The teacher asks, \"What happened?\"",
+            "Keza is scared the person will come back.",
+        };
+        static readonly Color[] StepColours = { Theme.Unsafe, Theme.Primary, Theme.Hex("#7A5CC7"), Theme.Safe };
+        static readonly string[] ShortSteps = { "Say NO", "Tell", "Open up", "Protect" };   // short, so the four answers fit two by two
+        int planStep;
+
+        void StartPlan()
+        {
+            planStep = 0;
+            // The person steps back first, so the four answers have room behind Keza.
+            visitor.WalkTo(game.AR.PointAroundCharacter(1.5f, 150f), () =>
+            {
+                if (!Running) return;
+                visitor.FaceTowards(keza.transform.position);
+                AskStep();
+            });
+        }
+
+        /// <summary>A moment, and the four steps as answers in the room; the right one starts that step's practice.</summary>
+        void AskStep()
+        {
+            Header(string.Format(T("stop.g.step", "Moment {0} of 4"), planStep + 1));
+            bool firstTry = true;
+            int right = planStep;
+            var options = new PromptOption[LetterHunt.Letters.Length];
+            for (int i = 0; i < options.Length; i++)
+            {
+                int pick = i;
+                options[i] = new PromptOption(LetterHunt.Letters[i] + ": " + T("stop.g.short." + i, ShortSteps[i]), StepColours[i], () =>
+                {
+                    if (pick != right)
+                    {
+                        firstTry = false;
+                        Feedback(false, T("stop.g.wrong", "Not this one. Read the moment again."), null);
+                        return;
+                    }
+                    if (firstTry) score++;
+                    Collected(pick);
+                });
+            }
+            ChooseInRoom(T("stop.g.title", "Which step is this?"), T("stop.g.moment." + planStep, Moments[planStep]), Shuffle(options));
         }
 
         /// <summary>Adds a "think deeper" note for ages 9-11; empty for 6-8.</summary>
@@ -171,13 +230,13 @@ namespace SafeTouch.Lessons
             ChooseInRoom(T("stop.t.title", "T: Tell a grown-up you trust"),
                 T("stop.t.body", "Who should Keza tell?"),
                 Shuffle(
-                    new PromptOption(T("stop.t.teacher", "My teacher, or a grown-up I trust"), Theme.Safe, () =>
+                    new PromptOption(T("stop.t.teacher", "A grown-up I trust"), Theme.Safe, () =>
                     {
                         if (firstTry) score++;
                         teacher = Spawn(T("stop.teacher", "Teacher"), Theme.Primary, 1.0f, -130f);
                         Feedback(true, T("stop.t.fb", "Yes! If they don't help, keep telling until someone does."), NextLetter);
                     }),
-                    new PromptOption(T("stop.t.nobody", "Nobody, keep the secret"), Theme.Card, () =>
+                    new PromptOption(T("stop.t.nobody", "Nobody"), Theme.Card, () =>
                     {
                         firstTry = false;
                         Feedback(false, T("stop.t.nobodyfb", "Touching secrets are always told. Keza is not in trouble."), null);
@@ -283,14 +342,14 @@ namespace SafeTouch.Lessons
                         var parent = Spawn(T("stop.parent", "Mum"), Theme.Hex("#F28C38"), 1.0f, -20f, "mum");
                         parent.WalkTo(game.AR.PointAroundCharacter(0.5f, -20f), null);
                         Feedback(true, T("stop.more.fb", "Yes! Keza keeps telling until someone helps: a parent, a nurse, or the helpline 116."),
-                            () => Finish(score, 5));
+                            () => Finish(score, 9));   // four moments matched, four steps practised, keep telling
                     }),
-                    new PromptOption(T("stop.more.quit", "Give up, nobody listens"), Theme.Card, () =>
+                    new PromptOption(T("stop.more.quit", "Give up"), Theme.Card, () =>
                     {
                         firstTry = false;
                         Feedback(false, T("stop.more.quitfb", "Many grown-ups want to help. Keza tells the next one on the helping hand."), null);
                     }),
-                    new PromptOption(T("stop.more.wait", "Wait and see if it happens again"), Theme.Card, () =>
+                    new PromptOption(T("stop.more.wait", "Wait and see"), Theme.Card, () =>
                     {
                         firstTry = false;
                         Feedback(false, T("stop.more.waitfb", "Keza doesn't have to wait. Telling early keeps Keza safe."), null);

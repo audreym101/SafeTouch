@@ -57,6 +57,7 @@ namespace SafeTouch.Managers
             generated["place"] = Clip("place", Notes(new[] { 67, 72 }, 0.1f, 0.3f));
             generated["car"] = Clip("car", Engine());
             generated["horn"] = Clip("horn", Horn());
+            generated["uhoh"] = Clip("uhoh", Notes(new[] { 62, 61 }, 0.22f, 0.22f));   // a low, worried "uh-oh"
             UIFactory.ButtonPressed = () => PlaySFX("pop");
 
             musicSource = gameObject.AddComponent<AudioSource>();
@@ -109,7 +110,7 @@ namespace SafeTouch.Managers
             audioSource.PlayOneShot(clip);
         }
 
-        /// <summary>Plays "pop", "tap", "correct", "tryagain", "badge", "place", "car" or "horn".</summary>
+        /// <summary>Plays "pop", "tap", "correct", "tryagain", "badge", "place", "car", "horn" or "uhoh".</summary>
         public void PlaySFX(string sfxName)
         {
             foreach (var clip in sfxClips)

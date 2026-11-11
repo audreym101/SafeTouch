@@ -8,10 +8,14 @@ This follows Behavioural Skills Training (instruction, modelling, **rehearsal, f
 
 1. **Warm-up (once per session):** "Say *Hello Keza!* in your everyday voice." This measures the child's normal talking pitch.
 2. **Get ready… / Say NO now!** The app listens to the room for about 0.3 s, then invites the NO.
-3. A **loudness meter** fills while the child speaks. It turns green past the dark line that marks a strong voice for this room.
+3. The **NO power meter** rises while the child speaks, with a big number from 0 to 100 above it.
+    - The **PASS** line marks a strong, firm voice for this room. The bar turns green past it, and gold past the child's record.
+    - A **white mark** stays at the loudest point of this try.
+    - A **gold mark** shows the child's **record**, their loudest NO ever ("Your record: 85"). A NO louder than the record is cheered: **New record!**, with a sound.
+    - NO power is the loudness above the room's own noise: 30 dB above the room fills the bar, and the PASS line sits at the coach's strong voice (13 dB, about 43).
 4. A **pitch line** draws one dot per 32 ms. The muted line is the child's talking voice. Dots above the orange line (more than 6 semitones higher) turn red.
 5. A **result**: 0–3 stars, three checks (**Loud**, **Steady**, **Short**: *yes* / *not yet*), and one tip.
-6. **Try again** (up to 3 tries), **Continue**, or **Tap NO instead**.
+6. **Try again** (up to 3 tries), **Continue**, or **Tap NO instead**. A NO that reaches the PASS line with two stars or more offers **Continue** first ("Strong NO! You pass!"). A quieter one offers **Try again** first ("Louder, to reach PASS!"), with Continue beside it. After three tries Continue is the only button, so no child is ever stuck.
 
 A child who can't or won't speak always has the tap option. A try that was heard never gets zero stars.
 
@@ -60,7 +64,7 @@ Unity -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -te
 - Audio sits in a **one-second loop that is constantly overwritten**. Nothing is recorded, saved to storage or sent anywhere.
 - **No speech recognition runs.** SafeTouch judges *how* NO was said, not *which* word, so the analysis needs no cloud service, and "OYA" (Kinyarwanda) works the same as "NO".
 - The talking-pitch value from the warm-up is kept **in memory for the session only**.
-- Progress stores only a **count** of three-star NOs (for the *Strong Voice* badge). This count is not sent by cloud sync.
+- Progress stores only a **count** of three-star NOs (for the *Strong Voice* badge) and the child's **record**, the NO power of their loudest NO (a number from 0 to 100, terms version 1.5). Neither is sent by cloud sync. Parents see both in **Grown-ups → My child**.
 - Parents can switch voice practice off in **Grown-ups → Settings**. The lessons then use the NO button.
 - Android asks for microphone permission the first time a lesson listens. If it is refused, the lessons fall back to buttons.
 
@@ -71,6 +75,8 @@ Unity -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -te
 - Very young or shy children may stay quiet. The tap path keeps the lesson moving, and the tips never blame the child.
 
 ## A child should not have to shout
+
+Passing still needs only a firm voice: the PASS line is the coach's strong voice, well below a shout. The record above it is a game for children who want to go further, and a NO screamed into the phone still gets the tip "You don't need to scream".
 
 The thresholds are low enough for an ordinary firm voice. Measured with synthetic voices in a quiet room (about -59 dBFS), a classroom (-43 dBFS) and a noisy classroom (-35 dBFS):
 

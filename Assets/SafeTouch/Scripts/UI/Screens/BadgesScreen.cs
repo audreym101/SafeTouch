@@ -29,7 +29,7 @@ namespace SafeTouch.UI.Screens
                 string state = !progress.IsLevelComplete(info.level) ? Localization.T("badges.notyet")
                     : max > 0 ? string.Format(Localization.T("badges.score.of", "{0} of {1} stars"), score, max)
                     : string.Format(Localization.T("badges.score"), score);
-                UIFactory.Label(list, Localization.T(info.titleKey) + "  -  " + state, Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, false);
+                UIFactory.Label(list, info.Title(progress.ageGroup == Data.Progress.PathOlder) + "  -  " + state, Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, false);
             }
 
             if (progress.bestChaseSeconds > 0f)

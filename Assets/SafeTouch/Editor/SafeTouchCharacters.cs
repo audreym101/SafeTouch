@@ -62,6 +62,7 @@ namespace SafeTouch.EditorTools
 
             BuildKeza(sparkle);
             BuildClassmate(sparkle);
+            BuildGanza(sparkle);
             BuildAdults(sparkle);
             BuildProp(PlaygroundModel, "playground", 1.1f, true);
             BuildProp(DeskModel, "school", 0.32f, false);
@@ -85,7 +86,9 @@ namespace SafeTouch.EditorTools
             Color painted;
             var mask = BuildSkinMask(KezaDiffuse, GeneratedFolder + "/Keza Skin Mask.png", out painted);
             var material = new Material(Shader.Find("SafeTouch/Skin Tone"));
-            material.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>(KezaDiffuse));
+            // Everyday colours, like a real girl of her age: dark hair, a yellow top, denim shorts, brown boots.
+            material.SetTexture("_MainTex", Recolour(KezaDiffuse, GeneratedFolder + "/Keza Diffuse.png",
+                new Vector3(0.07f, 0.5f, 0.2f), new Vector3(0.13f, 0.55f, 0.98f), new Vector3(0.6f, 0.45f, 0.55f), new Vector3(0.07f, 0.45f, 0.45f)));
             material.SetTexture("_SkinMask", mask);
             material.SetColor("_SkinReference", painted);
             material.SetColor("_SkinColor", SkinTones.Get(SkinTones.DefaultId).Color);
@@ -257,10 +260,17 @@ namespace SafeTouch.EditorTools
             for (int i = 0; i < pixels.Length; i++)
             {
                 var p = pixels[i];
-                if (SkinWeight(p) > 0.5f) continue;
                 float h, s, v;
-                Color.RGBToHSV(p, out h, out s, out v);
                 Color c;
+                if (IsLogo(i, texture.width, texture.height))
+                {
+                    c = Color.HSVToRGB(0.57f, 0.38f, 0.9f);   // no bunny: plain shirt
+                    c.a = p.a / 255f;
+                    pixels[i] = c;
+                    continue;
+                }
+                if (SkinWeight(p) > 0.5f) continue;
+                Color.RGBToHSV(p, out h, out s, out v);
                 if (h > 0.42f && h < 0.58f && s > 0.2f) c = Color.HSVToRGB(0.07f, 0.5f, v * 0.22f + 0.03f);        // hair
                 else if (h > 0.78f && h < 0.97f && s >= 0.4f) c = Color.HSVToRGB(0.61f, 0.6f, v * 0.5f);            // shorts
                 else if (h > 0.7f && h < 0.99f && s < 0.4f && s > 0.04f) c = Color.HSVToRGB(0.57f, 0.38f, Mathf.Min(1f, v * 0.97f));   // top
@@ -275,6 +285,230 @@ namespace SafeTouch.EditorTools
             Object.DestroyImmediate(texture);
             AssetDatabase.ImportAsset(outPath);
             return AssetDatabase.LoadAssetAtPath<Texture2D>(outPath);
+        }
+
+        /// <summary>
+        /// Recolours the child model's texture like SchoolUniform, with the given colours for the hair, the top,
+        /// the shorts and the boots (each: hue, saturation, and how much of the texture's own shading to keep).
+        /// The skin (SkinWeight) is kept, so the skin tone still works.
+        /// </summary>
+        static Texture2D Recolour(string diffusePath, string outPath, Vector3 hair, Vector3 top, Vector3 shorts, Vector3 boots)
+        {
+            var texture = new Texture2D(2, 2);
+            texture.LoadImage(File.ReadAllBytes(diffusePath));
+            var pixels = texture.GetPixels32();
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                var p = pixels[i];
+                float h, s, v;
+                Color c;
+                if (IsLogo(i, texture.width, texture.height))
+                {
+                    // The sad bunny on the top goes: plain top colour there.
+                    c = Color.HSVToRGB(top.x, top.y, Mathf.Min(1f, 0.92f * top.z));
+                    c.a = p.a / 255f;
+                    pixels[i] = c;
+                    continue;
+                }
+                if (SkinWeight(p) > 0.5f) continue;
+                Color.RGBToHSV(p, out h, out s, out v);
+                if (IsHair(h, s)) c = Color.HSVToRGB(hair.x, hair.y, v * hair.z + 0.03f);
+                else if (h > 0.78f && h < 0.97f && s >= 0.4f) c = Color.HSVToRGB(shorts.x, shorts.y, Mathf.Min(1f, v * shorts.z));
+                else if (h > 0.7f && h < 0.99f && s < 0.4f && s > 0.04f) c = Color.HSVToRGB(top.x, top.y, Mathf.Min(1f, v * top.z));
+                else if (h > 0.03f && h < 0.14f && s > 0.45f) c = Color.HSVToRGB(boots.x, boots.y, Mathf.Min(1f, v * boots.z));
+                else continue;
+                c.a = p.a / 255f;
+                pixels[i] = c;
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply();
+            File.WriteAllBytes(outPath, texture.EncodeToPNG());
+            Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(outPath);
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(outPath);
+        }
+
+        /// <summary>The bunny with crossed-out eyes and a sad mouth printed on the top (a box in the texture).</summary>
+        static bool IsLogo(int index, int width, int height)
+        {
+            float u = (index % width) / (float)width, v = (index / width) / (float)height;
+            return u > 0.07f && u < 0.15f && v > 0.14f && v < 0.245f;
+        }
+
+        /// <summary>Keza's teal hair in the model's texture.</summary>
+        static bool IsHair(float h, float s)
+        {
+            return h > 0.42f && h < 0.58f && s > 0.2f;
+        }
+
+        // ---------------------------------------------------------------
+        // Ganza, the boy helper, on the same lifelike child model
+        // ---------------------------------------------------------------
+
+        public const string GanzaPrefabPath = PrefabFolder + "/Ganza Model.prefab";
+
+        /// <summary>
+        /// Ganza on Keza's model, so he looks as real as she does and waves the same way: his hair cut short
+        /// (the bob is lifted to just above the ears, see ShortHair), black hair, a green top, khaki shorts and
+        /// dark trainers. His skin takes the tone the child picks, like Keza's.
+        /// </summary>
+        static void BuildGanza(Material sparkle)
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(KezaModel);
+            var kezaMaterial = AssetDatabase.LoadAssetAtPath<Material>(GeneratedFolder + "/Keza Skin Tone.mat");
+            var greeting = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(GeneratedFolder + "/Keza Greeting.controller");
+            if (model == null || kezaMaterial == null || !File.Exists(KezaDiffuse))
+            {
+                Debug.LogWarning("[SafeTouch] Build Keza first: Ganza is made from her model.");
+                return;
+            }
+
+            var material = new Material(kezaMaterial);
+            material.SetTexture("_MainTex", Recolour(KezaDiffuse, GeneratedFolder + "/Ganza Diffuse.png",
+                new Vector3(0.05f, 0.35f, 0.12f), new Vector3(0.36f, 0.5f, 0.72f), new Vector3(0.1f, 0.32f, 0.62f), new Vector3(0.6f, 0.08f, 0.3f)));
+            material = SaveAsset(material, GeneratedFolder + "/Ganza Skin Tone.mat");
+
+            var colours = new Texture2D(2, 2);
+            colours.LoadImage(File.ReadAllBytes(KezaDiffuse));
+
+            var root = new GameObject("Ganza");
+            var body = (GameObject)PrefabUtility.InstantiatePrefab(model);
+            body.name = "Model";
+            body.transform.SetParent(root.transform, false);
+            int part = 0;
+            foreach (var r in body.GetComponentsInChildren<Renderer>())
+            {
+                r.sharedMaterials = Enumerable.Repeat(material, r.sharedMaterials.Length).ToArray();
+                var skinned = r as SkinnedMeshRenderer;
+                if (skinned != null && skinned.sharedMesh != null)
+                    skinned.sharedMesh = SaveAsset(ShortHair(skinned, colours), GeneratedFolder + "/Ganza Mesh " + (++part) + ".asset");
+            }
+            Object.DestroyImmediate(colours);
+
+            var animator = body.GetComponent<Animator>();
+            if (animator == null) animator = body.AddComponent<Animator>();
+            animator.applyRootMotion = false;
+            animator.runtimeAnimatorController = greeting;
+
+            var size = FitHeight(root, body, KezaHeight);
+            AddPersonParts(root, size, "Ganza", true, sparkle, new Renderer[0]);
+            Save(root, GanzaPrefabPath);
+        }
+
+        /// <summary>
+        /// A short boy's haircut from Keza's bob: every hair point below the hairline over the ears is lifted up to
+        /// it, so the hair ends just above the ears all round, and the fringe stays on the forehead. The skull is
+        /// measured from the skin that moves with the head bone.
+        /// </summary>
+        static Mesh ShortHair(SkinnedMeshRenderer skinned, Texture2D colours)
+        {
+            var mesh = Object.Instantiate(skinned.sharedMesh);
+            mesh.name = "Ganza " + skinned.sharedMesh.name;
+            var verts = mesh.vertices;
+            var uvs = mesh.uv;
+            var weights = mesh.boneWeights;
+            var bones = skinned.bones;
+            int head = System.Array.FindIndex(bones, b => b != null && (b.name.EndsWith(":Head") || b.name == "Head"));
+            if (head < 0 || uvs.Length != verts.Length || weights.Length != verts.Length) return mesh;
+
+            var hair = new bool[verts.Length];
+            bool anySkull = false;
+            var skull = new Bounds();
+            for (int i = 0; i < verts.Length; i++)
+            {
+                var uv = uvs[i];
+                Color c = colours.GetPixelBilinear(uv.x - Mathf.Floor(uv.x), uv.y - Mathf.Floor(uv.y));
+                float h, s, v;
+                Color.RGBToHSV(c, out h, out s, out v);
+                hair[i] = IsHair(h, s);
+                var w = weights[i];
+                bool onHead = (w.boneIndex0 == head && w.weight0 > 0.6f);
+                if (onHead && !hair[i])
+                {
+                    if (!anySkull) { skull = new Bounds(verts[i], Vector3.zero); anySkull = true; }
+                    else skull.Encapsulate(verts[i]);
+                }
+            }
+            if (!anySkull) return mesh;
+
+            // The hairline: a little above the middle of the head (about the top of the ears).
+            var c0 = skull.center;
+            var e = skull.extents;
+            float hairline = c0.y + e.y * 0.12f;
+            float crown = c0.y + e.y * 1.12f;   // the two strands on top are pressed down to the crown
+            int moved = 0;
+            for (int i = 0; i < verts.Length; i++)
+            {
+                if (!hair[i]) continue;
+                var p = verts[i];
+                p.y = Mathf.Clamp(p.y, hairline, crown);
+                // Close to the head: no wider than the skull at that height (plus the hair's thickness), so the
+                // short cut follows the head's round shape instead of the bob's volume.
+                float k = Mathf.Clamp01((p.y - c0.y) / (e.y * 1.08f));
+                float room = Mathf.Sqrt(Mathf.Max(0.05f, 1f - k * k)) * 1.1f;
+                float dx = (p.x - c0.x) / (e.x * room), dz = (p.z - c0.z) / (e.z * room);
+                float reach = Mathf.Sqrt(dx * dx + dz * dz);
+                if (reach > 1f)
+                {
+                    p.x = c0.x + (p.x - c0.x) / reach;
+                    p.z = c0.z + (p.z - c0.z) / reach;
+                }
+                if (p != verts[i]) moved++;
+                verts[i] = p;
+            }
+            mesh.vertices = verts;
+            mesh.RecalculateBounds();
+            Debug.Log("[SafeTouch] Ganza's haircut: " + moved + " hair points lifted to the hairline");
+            return mesh;
+        }
+
+        /// <summary>
+        /// SafeTouch > 10. Makes the lifelike helpers and family: Keza in everyday colours, Ganza on the same
+        /// model, the classmate, Mum, Dad and the dog, and puts them on ARManager in the scene.
+        /// </summary>
+        [MenuItem("SafeTouch/10. Build Lifelike Keza, Ganza and Family", priority = 10)]
+        public static void BuildHelpers()
+        {
+            EnsureFolder(PrefabFolder);
+            EnsureFolder(GeneratedFolder);
+            EnsureFolder(PropsFolder);
+            var sparkle = AssetDatabase.LoadAssetAtPath<Material>(SparkleMaterial);
+            BuildKeza(sparkle);
+            BuildClassmate(sparkle);
+            BuildGanza(sparkle);
+            BuildFamily(sparkle);
+            AssetDatabase.SaveAssets();
+            if (!File.Exists(SceneFile)) return;
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(SceneFile);
+            var ar = Object.FindFirstObjectByType<ARManager>();
+            if (ar == null) return;
+            SetHelpers(ar);
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
+            Debug.Log("[SafeTouch] Lifelike Keza, Ganza, classmate and family are on ARManager.");
+        }
+
+        /// <summary>Puts Keza, Ganza and the family roles (when built) on ARManager.</summary>
+        public static void SetHelpers(ARManager ar)
+        {
+            var keza = AssetDatabase.LoadAssetAtPath<GameObject>(KezaPrefabPath);
+            if (keza != null) SetField(ar, "characterPrefab", keza);
+            SetField(ar, "boyPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(GanzaPrefabPath));
+            var roles = new[] { "mum", "dad", "child" };
+            var paths = new[] { MumPrefabPath, DadPrefabPath, ClassmatePrefabPath };
+            var so = new SerializedObject(ar);
+            var prop = so.FindProperty("rolePrefabs");
+            prop.arraySize = 0;
+            for (int i = 0; i < roles.Length; i++)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(paths[i]);
+                if (prefab == null) continue;
+                prop.arraySize++;
+                var element = prop.GetArrayElementAtIndex(prop.arraySize - 1);
+                element.FindPropertyRelative("role").stringValue = roles[i];
+                element.FindPropertyRelative("prefab").objectReferenceValue = prefab;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // ---------------------------------------------------------------
@@ -536,7 +770,7 @@ namespace SafeTouch.EditorTools
         /// vertices) about 0.6 m across. The soil plane is dropped: the real
         /// floor shows through in AR.
         /// </summary>
-        static void BuildGrass()
+        internal static void BuildGrass()
         {
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(GrassModel);
             if (model == null) { Debug.LogWarning("[SafeTouch] Grass model is missing: " + GrassModel); return; }
@@ -907,7 +1141,7 @@ namespace SafeTouch.EditorTools
         }
 
         /// <summary>Scales root so the visible model is height tall, feet on the floor, centred. Returns the unscaled size.</summary>
-        static Vector3 FitHeight(GameObject root, GameObject body, float height)
+        internal static Vector3 FitHeight(GameObject root, GameObject body, float height)
         {
             var b = SafeTouchModels.Bounds(body.GetComponentsInChildren<Renderer>().Where(r => r.enabled).ToArray());
             body.transform.localPosition = new Vector3(-b.center.x, -b.min.y, -b.center.z);
@@ -916,7 +1150,7 @@ namespace SafeTouch.EditorTools
         }
 
         /// <summary>The same parts the simple figures have: behaviour, tap collider, name label and skin tone.</summary>
-        static void AddPersonParts(GameObject root, Vector3 size, string label, bool isGuide, Material sparkle, Renderer[] tinted)
+        internal static void AddPersonParts(GameObject root, Vector3 size, string label, bool isGuide, Material sparkle, Renderer[] tinted)
         {
             ARFigure figure = isGuide ? root.AddComponent<ARCharacter>() : root.AddComponent<ARFigure>();
             float scale = root.transform.localScale.y;
@@ -945,21 +1179,21 @@ namespace SafeTouch.EditorTools
             SetField(figure, "nameLabel", text);
         }
 
-        static T SaveAsset<T>(T asset, string path) where T : Object
+        internal static T SaveAsset<T>(T asset, string path) where T : Object
         {
             AssetDatabase.DeleteAsset(path);
             AssetDatabase.CreateAsset(asset, path);
             return asset;
         }
 
-        static void Save(GameObject root, string path)
+        internal static void Save(GameObject root, string path)
         {
             PrefabUtility.SaveAsPrefabAsset(root, path);
             Object.DestroyImmediate(root);
             Debug.Log("[SafeTouch] Saved " + path);
         }
 
-        static void SetField(Object target, string field, Object value)
+        internal static void SetField(Object target, string field, Object value)
         {
             var so = new SerializedObject(target);
             var prop = so.FindProperty(field);
@@ -968,7 +1202,7 @@ namespace SafeTouch.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        static void SetArray(Object target, string field, Object[] values)
+        internal static void SetArray(Object target, string field, Object[] values)
         {
             var so = new SerializedObject(target);
             var prop = so.FindProperty(field);
@@ -978,7 +1212,7 @@ namespace SafeTouch.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        static void EnsureFolder(string path)
+        internal static void EnsureFolder(string path)
         {
             if (AssetDatabase.IsValidFolder(path)) return;
             var parent = Path.GetDirectoryName(path).Replace('\\', '/');

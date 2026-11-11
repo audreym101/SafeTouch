@@ -61,6 +61,18 @@ namespace SafeTouch.Tests
         }
 
         [Test]
+        public void ALouderNoHasMoreNoPower()
+        {
+            var s = NoCoachSettings.ForAgeGroup("6-8");
+            var normal = NoCoach.Rate(InRoom(0.012f, 0.10f)[0], s);
+            var firm = NoCoach.Rate(InRoom(0.012f, 0.30f)[0], s);
+            Assert.Greater(firm.Power, normal.Power, "the louder the NO, the higher the NO power");
+            Assert.GreaterOrEqual(normal.Power, NoRating.PowerOf(s.strongLoudnessDb), "a normal firm voice reaches the PASS line");
+            Assert.AreEqual(0, NoRating.NothingHeard().Power, "nothing heard: no power, and no record");
+            Assert.AreEqual(100, NoRating.PowerOf(45f), "the meter tops out at 100");
+        }
+
+        [Test]
         public void ANormalVoiceInANoisyRoomIsStillHeard()
         {
             var words = InRoom(0.03f, 0.10f);   // a noisy room, about -35 dBFS

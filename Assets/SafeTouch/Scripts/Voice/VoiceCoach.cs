@@ -51,7 +51,7 @@ namespace SafeTouch.Voice
         /// <summary>Raised for every analysed frame while listening, for the pitch line.</summary>
         public event Action<VoiceFrame> FrameHeard;
 
-        const float MeterRangeDb = 30f;
+        const float MeterRangeDb = NoRating.FullPowerDb;   // the meter and the NO power number share one scale
 
         void Awake()
         {

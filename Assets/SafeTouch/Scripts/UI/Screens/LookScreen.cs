@@ -109,6 +109,8 @@ namespace SafeTouch.UI.Screens
             UIFactory.SetButtonLabel(boy, string.Format(Localization.T("name.helper.boy", "A boy: {0}"), Localization.BoyName));
             girl.image.color = Localization.BoyGuide ? Theme.Card : Theme.Sun;
             boy.image.color = Localization.BoyGuide ? Theme.Sun : Theme.Card;
+            // Skin tones and clothes are chosen in daylight, where their colours are true.
+            if (game.AR.Stage != null) game.AR.Stage.ChooseNight(false);
             bool inRoom = game.AR.HasCharacter;
             preview.gameObject.SetActive(!inRoom);
             Root.GetComponent<Image>().color = inRoom ? Theme.Clear : Theme.Sky;   // no camera picture yet: not a black screen

@@ -1,5 +1,5 @@
 {
-  "_note": "Draft content for expert review in week 7 (child protection officer, IZU volunteer, teacher). Non-graphic by design. Short sentences and everyday words for ages 6-11. correctAnswer: A = Safe, B = Uncomfortable, C = Unsafe. level 2 cards (S08-S13) and \"deeper\" notes are shown to ages 9-11 only.",
+  "_note": "Draft content for expert review (child protection officer, IZU volunteer, teacher). Non-graphic by design. Short sentences and everyday words. correctAnswer: A = Safe, B = Uncomfortable, C = Unsafe. Each age group has its own deck: level 1 cards are for ages 6-8 (Explorer), level 2 cards for ages 9-11 (Guardian), so a child who grows into the older path meets new situations. \"night\": the story happens after dark. \"trick\" (9-11): the warning sign the child names after sorting the card.",
   "items": [
     {
       "scenarioId": "S01",
@@ -103,7 +103,8 @@
       "correctAnswer": "C",
       "feedback": "Never send photos to people who want secrets. Stop replying and show a grown-up.",
       "audioClipName": "scenario_s08",
-      "deeper": "Only known online, asking for photos, asking for secrets: three warning signs. Block them, keep the messages and show a grown-up. You are not in trouble."
+      "deeper": "Only known online, asking for photos, asking for secrets: three warning signs. Block them, keep the messages and show a grown-up. You are not in trouble.",
+      "trick": "stranger"
     },
     {
       "scenarioId": "S09",
@@ -116,7 +117,8 @@
       "correctAnswer": "C",
       "feedback": "Gifts should never come with secrets. Tell a grown-up you trust, even if the person is nice.",
       "audioClipName": "scenario_s09",
-      "deeper": "This is called grooming: being nice and giving gifts, then asking for secrets. A gift does not mean you owe them anything."
+      "deeper": "This is called grooming: being nice and giving gifts, then asking for secrets. A gift does not mean you owe them anything.",
+      "trick": "gift"
     },
     {
       "scenarioId": "S10",
@@ -129,7 +131,8 @@
       "correctAnswer": "B",
       "feedback": "You can say \"No, thank you\" and sit somewhere else. Your body belongs to you.",
       "audioClipName": "scenario_s10",
-      "deeper": "Saying \"no, thank you\" politely is not rude, even to adults you know."
+      "deeper": "Saying \"no, thank you\" politely is not rude, even to adults you know.",
+      "trick": "pressure"
     },
     {
       "scenarioId": "S11",
@@ -142,7 +145,8 @@
       "correctAnswer": "C",
       "feedback": "This is not okay, even from family. Move away and tell a grown-up you trust.",
       "deeper": "Showing these pictures to a child is a kind of abuse, even with no touching. It is never your fault that you saw them.",
-      "audioClipName": "scenario_s11"
+      "audioClipName": "scenario_s11",
+      "trick": "secret"
     },
     {
       "scenarioId": "S12",
@@ -155,7 +159,8 @@
       "correctAnswer": "C",
       "feedback": "Your friend is not safe. Tell a grown-up you trust. That is how a good friend helps.",
       "deeper": "Some secrets are too big for children. Telling a grown-up gets your friend help.",
-      "audioClipName": "scenario_s12"
+      "audioClipName": "scenario_s12",
+      "trick": "secret"
     },
     {
       "scenarioId": "S13",
@@ -168,7 +173,94 @@
       "correctAnswer": "B",
       "feedback": "You can wave or shake hands instead. A kind hello doesn't need a kiss.",
       "deeper": "Grown-ups who care about you will accept a wave. If someone gets angry, tell a parent.",
-      "audioClipName": "scenario_s13"
+      "audioClipName": "scenario_s13",
+      "trick": "pressure"
+    },
+    {
+      "scenarioId": "S14",
+      "level": 1,
+      "night": true,
+      "title": "Late after school",
+      "question": "It's dark and you are late leaving school. A driver you don't know says, \"Your mum sent me. Get in!\" How is this?",
+      "optionA": "Safe",
+      "optionB": "Uncomfortable",
+      "optionC": "Unsafe",
+      "correctAnswer": "C",
+      "feedback": "Never get into a car with someone you don't know, even if they say your parents sent them. Say NO, go back to school and ask your teacher to call home.",
+      "deeper": "A grown-up who collects you is someone your family told you about first. Agree a family password: no password, no ride.",
+      "audioClipName": "scenario_s14"
+    },
+    {
+      "scenarioId": "S15",
+      "level": 1,
+      "night": true,
+      "title": "Lost after dark",
+      "question": "It's getting dark at the market and you can't find your mum. A lady selling fruit, with her own children, offers to phone your mum. How is this?",
+      "optionA": "Safe",
+      "optionB": "Uncomfortable",
+      "optionC": "Unsafe",
+      "correctAnswer": "A",
+      "feedback": "If you are lost, stay where people can see you and ask a mum with children or a shopkeeper to call your family. Wait there, and never go off with anyone.",
+      "deeper": "Learn your family's phone number by heart, so a helper can call them for you.",
+      "audioClipName": "scenario_s15"
+    },
+    {
+      "scenarioId": "S16",
+      "level": 2,
+      "night": true,
+      "title": "Someone following you",
+      "question": "It's dark. You are walking home and a grown-up you don't know keeps following you. How is this?",
+      "optionA": "Safe",
+      "optionB": "Uncomfortable",
+      "optionC": "Unsafe",
+      "correctAnswer": "C",
+      "feedback": "Go quickly to a bright place with people, like a shop, and tell a grown-up there. Then tell your family.",
+      "deeper": "Trust your uh-oh feeling. After dark, walk home with a friend or a grown-up you trust, on busy, bright roads.",
+      "audioClipName": "scenario_s16",
+      "trick": "stranger"
+    },
+    {
+      "scenarioId": "S17",
+      "level": 2,
+      "title": "The coach asks first",
+      "question": "At netball practice, the coach asks, \"May I move your hands to show you the throw?\" Your whole team is there. How is this?",
+      "optionA": "Safe",
+      "optionB": "Uncomfortable",
+      "optionC": "Unsafe",
+      "correctAnswer": "A",
+      "feedback": "The coach asked first, for a reason, with everyone there. That is safe. You can still say no.",
+      "deeper": "Safe grown-ups ask first, explain why, stay where others can see, and never ask for secrets.",
+      "audioClipName": "scenario_s17",
+      "trick": "none"
+    },
+    {
+      "scenarioId": "S18",
+      "level": 2,
+      "night": true,
+      "title": "A video call at night",
+      "question": "It is late at night. Someone you met in a game asks you to turn on your camera and keep it secret. How is this?",
+      "optionA": "Safe",
+      "optionB": "Uncomfortable",
+      "optionC": "Unsafe",
+      "correctAnswer": "C",
+      "feedback": "Never turn on your camera for someone you met online. Don't reply, and tell a grown-up you trust.",
+      "deeper": "People online are not always who they say. Asking for secret video or photos, late at night, is a big red flag.",
+      "audioClipName": "scenario_s18",
+      "trick": "stranger"
+    },
+    {
+      "scenarioId": "S19",
+      "level": 2,
+      "title": "A friend asks first",
+      "question": "You win a race. Your friend asks, \"Can I give you a hug?\" and you say yes. How is this?",
+      "optionA": "Safe",
+      "optionB": "Uncomfortable",
+      "optionC": "Unsafe",
+      "correctAnswer": "A",
+      "feedback": "Your friend asked, and you said yes. That is safe. Asking first is how friends show respect.",
+      "deeper": "It works both ways: ask before you hug others too, and their no is always okay.",
+      "audioClipName": "scenario_s19",
+      "trick": "none"
     }
   ]
 }

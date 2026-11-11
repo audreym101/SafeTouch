@@ -31,14 +31,35 @@ In lesson 2, **Safe or Unsafe?**, every card starts as a short 3D story with Kez
 | S11 Pictures on a phone (9-11) | An older cousin wants Keza to look at phone pictures (the screen shows nothing) | Walks away and tells Mum |
 | S12 A friend's worry (9-11) | A friend shares a worry and asks Keza not to tell | Tells the teacher, together with the friend |
 | S13 A kiss hello (9-11) | An uncle insists on a kiss hello | Offers a wave or a high-five instead |
+| S14 Late after school *(night)* | It is dark; Keza walks out of the school gate alone. A car pulls up and the driver says "Your mum sent me. Get in!" | Says NO out loud and runs back to the teacher at the gate; the car drives away. The feedback teaches a family password: no password, no ride |
+| S15 Lost after dark *(night)* | Keza can't find Mum at the market as night falls; a fruit seller with her own child phones Mum, who comes | (safe card: asking a mum with children or a shopkeeper, and staying where people can see you) |
+| S16 Someone following you *(night, 9-11)* | Walking home in the dark, a stranger keeps following Keza | Goes into the bright shop and tells the shopkeeper; the stranger walks away |
+| S17 The coach asks first *(9-11)* | At sports practice the coach asks "May I move your hands to show the throw?", with the whole team there | (safe card: asking first, for a reason, in the open) |
+| S18 A video call at night *(night, 9-11)* | Late at night, a phone shows messages from someone met in a game: "Turn on your camera. Don't tell your parents!" | Doesn't reply, tells Mum |
+| S19 A friend asks first *(9-11)* | After a race, a friend asks "Can I give you a hug?" and Keza says yes | (safe card: consent between friends, both ways) |
+
+**Two decks.** S01 to S07, S14 and S15 are the ages 6 to 8 deck (`level` 1). S08 to S13 and S16 to S19 are the ages 9 to 11 deck (`level` 2). No card is in both, so a child who moves up meets new situations that teach the same ideas in more detail.
+
+## Ages 9 to 11: Spot the Red Flag
+
+The older deck is played differently:
+- **While the story plays**, the card shows **Red flag!** The child taps it the moment something feels wrong. Too early, and they're told to keep watching. Right after the warning sign (the uh-oh moment), a **red flag** goes up over the person, the phone or the car.
+- **After sorting**, instead of "how does Keza feel?", the child answers **What's the trick?** The choices are a secret, a gift, a stranger, pressure, or no trick (each card's `trick` in `scenarios.json`). A short explanation follows, then the act-out.
+- Both are practice and are not saved. Only the sorting answer is saved for the evaluation, as before.
+
+**Day and night.** Each card plays at its own time of day: day stories in daylight, stories after dark at night, whatever the child picked with the moon button. The button is hidden while a card plays and comes back after the lesson.
 
 Nothing in the stories is graphic. The words match the cards, which the content experts review.
+
+## Stories after dark
+
+Cards S14, S15, S16 and S18 have `"night": true` in `scenarios.json`. While their story, question and act-out play, the 3D world turns to night (see [3d-mode.md](3d-mode.md)): a deep blue sky with the moon and stars, street lamps with warm pools of light, a lit shop, a market stall with its bulb and car headlights. A soft light always stays on the play area, so the people are easy to see. The day cards always play in daylight, even if the child chose night with the moon button; their choice comes back after the lesson. In camera mode the room stays as it is, but the lamps, the lit shop and the headlights still come.
 
 ## Code and content
 
 - [ScenarioStories.cs](../Assets/SafeTouch/Scripts/Lessons/ScenarioStories.cs) holds the stories and the act-outs.
-  - The props are built from simple shapes, like the playground: a car, a road, a bench, a fence, a school board, a health-centre sign, phones, sweets and a gift.
-  - The people are the same figures as in the other lessons. Other children are children: the friend uses the girl model in her own colours, and the cousins and the classmate are boys built like the boy helper.
+  - The props are built from simple shapes, like the playground: a car (with headlights at night), a road, a bench, a fence, a school board, a health-centre sign, phones, sweets, a gift, and for the night stories street lamps, a school gate, a market stall and a lit shop.
+  - The people are the same figures as in the other lessons. Other children are children: the friend uses the lifelike classmate model (the older girl for 9 to 11) in her own colours, so she never looks like Keza, and the cousins and the classmate are boys like the boy helper.
   - Everything is placed in metres from Keza, in front of the phone's view, so it works in the 3D world and in camera mode.
 - [ScenarioLesson.cs](../Assets/SafeTouch/Scripts/Lessons/ScenarioLesson.cs) runs a card: story, question, feedback, act-out.
 - The words are `story.*` keys.

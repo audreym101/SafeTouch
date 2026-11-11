@@ -103,7 +103,8 @@
       "correctAnswer": "C",
       "feedback": "Ntukigere woherereza amafoto abantu bagusaba kugira amabanga. Reka kumusubiza, uhite ubyereka umuntu mukuru wizeye.",
       "audioClipName": "scenario_s08",
-      "deeper": "Ibimenyetso bitatu bibi biri hamwe: umuntu uzi kuri interineti gusa, usaba amafoto, kandi usaba ibanga. Muhagarike, ubike ubutumwa, ubwereke umuntu mukuru. Nta kibazo uzagira."
+      "deeper": "Ibimenyetso bitatu bibi biri hamwe: umuntu uzi kuri interineti gusa, usaba amafoto, kandi usaba ibanga. Muhagarike, ubike ubutumwa, ubwereke umuntu mukuru. Nta kibazo uzagira.",
+      "trick": "stranger"
     },
     {
       "scenarioId": "S09",
@@ -116,7 +117,8 @@
       "correctAnswer": "C",
       "feedback": "Impano ntizikwiye na rimwe kuzana amabanga. Iki ni ikimenyetso kibi. Bibwire umuntu mukuru wizeye, n'iyo uwo muntu akugirira neza.",
       "audioClipName": "scenario_s09",
-      "deeper": "Ibi byitwa kureshya umwana: umuntu yubaka icyizere akoresheje impano n'ubugwaneza, hanyuma agasaba amabanga. Impano ntisobanura ko hari icyo umurimo."
+      "deeper": "Ibi byitwa kureshya umwana: umuntu yubaka icyizere akoresheje impano n'ubugwaneza, hanyuma agasaba amabanga. Impano ntisobanura ko hari icyo umurimo.",
+      "trick": "gift"
     },
     {
       "scenarioId": "S10",
@@ -129,7 +131,8 @@
       "correctAnswer": "B",
       "feedback": "Ushobora kuvuga uti \"Oya, urakoze\" ukicara ahandi. Umubiri wawe ni uwawe.",
       "audioClipName": "scenario_s10",
-      "deeper": "Umubiri wawe ni uwawe, n'imbere y'abantu bakuru uzi. Kuvuga \"oya, urakoze\" mu kinyabupfura si ukubura icyubahiro."
+      "deeper": "Umubiri wawe ni uwawe, n'imbere y'abantu bakuru uzi. Kuvuga \"oya, urakoze\" mu kinyabupfura si ukubura icyubahiro.",
+      "trick": "pressure"
     },
     {
       "scenarioId": "S11",
@@ -142,7 +145,8 @@
       "correctAnswer": "C",
       "feedback": "Kwereka abana amafoto nk'ayo si byiza, n'iyo byaba bikozwe n'umuryango. Itarure, ubibwire umuntu mukuru wizeye.",
       "deeper": "Kwereka umwana amafoto y'ibanga ni ubwoko bw'ihohoterwa, n'iyo nta gukorakora kwabayeho. Si ikosa ryawe kuba warayabonye.",
-      "audioClipName": "scenario_s11"
+      "audioClipName": "scenario_s11",
+      "trick": "secret"
     },
     {
       "scenarioId": "S12",
@@ -155,7 +159,8 @@
       "correctAnswer": "C",
       "feedback": "Inshuti yawe ntitekanye. Bibwire umuntu mukuru wizeye, n'iyo yagusabye kutabivuga. Uko ni ko inshuti nziza ifasha.",
       "deeper": "Hari amabanga aremereye cyane ku bana. Kubibwira umuntu mukuru si ugugambanira inshuti yawe; ni ukuyishakira ubufasha.",
-      "audioClipName": "scenario_s12"
+      "audioClipName": "scenario_s12",
+      "trick": "secret"
     },
     {
       "scenarioId": "S13",
@@ -168,7 +173,94 @@
       "correctAnswer": "B",
       "feedback": "Ushobora kumupepera cyangwa mukaramukanya mu ntoki aho kumusoma. Kuramutsa umuntu neza ntibisaba gusomana.",
       "deeper": "Kubahana ni ibya bombi. Abantu bakuru bakwitaho bazemera ubundi buryo bwo kuramutsa. Niba umuntu arakaye, bibwire umubyeyi.",
-      "audioClipName": "scenario_s13"
+      "audioClipName": "scenario_s13",
+      "trick": "pressure"
+    },
+    {
+      "scenarioId": "S14",
+      "level": 1,
+      "night": true,
+      "title": "Gutaha utinze uvuye ku ishuri",
+      "question": "Bwije kandi watinze kuva ku ishuri. Umushoferi utazi akubwira ati: \"Mama wawe ni we wanyohereje. Injira mu modoka!\" Ibi bimeze gute?",
+      "optionA": "Bitekanye",
+      "optionB": "Bimbangamiye",
+      "optionC": "Biteje akaga",
+      "correctAnswer": "C",
+      "feedback": "Ntukigere winjira mu modoka y'umuntu utazi, n'iyo yavuga ko ababyeyi bawe ari bo bamwohereje. Vuga OYA, usubire ku ishuri, usabe mwarimu guhamagara iwanyu.",
+      "deeper": "Umuntu mukuru uza kugutwara ni uwo umuryango wawe wakubwiye mbere. Mwumvikane ijambo ry'ibanga ry'umuryango: nta jambo ry'ibanga, nta kugenda.",
+      "audioClipName": "scenario_s14"
+    },
+    {
+      "scenarioId": "S15",
+      "level": 1,
+      "night": true,
+      "title": "Kubura iwanyu bwije",
+      "question": "Butangiye kwira ku isoko kandi ntubona mama wawe. Umubyeyi ucuruza imbuto, uri kumwe n'abana be, yemeye guhamagara mama wawe kuri telefoni. Ibi bimeze gute?",
+      "optionA": "Bitekanye",
+      "optionB": "Bimbangamiye",
+      "optionC": "Biteje akaga",
+      "correctAnswer": "A",
+      "feedback": "Niwabura iwanyu, guma ahantu abantu bakureba, usabe umubyeyi uri kumwe n'abana cyangwa umucuruzi guhamagara umuryango wawe. Bategerereze aho, kandi ntukagende n'uwo ari we wese.",
+      "deeper": "Fata mu mutwe nimero ya telefoni y'iwanyu, kugira ngo ugufasha abashe kubahamagara.",
+      "audioClipName": "scenario_s15"
+    },
+    {
+      "scenarioId": "S16",
+      "level": 2,
+      "night": true,
+      "title": "Umuntu ugukurikira",
+      "question": "Bwije. Uri gutaha n'amaguru maze umuntu mukuru utazi akomeza kugukurikira. Ibi bimeze gute?",
+      "optionA": "Bitekanye",
+      "optionB": "Bimbangamiye",
+      "optionC": "Biteje akaga",
+      "correctAnswer": "C",
+      "feedback": "Genda vuba ujye ahantu hari urumuri n'abantu, nko mu iduka, ubibwire umuntu mukuru uhari. Hanyuma ubibwire umuryango wawe.",
+      "deeper": "Izere ya myumvire yo kwikanga imbere muri wowe. Iyo bwije, taha uri kumwe n'inshuti cyangwa umuntu mukuru wizeye, unyure mu mihanda irimo abantu n'urumuri.",
+      "audioClipName": "scenario_s16",
+      "trick": "stranger"
+    },
+    {
+      "scenarioId": "S17",
+      "level": 2,
+      "title": "Umutoza abanza kubaza",
+      "question": "Mu myitozo ya netball, umutoza arakubaza ati: \"Nshobora kwimura amaboko yawe nkwereka uko batera umupira?\" Ikipe yose iri aho. Ibi bimeze gute?",
+      "optionA": "Bitekanye",
+      "optionB": "Bimbangamiye",
+      "optionC": "Biteje akaga",
+      "correctAnswer": "A",
+      "feedback": "Umutoza yabanje kubaza, afite impamvu, bose bahari. Ibyo bitekanye. Ushobora no kuvuga oya.",
+      "deeper": "Abantu bakuru batekanye babanza kubaza, bagasobanura impamvu, bakaguma aho abandi babona, kandi ntibasaba amabanga.",
+      "audioClipName": "scenario_s17",
+      "trick": "none"
+    },
+    {
+      "scenarioId": "S18",
+      "level": 2,
+      "night": true,
+      "title": "Guhamagarwa kuri videwo nijoro",
+      "question": "Ni nijoro cyane. Umuntu wahuriye na we mu mukino akakusaba gufungura kamera yawe no kubigira ibanga. Ibi bimeze gute?",
+      "optionA": "Bitekanye",
+      "optionB": "Bimbangamiye",
+      "optionC": "Biteje akaga",
+      "correctAnswer": "C",
+      "feedback": "Ntukigere ufungura kamera yawe ku muntu wahuriye na we kuri interineti. Ntusubize, ubibwire umuntu mukuru wizeye.",
+      "deeper": "Abantu bo kuri interineti si ko buri gihe baba abo bavuga. Gusaba videwo cyangwa amafoto by'ibanga, nijoro, ni ikimenyetso gikomeye cy'akaga.",
+      "audioClipName": "scenario_s18",
+      "trick": "stranger"
+    },
+    {
+      "scenarioId": "S19",
+      "level": 2,
+      "title": "Inshuti ibanza kubaza",
+      "question": "Watsinze isiganwa. Inshuti yawe irakubaza iti: \"Nshobora kuguhobera?\" Uravuga uti yego. Ibi bimeze gute?",
+      "optionA": "Bitekanye",
+      "optionB": "Bimbangamiye",
+      "optionC": "Biteje akaga",
+      "correctAnswer": "A",
+      "feedback": "Inshuti yawe yabajije, urayemerera. Ibyo bitekanye. Kubanza kubaza ni ko inshuti zubahana.",
+      "deeper": "Bigenda impande zombi: nawe banza ubaze mbere yo guhobera abandi, kandi oya yabo ihora yemewe.",
+      "audioClipName": "scenario_s19",
+      "trick": "none"
     }
   ]
 }

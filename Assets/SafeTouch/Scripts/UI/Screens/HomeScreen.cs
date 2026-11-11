@@ -152,11 +152,12 @@ namespace SafeTouch.UI.Screens
                     continue;
                 }
                 bool done = progress.IsLevelComplete(level);
-                card.title.text = level + ". " + Localization.T(card.info.titleKey);
+                bool older = progress.ageGroup == Data.Progress.PathOlder;
+                card.title.text = level + ". " + card.info.Title(older);
                 status = done ? DoneStatus(progress, level)
                     : unlocked ? Localization.T("status.ready")
                     : string.Format(Localization.T("status.locked"), level - 1);
-                SetSummary(card, Localization.T(card.info.summaryKey), status);
+                SetSummary(card, card.info.Summary(older), status);
             }
         }
 

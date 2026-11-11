@@ -40,10 +40,13 @@ namespace SafeTouch.AR
     /// <summary>
     /// Direct touch in the AR view, so children act on the room itself rather
     /// than on buttons:
-    ///   tap          - touch a person, a floor zone, a letter or a body dot (Tapped)
-    ///   drag         - walk a person across the real floor with a finger
-    ///   pinch, twist - in "look closer" mode, make Keza bigger and turn her
-    ///   one-finger drag in that mode turns her too.
+    ///   tap          - touch a person, a floor zone, a letter or a body dot (Tapped);
+    ///                  touching a person also picks them for the move pad
+    ///   drag         - walk a person across the floor with a finger (they step and turn as they go)
+    ///   swipe        - on the grass of the 3D world, swing the camera around the guide
+    ///   twist        - with two fingers, turn the person last touched (or the guide)
+    ///   pinch, twist - in "look closer" mode, make Keza bigger and turn her;
+    ///                  one-finger drag in that mode turns her too.
     /// Touches that start on the app's buttons or cards are left to the UI.
     /// In the Editor the mouse stands in: click, drag, scroll wheel to
     /// resize and right-drag to turn.
@@ -73,8 +76,10 @@ namespace SafeTouch.AR
         // "Look closer": the object pinch and twist act on
         Transform target;
         float minScale, maxScale, baseScale;
-        bool twoFinger;
+        bool twoFinger, twisting;
         float pinchStartDistance, pinchStartScale, twistStartAngle, twistStartYaw;
+        ARFigure twistFigure;
+        const float TwistThreshold = 12f;   // degrees the fingers turn before a pinch also turns the person
 
         public bool Manipulating { get { return target != null; } }
 
@@ -139,7 +144,14 @@ namespace SafeTouch.AR
             else if (mouse.leftButton.wasReleasedThisFrame) Release(position);
             else if (mouse.leftButton.isPressed) Hold(position);
 
-            if (target == null || OverUI(position)) return;
+            if (OverUI(position)) return;
+            if (target == null)
+            {
+                // Right-drag turns the person last touched, like a two-finger twist.
+                var who = ar != null ? ar.Selected : null;
+                if (mouse.rightButton.isPressed && who != null && Mathf.Abs(mouse.delta.ReadValue().x) > 0.01f) who.TurnBy(-mouse.delta.ReadValue().x * 0.6f);
+                return;
+            }
             float scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f) SetScale(target.localScale.x * (1f + Mathf.Sign(scroll) * 0.08f));
             if (mouse.rightButton.isPressed) target.Rotate(0f, -mouse.delta.ReadValue().x * 0.4f, 0f, Space.World);
@@ -182,10 +194,15 @@ namespace SafeTouch.AR
                 Vector3 floor;
                 if (FloorPoint(position, out floor))
                 {
-                    if (!dragging) { dragging = true; dragFigure.Stop(); }
+                    if (!dragging) { dragging = true; dragFigure.Stop(); ar.Select(dragFigure); }
                     ar.DragFigure(dragFigure, floor + grabOffset);
                     if (DragMoved != null) DragMoved(dragFigure);
                 }
+            }
+            else if (moved && ar != null)
+            {
+                // A swipe on the grass swings the camera around the guide: half the screen's width is a quarter turn.
+                ar.Orbit((position.x - lastPosition.x) / Mathf.Max(Screen.width, 1) * 180f);
             }
             lastPosition = position;
         }
@@ -203,7 +220,14 @@ namespace SafeTouch.AR
                 return;
             }
             bool quick = Time.unscaledTime - pressTime <= TapMaxSeconds;
-            if (!moved && quick && Tapped != null) Tapped(Cast(position));
+            if (!moved && quick)
+            {
+                var tap = Cast(position);
+                // Touching a person picks them for the move pad and the two-finger twist.
+                var figure = tap.Find<ARFigure>();
+                if (figure != null && ar != null && ar.CanDrag(figure)) ar.Select(figure);
+                if (Tapped != null) Tapped(tap);
+            }
             dragFigure = null;
         }
 
@@ -213,10 +237,13 @@ namespace SafeTouch.AR
             pressing = false;
             dragging = false;
             dragFigure = null;
-            if (target == null) return;
-
             float distance = Vector2.Distance(a, b);
             float angle = Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg;
+            if (target == null)
+            {
+                TwistPerson(angle);
+                return;
+            }
             if (!twoFinger)
             {
                 twoFinger = true;
@@ -229,6 +256,34 @@ namespace SafeTouch.AR
             SetScale(pinchStartScale * distance / pinchStartDistance);
             var e = target.eulerAngles;
             target.rotation = Quaternion.Euler(e.x, twistStartYaw - Mathf.DeltaAngle(twistStartAngle, angle), e.z);
+        }
+
+        /// <summary>
+        /// Two fingers turning like a dial turn the person last touched (or the guide). A pinch without a turn
+        /// only zooms (SizeButtons), so the person starts turning once the fingers have turned a little.
+        /// </summary>
+        void TwistPerson(float angle)
+        {
+            if (!twoFinger)
+            {
+                twoFinger = true;
+                twisting = false;
+                twistStartAngle = angle;
+                twistFigure = ar != null ? ar.Selected : null;
+                if (twistFigure != null) twistStartYaw = twistFigure.transform.eulerAngles.y;
+                return;
+            }
+            if (twistFigure == null) return;
+            float turned = Mathf.DeltaAngle(twistStartAngle, angle);
+            if (!twisting && Mathf.Abs(turned) < TwistThreshold) return;
+            if (!twisting)
+            {
+                twisting = true;
+                twistStartAngle = angle;   // from here on, the person turns as much as the fingers
+                twistStartYaw = twistFigure.transform.eulerAngles.y;
+                return;
+            }
+            twistFigure.TurnTo(twistStartYaw - turned);
         }
 
         void SetScale(float scale)

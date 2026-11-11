@@ -515,6 +515,7 @@ namespace SafeTouch.AR
             bool isOlder = ageGroup == "9-11";
             if (isOlder == older) return;
             older = isOlder;
+            if (Stage != null) Stage.SetOlderLook(older);   // 9 to 11: the warmer, more dramatic light
             ReplaceGuide();
         }
 
@@ -637,8 +638,9 @@ namespace SafeTouch.AR
         GameObject RolePrefabFor(string role, string label)
         {
             if (string.IsNullOrEmpty(role)) return null;
-            // Other children (a friend, a classmate, a cousin) use the child model, in their own clothes and skin tone.
-            if (role == "child") return GirlPrefab;
+            // Other children (a friend, a classmate, a cousin): the classmate model for 6 to 8 (Keza's age, but
+            // their own face, hair and clothes), the older girl for 9 to 11; Keza's model if neither is built.
+            if (role == "child") return (!older ? RoleModel("child") : null) ?? GirlPrefab;
             if (role == "parent")
             {
                 // "Mum or Dad": the same label always gets the same parent.
@@ -646,8 +648,22 @@ namespace SafeTouch.AR
                 foreach (char c in label ?? "") { hash ^= c; hash *= 16777619; }
                 return RolePrefabFor((hash >> 4) % 2 == 0 ? "mum" : "dad", label) ?? RolePrefabFor("mum", label) ?? RolePrefabFor("dad", label);
             }
+            return RoleModel(role);
+        }
+
+        GameObject RoleModel(string role)
+        {
             foreach (var r in rolePrefabs) if (r != null && r.role == role && r.prefab != null) return r.prefab;
             return null;
+        }
+
+        /// <summary>
+        /// A model for the people who walk about in the 3D park ("mum", "dad" or "child"), or null when it
+        /// has not been built. They are extras: never Keza, never a person in a lesson.
+        /// </summary>
+        public GameObject ExtraModel(string role)
+        {
+            return RoleModel(role);
         }
 
         /// <summary>Spawns a figure (visitor or trusted adult) at a point around Keza. role picks a model, e.g. "parent".</summary>
@@ -667,8 +683,10 @@ namespace SafeTouch.AR
                 ? Data.SkinTones.Get(kezaTone.ToneId)
                 : Data.SkinTones.ForName(label);
             GetOrAdd<SkinToneApplier>(go).SetTone(tone, false);
-            if (role == "child") DressChild(go, color);
-            if (role == "boy") BoyModel.Dress(go, color);
+            // Other children wear the role's colour: on the lifelike child model through the skin-tone shader's
+            // tint, on the boy built from shapes through his T-shirt.
+            if (role == "child" || (role == "boy" && go.GetComponent<BoyMotion>() == null)) DressChild(go, color);
+            else if (role == "boy") BoyModel.Dress(go, color);
             go.transform.position = PointAroundCharacter(radius, angleDegrees);
             if (anchorRoot != null) go.transform.SetParent(anchorRoot, true);
             figure.FaceTowards(character.transform.position);
@@ -710,26 +728,69 @@ namespace SafeTouch.AR
         public void ClearMovable()
         {
             movable.Clear();
+            Select(null);
+        }
+
+        ARFigure selected;
+        GameObject selectedRing;
+
+        /// <summary>
+        /// The person the move pad walks and turns, and a two-finger twist turns: the one the child last
+        /// touched or dragged, if they may still be moved; otherwise the guide.
+        /// </summary>
+        public ARFigure Selected
+        {
+            get { return selected != null && CanDrag(selected) ? selected : character; }
+        }
+
+        /// <summary>Picks the person the move pad acts on (null: the guide); a ring glows at their feet for a moment.</summary>
+        public void Select(ARFigure figure)
+        {
+            if (selectedRing != null) Destroy(selectedRing);
+            selectedRing = null;
+            selected = figure;
+            if (figure == null || !CanDrag(figure)) return;
+            selectedRing = ARFx.FloorQuad("Picked", ARFx.Ring, Theme.WithAlpha(Color.white, 0.9f), 0.32f);
+            selectedRing.transform.SetParent(figure.transform, false);
+            float s = Mathf.Max(figure.transform.lossyScale.y, 0.0001f);
+            selectedRing.transform.localPosition = Vector3.up * 0.006f / s;
+            selectedRing.transform.localScale /= s;
+            FxAnimator.Pulse(selectedRing);
+            Destroy(selectedRing, 1.6f);
         }
 
         /// <summary>
-        /// One step of the guide for the arrow buttons: up walks away from the
-        /// phone, right walks to the right of the screen, so the buttons always
-        /// match the view. A help for children who find dragging hard.
+        /// One step for the arrow buttons, for the guide or whoever the child picked: up walks away from the
+        /// phone, right walks to the right of the screen, so the buttons always match the view. A help for
+        /// children who find dragging hard; holding an arrow keeps them walking.
         /// </summary>
         public void Step(Vector2 direction)
         {
-            if (character == null) return;
+            var who = Selected;
+            if (who == null) return;
             var cam = CameraTransform;
             var forward = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
             var right = Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;
-            var target = character.transform.position + (right * direction.x + forward * direction.y) * 0.18f;
+            var target = who.transform.position + (right * direction.x + forward * direction.y) * 0.18f;
             if (anchorRoot != null)
             {
                 var offset = Vector3.ProjectOnPlane(target - anchorRoot.position, Vector3.up);
                 if (offset.magnitude > MaxDistanceFromAnchor) return;   // stay near the placed spot
             }
-            character.WalkTo(target, null);
+            who.WalkTo(target, null);
+        }
+
+        /// <summary>Turns the guide, or whoever the child picked, on the spot (more than 0: to the right).</summary>
+        public void Turn(float degrees)
+        {
+            var who = Selected;
+            if (who != null) who.TurnBy(degrees);
+        }
+
+        /// <summary>In the 3D world, swings the camera around the guide (a swipe on the grass); nothing in the camera picture.</summary>
+        public void Orbit(float degrees)
+        {
+            if (Stage != null) Stage.Orbit(degrees);
         }
 
         public bool CanDrag(ARFigure figure)
@@ -750,9 +811,11 @@ namespace SafeTouch.AR
                 if (offset.magnitude > MaxDistanceFromAnchor) point = anchorRoot.position + offset.normalized * MaxDistanceFromAnchor;
             }
             point.y = figure.transform.position.y;
+            // Following the finger at a person's pace (they step, not slide), and turning the way they go.
             var from = figure.transform.position;
-            var to = Vector3.Lerp(from, point, 1f - Mathf.Exp(-18f * Time.deltaTime));
-            if ((to - from).sqrMagnitude > 0.000001f) figure.FaceTowards(to + (to - from) * 10f);
+            var to = Vector3.Lerp(from, point, 1f - Mathf.Exp(-9f * Time.deltaTime));
+            to = from + Vector3.ClampMagnitude(to - from, 1.2f * Time.deltaTime);
+            if ((to - from).sqrMagnitude > 0.0000004f) figure.TurnTowards(to + (to - from) * 10f);
             figure.transform.position = to;
         }
 

@@ -13,7 +13,8 @@ namespace SafeTouch.UI
     /// Two round buttons on the right of the 3D or camera view: + makes Keza bigger, - makes her smaller.
     /// Pinching with two fingers (the mouse wheel in the Editor) does the same. On the playground the camera
     /// moves closer; in the camera picture Keza steps closer to the phone (ARManager.ChangeSize).
-    /// They show while Keza is on screen.
+    /// They show while Keza is on screen, except in lessons, which have their own closer and further buttons
+    /// among their tools (the pinch works there too).
     /// </summary>
     public class SizeButtons : MonoBehaviour
     {
@@ -84,8 +85,9 @@ namespace SafeTouch.UI
         void LateUpdate()
         {
             showing = game.AR != null && game.AR.HasCharacter && ui.CameraShowing;
-            if (panel.transform.childCount > 0 && panel.transform.GetChild(0).gameObject.activeSelf != showing)
-                foreach (Transform child in panel.transform) child.gameObject.SetActive(showing);
+            bool buttons = showing && !ui.LessonShowing;
+            if (panel.transform.childCount > 0 && panel.transform.GetChild(0).gameObject.activeSelf != buttons)
+                foreach (Transform child in panel.transform) child.gameObject.SetActive(buttons);
             // Shown after Keza has been out of the picture for a moment, so a quick look around does not flash it.
             bool away = showing && game.AR.CanBringBack && !game.AR.CharacterInView;
             if (!away) outOfViewSince = -1f;

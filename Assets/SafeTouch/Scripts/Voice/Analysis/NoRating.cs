@@ -38,6 +38,21 @@ namespace SafeTouch.Voice
 
         public bool Heard { get { return stars > 0; } }
 
+        /// <summary>Decibels above the room that fill the NO power meter: a full-strength voice.</summary>
+        public const float FullPowerDb = 30f;
+
+        /// <summary>
+        /// "NO power", 0 to 100: how far the NO rose above the room's noise, the number the child sees and tries to
+        /// beat. A firm voice (strongLoudnessDb) passes; louder fills the meter. 0 when nothing was heard.
+        /// </summary>
+        public int Power { get { return Heard ? PowerOf(loudnessDb) : 0; } }
+
+        /// <summary>The NO power of a loudness in decibels above the room.</summary>
+        public static int PowerOf(float decibels)
+        {
+            return (int)System.Math.Round(System.Math.Max(0f, System.Math.Min(1f, decibels / FullPowerDb)) * 100f);
+        }
+
         /// <summary>Two or three stars: good enough to move the lesson on.</summary>
         public bool Good { get { return stars >= 2; } }
 

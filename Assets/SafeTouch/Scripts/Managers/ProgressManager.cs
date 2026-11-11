@@ -207,10 +207,24 @@ namespace SafeTouch.Managers
         /// <summary>Counts a spoken NO. Three-star tries count towards the "Strong Voice" badge.</summary>
         public void RecordNo(NoRating rating)
         {
-            if (rating == null || rating.stars < 3) return;
+            if (rating == null) return;
+            RecordNoPower(rating.Power);
+            if (rating.stars < 3) return;
             progress.strongNoCount++;
             UpdateBadges();
             Save();
+        }
+
+        /// <summary>The child's record: the NO power of their loudest spoken NO (0 when they have not spoken one yet).</summary>
+        public int LoudestNo { get { return progress.loudestNo; } }
+
+        /// <summary>Keeps a NO's power if it beats the record. True for a new record. Only the number is kept, never the sound.</summary>
+        public bool RecordNoPower(int power)
+        {
+            if (power <= progress.loudestNo) return false;
+            progress.loudestNo = Mathf.Min(power, 100);
+            Save();
+            return true;
         }
 
         public void SetSkinTone(string toneId)

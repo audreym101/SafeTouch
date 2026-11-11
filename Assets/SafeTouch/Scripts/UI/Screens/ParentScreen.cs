@@ -72,6 +72,17 @@ namespace SafeTouch.UI.Screens
             var progress = game.Progress.GetData();
             BuildGuess(progress);
             BuildUnsafe(progress);
+            BuildVoice(progress);
+        }
+
+        /// <summary>Saying NO out loud: the child's loudest NO (their record, 0 to 100) and how many strong NOs they said.</summary>
+        void BuildVoice(Progress progress)
+        {
+            UIFactory.Label(list, T("parent.child.voice.title", "Saying NO"), Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
+            string text = progress.loudestNo > 0
+                ? string.Format(T("parent.child.voice.body", "Loudest NO: {0} out of 100. Strong NOs said: {1}. Only these numbers are kept, never your child's voice."), progress.loudestNo, progress.strongNoCount)
+                : T("parent.child.voice.none", "Your child hasn't said NO out loud yet. They practise it in the lessons and in Bubble Guard.");
+            UIFactory.Label(list, text, Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
         }
 
         /// <summary>

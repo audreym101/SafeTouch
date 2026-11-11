@@ -51,6 +51,7 @@ MonoBehaviour:
   tintedParts: []
   nameLabel: {fileID: 6897060693836761907}
   walkSpeed: 0.35
+  keepOwnColours: 0
 --- !u!136 &2432299201402227921
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -104,7 +105,7 @@ MonoBehaviour:
   - sclera
   replaceSkinTexture: 1
   blendSeconds: 0.6
-  sparkleMaterial: {fileID: 0}
+  sparkleMaterial: {fileID: 2100000, guid: 81b025fd2801a9b4c86dffe91b28c640, type: 2}
 --- !u!1 &3880448655693304353
 GameObject:
   m_ObjectHideFlags: 0

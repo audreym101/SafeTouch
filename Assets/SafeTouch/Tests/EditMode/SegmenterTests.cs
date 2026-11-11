@@ -27,6 +27,18 @@ namespace SafeTouch.Tests
         }
 
         [Test]
+        public void ANoSaidTheMomentListeningStartsIsStillHeard()
+        {
+            // The child says NO during "get ready", before the room has been measured, then again.
+            var audio = Signals.WithRoom(Signals.Join(
+                Signals.Voice(280f, 250f, 0.6f, 0.3f), Signals.Silence(0.8f),
+                Signals.Voice(280f, 250f, 0.5f, 0.3f), Signals.Silence(0.8f)), 0.012f);
+            var words = Signals.Segment(audio);
+            Assert.AreEqual(2, words.Count, "the early NO is heard too: it must not be learnt as the room's noise");
+            Assert.AreEqual(0.5f, words[1].Duration, 0.15f, "the second NO is heard whole");
+        }
+
+        [Test]
         public void IgnoresAClick()
         {
             var words = Signals.Segment(Signals.Try(Signals.Voice(280f, 280f, 0.04f, 0.5f)));

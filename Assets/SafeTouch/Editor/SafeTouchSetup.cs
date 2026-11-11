@@ -297,6 +297,7 @@ namespace SafeTouch.EditorTools
             SetArray(ar, "figureVariants", people);
             SetRoles(ar, new[] { "mum", "dad", "child" },
                 new[] { SafeTouchCharacters.MumPrefabPath, SafeTouchCharacters.DadPrefabPath, SafeTouchCharacters.ClassmatePrefabPath });
+            Set(ar, "boyPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(SafeTouchCharacters.GanzaPrefabPath));   // empty: Ganza from simple shapes
             SafeTouchCharacters.SetOlder(ar);   // the 9 to 11 characters from downloaded models, if they have been made (SafeTouch > 8)
             Set(ar, "reticle", reticleInstance.transform);
             Set(ar, "raycastManager", raycasts);

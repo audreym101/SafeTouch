@@ -16,6 +16,7 @@ namespace SafeTouch.Voice
         const float LowestFloorDb = -90f;
         const float HighestFloorDb = -20f;
         const int OnsetFrames = 2;   // two loud frames in a row, so a tap on the table doesn't start a word
+        const float NoisyRoomDb = -35f;   // a noisy classroom: the loudest a room is taken to be before it is measured
 
         Utterance current;
         int quietFrames;
@@ -119,7 +120,17 @@ namespace SafeTouch.Voice
         void TrackFloor(float levelDb)
         {
             float rate;
-            if (!Settled) rate = SettleFrames == 0 ? 1f : 0.35f;   // learn the room quickly at first
+            // Learning the room quickly at first, but a child who says NO straight away (during "get ready")
+            // must not be learnt as the room: the first guess is never louder than a noisy classroom, louder
+            // frames barely move the floor while settling, quieter ones move it fast. So the rest of their NO,
+            // and the next one, are still heard.
+            if (!Settled && SettleFrames == 0)
+            {
+                NoiseFloorDb = Mathf.Clamp(Mathf.Min(levelDb, NoisyRoomDb), LowestFloorDb, HighestFloorDb);
+                SettleFrames++;
+                return;
+            }
+            if (!Settled) rate = levelDb > NoiseFloorDb + 3f ? 0.05f : 0.35f;
             else if (levelDb < NoiseFloorDb) rate = 0.3f;           // the room got quieter: follow fast
             else rate = 0.03f;                                      // a little louder: follow slowly
             NoiseFloorDb = Mathf.Clamp(Mathf.Lerp(NoiseFloorDb, levelDb, rate), LowestFloorDb, HighestFloorDb);

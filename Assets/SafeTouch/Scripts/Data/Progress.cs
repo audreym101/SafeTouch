@@ -37,6 +37,7 @@ namespace SafeTouch.Data
         public float bestChaseSeconds;          // fastest "NO" in the Memory Quest chase; 0 = not played yet
         public bool voiceEnabled = true;        // spoken NO practice; a parent can switch it off
         public int strongNoCount;               // three-star spoken NOs; a count only, never audio or pitch values
+        public int loudestNo;                   // NO power (0-100) of the loudest spoken NO, the child's record; a number only, never the sound
         public string skinTone = SkinTones.DefaultId;   // how the child chose Keza to look (not the child's own data)
         public string guide = "girl";           // the helper the child picked: "girl" (Keza) or "boy"; on this phone only, never synced
         public int bestGuardScore;              // best Bubble Guard score
@@ -158,6 +159,7 @@ namespace SafeTouch.Data
         public List<string> badgesEarned = new List<string>();
         public float bestChaseSeconds;
         public int strongNoCount;
+        public int loudestNo;
         public int bestGuardScore;
         public int guardGamesPlayed;
 
@@ -172,6 +174,7 @@ namespace SafeTouch.Data
                 badgesEarned = new List<string>(p.badgesEarned),
                 bestChaseSeconds = p.bestChaseSeconds,
                 strongNoCount = p.strongNoCount,
+                loudestNo = p.loudestNo,
                 bestGuardScore = p.bestGuardScore,
                 guardGamesPlayed = p.guardGamesPlayed,
             };
@@ -186,6 +189,7 @@ namespace SafeTouch.Data
             p.badgesEarned = new List<string>(badgesEarned);
             p.bestChaseSeconds = bestChaseSeconds;
             p.strongNoCount = strongNoCount;
+            p.loudestNo = loudestNo;
             p.bestGuardScore = bestGuardScore;
             p.guardGamesPlayed = guardGamesPlayed;
         }

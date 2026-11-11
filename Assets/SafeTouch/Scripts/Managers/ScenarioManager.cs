@@ -17,12 +17,13 @@ namespace SafeTouch.Managers
         public bool IsLast { get { return currentIndex >= scenarios.Count - 1; } }
 
         /// <summary>
-        /// Loads every scenario up to the given difficulty level. Ages 6-8 use
-        /// level 1 (7 cards); ages 9-11 use level 2 (all 13 cards).
+        /// Loads one age group's own deck: level 1 for ages 6-8 (9 cards), level 2 for ages 9-11 (10 cards).
+        /// The decks share no cards, so a child who grows into the older path meets new situations
+        /// that teach the same ideas in more detail.
         /// </summary>
         public void LoadScenarios(int level)
         {
-            scenarios = ContentLibrary.Scenarios.Where(s => s.level <= level).ToList();
+            scenarios = ContentLibrary.Scenarios.Where(s => s.level == level).ToList();
             foreach (var s in scenarios)
                 if (!string.IsNullOrEmpty(s.audioClipName))
                     s.audioClip = Resources.Load<AudioClip>("Audio/Voice/" + s.audioClipName);
