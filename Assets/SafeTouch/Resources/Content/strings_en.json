@@ -81,22 +81,6 @@
       "value": "Finish lesson {0} first"
     },
     {
-      "key": "scan.hint",
-      "value": "Move your phone slowly to find the floor or a table."
-    },
-    {
-      "key": "scan.searching",
-      "value": "Looking for a flat surface..."
-    },
-    {
-      "key": "scan.found",
-      "value": "Found it! Tap the button to place Keza."
-    },
-    {
-      "key": "scan.place",
-      "value": "Place Keza here"
-    },
-    {
       "key": "lesson.replay",
       "value": "Read to me"
     },
@@ -115,22 +99,6 @@
     {
       "key": "adults.place",
       "value": "Put them around Keza"
-    },
-    {
-      "key": "badges.lessons",
-      "value": "My lessons"
-    },
-    {
-      "key": "badges.score",
-      "value": "{0} stars"
-    },
-    {
-      "key": "badges.notyet",
-      "value": "not yet"
-    },
-    {
-      "key": "badges.locked",
-      "value": "locked"
     },
     {
       "key": "gate.title",
@@ -404,23 +372,6 @@
       "key": "skin.ebony",
       "value": "Ebony"
     },
-    { "key": "scan.camera.title", "value": "Keza needs your camera" },
-    { "key": "scan.camera.body", "value": "Keza needs the camera to appear in your room. The picture is never saved or sent." },
-    { "key": "scan.camera.allow", "value": "Allow the camera" },
-    { "key": "scan.denied.title", "value": "The camera is switched off" },
-    { "key": "scan.denied.body", "value": "Without the camera, Keza can't appear in your room. Tap below and choose Allow." },
-    { "key": "scan.denied.again", "value": "Try again" },
-    { "key": "scan.settings.body", "value": "Ask a grown-up to open Settings and allow the camera for SafeTouch, then come back." },
-    { "key": "scan.settings.open", "value": "Open Settings" },
-    { "key": "scan.unsupported.title", "value": "This phone can't show AR" },
-    { "key": "scan.unsupported.body", "value": "SafeTouch needs a phone that works with Google Play Services for AR (ARCore). Ask a grown-up to try another phone." },
-    { "key": "scan.unsupported.back", "value": "Back to the lessons" },
-    { "key": "scan.preparing", "value": "Getting the camera ready..." },
-    { "key": "scan.search.title", "value": "Find the floor or a table" },
-    { "key": "scan.search.body", "value": "Point your phone at the floor or a big table. Move it slowly. Squares show where Keza can stand." },
-    { "key": "scan.small.title", "value": "Found it! Keep going..." },
-    { "key": "scan.small.body", "value": "This surface is {0:0.0} x {1:0.0} m. Keza needs about {2:0.0} x {2:0.0} m: move your phone slowly over more of it until the squares turn green." },
-    { "key": "scan.ready.title", "value": "Big enough!" },
     { "key": "consent.title", "value": "For parents and guardians" },
     { "key": "consent.intro", "value": "Dear parents,\n\nBefore your child uses SafeTouch, please read what it does and what it keeps, tick the boxes, and give your details so we can confirm by email that it was you." },
     { "key": "consent.details", "value": "Your details" },

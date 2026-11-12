@@ -10,7 +10,7 @@ namespace SafeTouch.EditorTools
 {
     /// <summary>
     /// SafeTouch > 4. Build Character Prefabs From Models. Turns the models
-    /// in Assets/SafeTouch/Models into AR-ready prefabs:
+    /// in Assets/SafeTouch/Models into prefabs for the 3D world:
     ///   Keza    - the Mixamo child, with a skin mask so her skin tone can
     ///             change while her clothes stay the same, and her greeting
     ///             wave for "Bounce".
@@ -48,7 +48,7 @@ namespace SafeTouch.EditorTools
         public const string KezaPrefabPath = PrefabFolder + "/Keza Model.prefab";
         public static readonly string[] AdultPrefabPaths = { PrefabFolder + "/Adult 1.prefab", PrefabFolder + "/Adult 2.prefab" };
 
-        // Heights in metres for the table-top AR scale, matching the simple figures.
+        // Heights in metres in the 3D world, matching the simple figures.
         const float KezaHeight = 0.55f;
         const float AdultHeight = 0.78f;
 
@@ -767,8 +767,8 @@ namespace SafeTouch.EditorTools
         /// The grass model is 9,437 separate blades on a 2 m patch, far too many
         /// draw calls for a phone. This keeps a round patch from the middle,
         /// every second blade, and merges them into one mesh (about 7,000
-        /// vertices) about 0.6 m across. The soil plane is dropped: the real
-        /// floor shows through in AR.
+        /// vertices) about 0.6 m across. The soil plane is dropped: the
+        /// lawn of the 3D world shows through.
         /// </summary>
         internal static void BuildGrass()
         {

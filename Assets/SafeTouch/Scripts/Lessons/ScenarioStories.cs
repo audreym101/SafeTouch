@@ -241,7 +241,7 @@ namespace SafeTouch.Lessons
 
         IEnumerator SweetsFromACar()
         {
-            float road = game.AR.UsesAR ? 1.2f : 2.1f;
+            float road = 2.1f;
             Road(road);
             car = Car(Theme.Hex("#2E4B73"));
             var stop = At(0.35f, road);
@@ -364,7 +364,7 @@ namespace SafeTouch.Lessons
         /// <summary>Late leaving school, in the dark: a car pulls up and a stranger says Mum sent them.</summary>
         IEnumerator LateFromSchool()
         {
-            float road = game.AR.UsesAR ? 1.2f : 2.1f;
+            float road = 2.1f;
             Road(road);
             SchoolGate(At(-0.8f, 0.6f));
             StreetLamp(At(1.15f, road - 0.55f));

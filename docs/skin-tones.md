@@ -61,7 +61,7 @@ Names are foods and woods, never ethnic labels. The default is Keza's original c
 
 ## The effect
 
-When Keza is already in the room, the screen stays see-through and the change plays on her in AR:
+When Keza is already in her 3D world, the screen stays see-through and the change plays on her there:
 - the colour blends over 0.6 s with a soft glow halfway;
 - sun-yellow and new-tone dots burst up around her;
 - she waves (or hops, on the simple figure).

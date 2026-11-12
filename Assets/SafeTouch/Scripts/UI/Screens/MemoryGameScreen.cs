@@ -61,7 +61,7 @@ namespace SafeTouch.UI.Screens
 
         public override void OnShow()
         {
-            TitleText.text = Localization.T("review.round1", "Round 1 of 4: match the pairs");
+            TitleText.text = Localization.T("review.round.pairs", "Round 1 of 3: match the pairs");
             UIFactory.SetButtonLabel(read, Localization.T("lesson.replay", "Read to me"));
         }
 

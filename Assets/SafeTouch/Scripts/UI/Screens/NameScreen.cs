@@ -60,7 +60,7 @@ namespace SafeTouch.UI.Screens
         {
             TitleText.text = Localization.T("name.title", "Your name");
             question.text = Localization.T("name.question", "What's your name?");
-            note.text = Localization.T("name.note", "Your helper in the room will have your name. Use your first name or a nickname. It stays on this phone.");
+            note.text = Localization.T("name.note", "Your helper in the 3D world will have your name. Use your first name or a nickname. It stays on this phone.");
             var placeholder = field.placeholder as Text;
             if (placeholder != null) placeholder.text = Localization.T("name.placeholder", "Type your name");
             var saved = game.Progress.GetData().childName;

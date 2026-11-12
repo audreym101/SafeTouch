@@ -227,7 +227,7 @@ namespace SafeTouch.Lessons
             if (Older) { AskWords(); return; }
 
             // The helpers stand around the guide: the child taps one (or a button).
-            TouchHint(T("adults.first.touch", "Tap a helper in the room."));
+            TouchHint(T("adults.first.touch", "Tap a helper."));
             var options = chosen.Take(4).Select(a => new PromptOption(a.name, Theme.Card, () => ChoseFirst(a, chosen.Count))).ToArray();
             Prompt(T("adults.first.title", "Keza's helping hand"),
                 T("adults.first.body", "If something felt wrong, who would Keza tell first?"),

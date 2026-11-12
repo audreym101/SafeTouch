@@ -38,7 +38,7 @@ namespace SafeTouch.AR
     }
 
     /// <summary>
-    /// Direct touch in the AR view, so children act on the room itself rather
+    /// Direct touch in the 3D view, so children act on the world itself rather
     /// than on buttons:
     ///   tap          - touch a person, a floor zone, a letter or a body dot (Tapped);
     ///                  touching a person also picks them for the move pad

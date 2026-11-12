@@ -70,7 +70,7 @@ namespace SafeTouch.UI
             if (canvas.GetComponent<TextSizer>() == null) canvas.gameObject.AddComponent<TextSizer>();   // the letter size chosen in Settings
 
             // Fills the whole screen behind the safe area: notches, rounded corners and
-            // tablet margins show the app's colour instead of black. Hidden on AR screens.
+            // tablet margins show the app's colour instead of black. Hidden on the see-through 3D screens.
             backdrop = UIFactory.Panel(canvas.transform, "Backdrop", Theme.Sky, false);
             UIFactory.Stretch((RectTransform)backdrop.transform);
             backdrop.raycastTarget = false;
@@ -99,7 +99,6 @@ namespace SafeTouch.UI
             screens.Add(Names);
             screens.Add(new AgeScreen());
             screens.Add(new HomeScreen());
-            screens.Add(new ScanScreen());
             screens.Add(Lesson);
             screens.Add(Adults);
             screens.Add(Memory);
@@ -145,7 +144,7 @@ namespace SafeTouch.UI
             if (backdrop != null) backdrop.enabled = active == null || !active.CameraVisibleNow;
         }
 
-        /// <summary>True while the screen showing lets the 3D view (or the camera picture) show through.</summary>
+        /// <summary>True while the screen showing lets the 3D view show through.</summary>
         public bool CameraShowing { get { return active != null && active.CameraVisibleNow; } }
 
         /// <summary>True while a lesson (or Bubble Guard) is on screen: it has its own closer and further buttons.</summary>

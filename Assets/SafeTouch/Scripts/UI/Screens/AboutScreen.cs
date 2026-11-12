@@ -36,8 +36,8 @@ namespace SafeTouch.UI.Screens
         {
             TitleText.text = L("About us", "Abo turi bo");
             heading.text = "SafeTouch";
-            what.text = L("SafeTouch helps children aged 6 to 11 learn to keep their body safe: personal space, safe and unsafe touch, saying \"No\", and who to tell. Keza, our guide, plays out real-life stories with you in a 3D world, or in your room with the phone's camera.",
-                          "SafeTouch ifasha abana bafite imyaka 6 kugeza 11 kwiga kurinda umubiri wabo: umwanya bwite, gukorwaho bikwiye n'ibidakwiye, kuvuga \"Oya\", n'uwo babwira. Keza, umuyobozi wacu, akina inkuru z'ubuzima busanzwe nawe mu isi ye ya 3D, cyangwa mu cyumba cyawe binyuze kuri kamera ya telefoni.");
+            what.text = L("SafeTouch helps children aged 6 to 11 learn to keep their body safe: personal space, safe and unsafe touch, saying \"No\", and who to tell. Keza, our guide, plays out real-life stories with you in her own 3D world.",
+                          "SafeTouch ifasha abana bafite imyaka 6 kugeza 11 kwiga kurinda umubiri wabo: umwanya bwite, gukorwaho bikwiye n'ibidakwiye, kuvuga \"Oya\", n'uwo babwira. Keza, umuyobozi wacu, akina inkuru z'ubuzima busanzwe nawe mu isi ye ya 3D.");
             who.text = L("SafeTouch was made in Rwanda, in English and Kinyarwanda, to be used by a child with a parent or teacher nearby.",
                          "SafeTouch yakorewe mu Rwanda, mu Cyongereza no mu Kinyarwanda, kugira ngo ikoreshwe n'umwana ari kumwe n'umubyeyi cyangwa umwarimu.");
             privacy.text = L("We keep only what a parent agreed to: the parent's details to confirm consent, and, only if the parent switches it on, the child's stars and badges saved online. A parent can delete it all at any time in Grown-ups > Settings.",

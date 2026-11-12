@@ -30,7 +30,7 @@ namespace SafeTouch.Lessons
     /// </summary>
     public class PersonalSpaceBubbleLesson : LessonBase
     {
-        // Zone radii in metres around Keza (real-world scale in AR).
+        // Zone radii in metres around Keza (true distances in the 3D world).
         public const float RedRadius = 0.3f;     // "my body": nobody comes in without my OK
         public const float YellowRadius = 0.6f;  // people I know and trust
         public const float GreenRadius = 0.9f;   // everyone else stays out here

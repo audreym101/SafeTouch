@@ -10,9 +10,9 @@ using ETouch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 namespace SafeTouch.UI
 {
     /// <summary>
-    /// Two round buttons on the right of the 3D or camera view: + makes Keza bigger, - makes her smaller.
-    /// Pinching with two fingers (the mouse wheel in the Editor) does the same. On the playground the camera
-    /// moves closer; in the camera picture Keza steps closer to the phone (ARManager.ChangeSize).
+    /// Two round buttons on the right of the 3D view: + makes Keza bigger, - makes her smaller.
+    /// Pinching with two fingers (the mouse wheel in the Editor) does the same: the camera moves closer or
+    /// further away (ARManager.ChangeSize).
     /// They show while Keza is on screen, except in lessons, which have their own closer and further buttons
     /// among their tools (the pinch works there too).
     /// </summary>
@@ -25,8 +25,7 @@ namespace SafeTouch.UI
         GameObject panel;
         Text caption;
         bool showing;
-        float lastPinch, outOfViewSince = -1f;
-        Button bringBack;
+        float lastPinch;
 
         public static SizeButtons Build(RectTransform parent, GameManager game, UIManager ui)
         {
@@ -47,13 +46,6 @@ namespace SafeTouch.UI
             shadow.effectColor = new Color(1f, 1f, 1f, 0.8f);
             Round(root, "-", Theme.Primary, () => buttons.Zoom(1f / Step));
             foreach (Transform child in root) child.gameObject.SetActive(false);   // hidden until Keza is on screen
-
-            // Camera mode: when the child points the phone away and Keza is out of the picture, one tap brings her back.
-            buttons.bringBack = UIFactory.Button(parent, "", Theme.Sun, Theme.Ink, () => game.AR.BringIntoView());
-            var brt = (RectTransform)buttons.bringBack.transform;
-            brt.anchorMin = brt.anchorMax = new Vector2(0.5f, 0.8f);
-            brt.sizeDelta = new Vector2(660f, 150f);
-            buttons.bringBack.gameObject.SetActive(false);
             return buttons;
         }
 
@@ -88,13 +80,6 @@ namespace SafeTouch.UI
             bool buttons = showing && !ui.LessonShowing;
             if (panel.transform.childCount > 0 && panel.transform.GetChild(0).gameObject.activeSelf != buttons)
                 foreach (Transform child in panel.transform) child.gameObject.SetActive(buttons);
-            // Shown after Keza has been out of the picture for a moment, so a quick look around does not flash it.
-            bool away = showing && game.AR.CanBringBack && !game.AR.CharacterInView;
-            if (!away) outOfViewSince = -1f;
-            else if (outOfViewSince < 0f) outOfViewSince = Time.unscaledTime;
-            bool offer = away && Time.unscaledTime - outOfViewSince > 0.7f;
-            if (bringBack.gameObject.activeSelf != offer) bringBack.gameObject.SetActive(offer);
-            if (offer) UIFactory.SetButtonLabel(bringBack, string.Format(Localization.Language == "rw" ? "Garura {0} hano" : "Bring {0} back", string.IsNullOrEmpty(game.AR.Character.Label) ? "Keza" : game.AR.Character.Label));
             if (!showing) { lastPinch = 0f; return; }
             caption.text = Localization.Language == "rw" ? "Ingano" : "Size";
             Pinch();

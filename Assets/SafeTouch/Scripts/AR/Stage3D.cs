@@ -6,8 +6,8 @@ namespace SafeTouch.AR
     /// <summary>
     /// The 3D playground: Keza appears at once in a park under a real sky, on a grass lawn with pine trees, a
     /// little house in its garden and people chatting in the distance, and the phone shows it through a virtual
-    /// camera. No camera permission and no scanning for a floor or table. The lessons are unchanged: they still
-    /// place people around Keza, in metres, through ARManager.
+    /// camera. The phone's own camera is never used. The lessons place people around Keza, in metres, through
+    /// ARManager.
     ///
     /// The look is cinematic: soft sun shadows, sky light, haze in the distance, a film colour grade with a
     /// vignette (CinematicLook), a camera that breathes a little like a hand-held one, shakes when something
@@ -57,7 +57,7 @@ namespace SafeTouch.AR
             SetUpCamera();
             BuildWorld();
             SetOlderLook(ar.Older);
-            ARFigure.SpeechScale = 2f;   // the view is further away than in the camera picture
+            ARFigure.SpeechScale = 2f;   // the view is a few metres away, so speech bubbles are drawn bigger
             ARFx.LabelScale = 1.5f;      // and so are the floating labels
             ar.CharacterPlaced += Aim;
             if (ar.HasCharacter) Aim(ar.Character);
@@ -71,7 +71,7 @@ namespace SafeTouch.AR
             lookHeight = HeightOf(character.gameObject) * 0.8f;
         }
 
-        /// <summary>Takes the playground away and gives the camera back its own settings (switching to the camera picture).</summary>
+        /// <summary>Takes the playground away and gives the camera back its own settings.</summary>
         public void Teardown()
         {
             ar.CharacterPlaced -= Aim;
@@ -87,14 +87,12 @@ namespace SafeTouch.AR
             if (look != null) Destroy(look);
             if (cam != null)
             {
-                foreach (var b in switchedOff) if (b != null) b.enabled = true;
                 cam.clearFlags = saved.clearFlags;
                 cam.backgroundColor = saved.background;
                 cam.fieldOfView = saved.fieldOfView;
                 cam.nearClipPlane = saved.near;
                 cam.farClipPlane = saved.far;
             }
-            switchedOff.Clear();
             RenderSettings.fog = saved.fog;
             RenderSettings.ambientMode = saved.ambientMode;
             RenderSettings.ambientLight = saved.ambientLight;
@@ -134,7 +132,6 @@ namespace SafeTouch.AR
         }
 
         Saved saved;
-        readonly List<Behaviour> switchedOff = new List<Behaviour>();
         Light sun;
         bool madeSun;
 
@@ -250,16 +247,6 @@ namespace SafeTouch.AR
             saved.fogStart = RenderSettings.fogStartDistance;
             saved.fogEnd = RenderSettings.fogEndDistance;
             saved.pixelLights = QualitySettings.pixelLightCount;
-            // The AR parts (camera picture, phone tracking) would show black or move the view: switch them off.
-            foreach (var b in cam.GetComponents<Behaviour>())
-            {
-                var type = b.GetType().Name;
-                if ((type == "ARCameraBackground" || type == "ARCameraManager" || type == "TrackedPoseDriver") && b.enabled)
-                {
-                    b.enabled = false;
-                    switchedOff.Add(b);
-                }
-            }
             var horizon = new Color(0.74f, 0.84f, 0.92f);
             var sky = Resources.Load<Material>("Looks/Sky");
             cam.clearFlags = sky != null ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;

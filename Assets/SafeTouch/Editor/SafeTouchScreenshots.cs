@@ -67,7 +67,7 @@ namespace SafeTouch.EditorTools
             var safe = canvas.GetComponentInChildren<SafeArea>(true);
             var camera = new GameObject("Screenshot camera").AddComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.22f, 0.24f, 0.26f);   // stands in for the camera picture on AR screens
+            camera.backgroundColor = new Color(0.22f, 0.24f, 0.26f);   // behind the see-through 3D screens
             canvas.renderMode = RenderMode.ScreenSpaceCamera;
             canvas.worldCamera = camera;
             canvas.planeDistance = 1f;
@@ -152,7 +152,6 @@ namespace SafeTouch.EditorTools
             yield return shot("02-age", () => ui.ShowMenu("age"));
             yield return shot("02b-menu", () => ui.ShowMenu("menu"));
             yield return shot("03-home", () => ui.ShowMenu("home"));
-            yield return shot("04-scan", () => ui.ShowMenu("scan"));
             yield return shot("05-lesson", () =>
             {
                 ui.ShowMenu("lesson");

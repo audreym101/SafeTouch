@@ -6,14 +6,14 @@ SafeTouch is an offline Android app. Deployment means getting a tested APK onto 
 
 | Environment | What runs | Where | When |
 |---|---|---|---|
-| Development | Unity editor with XR Simulation; API on `localhost:3000` with the in-memory store | Researcher's laptop | Weeks 1 to 6 |
-| Device testing | Development APK (Build And Run over USB) | Researcher's ARCore phone | Weeks 2 to 7 |
-| Pilot | Signed release APK, installed by hand | 2 to 3 ARCore phones used at the partner school or community centre in Kigali | Weeks 7 to 8 |
+| Development | Unity editor (Play mode shows the same 3D world as a phone); API on `localhost:3000` with the in-memory store | Researcher's laptop | Weeks 1 to 6 |
+| Device testing | Development APK (Build And Run over USB) | Researcher's Android phone | Weeks 2 to 7 |
+| Pilot | Signed release APK, installed by hand | 2 to 3 Android 8.0+ phones (64-bit) used at the partner school or community centre in Kigali | Weeks 7 to 8 |
 | Cloud API | `backend/` on Render's free web service with MongoDB Atlas M0 ([mongodb.md](mongodb.md)) | Render and Atlas, HTTPS | Week 6: parental consent; progress sync only if the supervisor and ethics review approve it |
 
 ## Building the release APK
 
-1. SafeTouch > **1. Configure Android AR Settings** (API 26+, IL2CPP ARM64, OpenGL ES 3, portrait). Then Project Settings > XR Plug-in Management > Google ARCore > **Requirement: Required**, so the Play Store only offers it to ARCore phones later.
+1. SafeTouch > **1. Configure Android Settings** (API 26+, IL2CPP ARM64, OpenGL ES 3, portrait).
 2. Project Settings > Player > Android > Publishing Settings: create a keystore (`safetouch.keystore`), kept outside the repo and backed up.
 3. Set **Version** (`0.1.0` for the supervisor demo, `0.2.0` for the pilot) and increase **Bundle Version Code** every build.
 4. File > Build Profiles > Android: Development Build **off**, Build.
@@ -21,12 +21,11 @@ SafeTouch is an offline Android app. Deployment means getting a tested APK onto 
 
 ## Installing on pilot phones
 
-1. Check the model on the ARCore supported devices list.
-2. Install **Google Play Services for AR** from the Play Store.
-3. Copy the APK over USB or with `adb install SafeTouch.apk`, and allow "Install unknown apps" for that one install, then turn it off again.
-4. Open SafeTouch once, allow the camera, and run the scan screen to confirm planes are detected in that room.
-5. In the parent section, confirm **Anonymous progress sync is OFF** (the default) unless the ethics approval covers it.
-6. Between children, use Settings > **Delete progress on this phone** so each session starts clean.
+1. Check the phone runs Android 8.0 or newer and is 64-bit (most phones since 2017 are).
+2. Copy the APK over USB or with `adb install SafeTouch.apk`, and allow "Install unknown apps" for that one install, then turn it off again.
+3. Open SafeTouch once and play the first lesson to confirm the 3D world runs smoothly on that phone. Allow the microphone when Keza asks, so the voice coach can be tried.
+4. In the parent section, confirm **Anonymous progress sync is OFF** (the default) unless the ethics approval covers it.
+5. Between children, use Settings > **Delete progress on this phone** so each session starts clean.
 
 ## The API (parental consent and optional anonymous progress)
 

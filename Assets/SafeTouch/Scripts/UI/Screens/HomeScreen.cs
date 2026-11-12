@@ -17,6 +17,21 @@ namespace SafeTouch.UI.Screens
             public LessonInfo info;
             public Button button;
             public Text title, summary;
+            public GameObject animal, emblem;   // Explorer (6-8) or Guardian (9-11) picture
+        }
+
+        /// <summary>What each Guardian emblem shows: lessons 1 to 5, then Bubble Guard.</summary>
+        static Sprite EmblemFor(LessonInfo info)
+        {
+            if (info == LessonInfo.Game) return Icons.Shield;
+            switch (info.level)
+            {
+                case 1: return Icons.Target;     // my bubble
+                case 2: return Icons.Search;     // spot the red flag
+                case 3: return Icons.StopSign;   // STOP
+                case 4: return Icons.People;     // my safety network
+                default: return Icons.Star;      // Memory Quest
+            }
         }
 
         readonly List<Card> cards = new List<Card>();
@@ -74,8 +89,10 @@ namespace SafeTouch.UI.Screens
                 card.summary = UIFactory.Label(card.button.transform, "", Theme.Label, Theme.Muted, TextAnchor.MiddleLeft, false);
                 card.summary.supportRichText = true;   // the status follows the summary in the lesson's colour
                 Decor.Badge((RectTransform)card.button.transform, info == LessonInfo.Game ? "G" : info.level.ToString(), info.color, 96f);
-                // A little animal for each lesson (bunny, cat, lion, elephant, owl; a frog for the game), hopping gently.
-                Decor.Animal((RectTransform)card.button.transform, info == LessonInfo.Game ? Decor.AnimalKind.Frog : (Decor.AnimalKind)Mathf.Clamp(info.level - 1, 0, 4), 120f);
+                // Explorer (6-8): a little animal for each lesson (bunny, cat, lion, elephant, owl; a frog for the game),
+                // hopping gently. Guardian (9-11): a mission-badge emblem instead, which older children take seriously.
+                card.animal = Decor.Animal((RectTransform)card.button.transform, info == LessonInfo.Game ? Decor.AnimalKind.Frog : (Decor.AnimalKind)Mathf.Clamp(info.level - 1, 0, 4), 120f).gameObject;
+                card.emblem = Decor.Emblem((RectTransform)card.button.transform, EmblemFor(info), info.color, 124f).gameObject;
                 cards.Add(card);
             }
 
@@ -136,8 +153,11 @@ namespace SafeTouch.UI.Screens
             UIFactory.SetButtonLabel(look, Localization.T("home.look", "Keza's look"));
             UIFactory.SetButtonLabel(grownUps, Localization.T("home.grownups"));
 
+            bool guardian = progress.ageGroup == Data.Progress.PathOlder;
             foreach (var card in cards)
             {
+                card.animal.SetActive(!guardian);
+                card.emblem.SetActive(guardian);
                 int level = card.info.level;
                 bool unlocked = game.Progress.IsUnlocked(level);
                 card.button.interactable = unlocked;

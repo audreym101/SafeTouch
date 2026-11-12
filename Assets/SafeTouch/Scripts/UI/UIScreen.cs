@@ -18,13 +18,13 @@ namespace SafeTouch.UI
 
         public abstract string Name { get; }
 
-        /// <summary>AR screens are see-through so the camera feed shows.</summary>
+        /// <summary>3D screens are see-through so Keza's world shows behind them.</summary>
         public virtual bool ShowsCamera { get { return false; } }
 
         /// <summary>
-        /// True while the camera picture is really showing behind this screen. A see-through
-        /// screen whose camera is not on yet (Keza not placed, camera not allowed) says false,
-        /// so the full-screen background fills the notch and tablet margins instead of black.
+        /// True while the 3D world is really showing behind this screen. A see-through screen
+        /// with no guide on the playground yet says false, so the full-screen background fills
+        /// the notch and tablet margins instead of black.
         /// </summary>
         public virtual bool CameraVisibleNow { get { return ShowsCamera; } }
 

@@ -47,7 +47,7 @@ namespace SafeTouch.UI.Screens
 
         public override void OnShow()
         {
-            TitleText.text = Localization.T("review.round4", "Round 4 of 4: safe places chase");
+            TitleText.text = Localization.T("review.round.chase", "Round 3 of 3: safe places chase");
             heading.text = Localization.T("places.title", "Where is Keza playing?");
             intro.text = Localization.T("places.intro", "Pick a place. Someone will come too close three times. Say NO, tap them, or drag Keza to a helper as fast as you can.");
             footer.text = Localization.T("places.footer", "Faster is better: 3 seconds or less earns 3 stars.");

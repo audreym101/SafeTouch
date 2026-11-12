@@ -1,4 +1,3 @@
-using SafeTouch.AR;
 using SafeTouch.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,13 +5,13 @@ using UnityEngine.UI;
 namespace SafeTouch.UI.Screens
 {
     /// <summary>
-    /// Settings a child can change: music, sound effects, where Keza appears (the 3D world or the camera
-    /// picture), letter size and the language. The choices stay on the phone.
+    /// Settings a child can change: music, sound effects, letter size and the language. The choices stay on
+    /// the phone.
     /// </summary>
     public class SettingsScreen : UIScreen
     {
-        Text musicTitle, soundsTitle, cameraTitle, cameraNote, lettersTitle, languageTitle;
-        Button music, sounds, cameraView, english, kinyarwanda;
+        Text musicTitle, soundsTitle, lettersTitle, languageTitle;
+        Button music, sounds, english, kinyarwanda;
         readonly Button[] letterButtons = new Button[TextSize.Scales.Length];
 
         public override string Name { get { return "settings"; } }
@@ -24,10 +23,6 @@ namespace SafeTouch.UI.Screens
             music = UIFactory.Button(col, "", Theme.Safe, Color.white, () => { game.Audio.MusicOn = !game.Audio.MusicOn; OnShow(); });
             soundsTitle = UIFactory.Label(col, "", Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
             sounds = UIFactory.Button(col, "", Theme.Safe, Color.white, () => { game.Audio.SoundsOn = !game.Audio.SoundsOn; OnShow(); });
-            // Keza in the 3D world (the default) or in the room, through the phone's camera.
-            cameraTitle = UIFactory.Label(col, "", Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
-            cameraView = UIFactory.Button(col, "", Theme.Safe, Color.white, () => { game.AR.SetCameraMode(!ARManager.CameraChosen); OnShow(); });
-            cameraNote = UIFactory.Label(col, "", Theme.Small, Theme.Muted, TextAnchor.MiddleLeft, false);
             // Letter size: three buttons with a small, a medium and a big "A".
             lettersTitle = UIFactory.Label(col, "", Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
             var sizes = UIFactory.Row(col, "Letter sizes", Theme.Gap, Theme.TouchTarget);
@@ -50,11 +45,6 @@ namespace SafeTouch.UI.Screens
             TitleText.text = L("Settings", "Igenamiterere");
             musicTitle.text = L("Music", "Umuziki");
             soundsTitle.text = L("Sounds when you tap", "Amajwi iyo ukanze");
-            cameraTitle.text = L("See my helper in my room (camera)", "Reba umufasha wanjye mu cyumba cyanjye (kamera)");
-            cameraNote.text = ARManager.CameraChosen
-                ? L("Your helper stands in your room, through the phone's camera.", "Umufasha wawe ahagarara mu cyumba cyawe, unyuze kuri kamera ya telefoni.")
-                : L("Your helper plays in a 3D world. The camera is not used.", "Umufasha wawe akinira mu isi ya 3D. Kamera ntikoreshwa.");
-            Switch(cameraView, ARManager.CameraChosen);
             lettersTitle.text = L("Letter size", "Ingano y'inyuguti");
             for (int i = 0; i < letterButtons.Length; i++)
             {

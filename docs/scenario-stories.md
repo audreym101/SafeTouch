@@ -53,14 +53,14 @@ Nothing in the stories is graphic. The words match the cards, which the content 
 
 ## Stories after dark
 
-Cards S14, S15, S16 and S18 have `"night": true` in `scenarios.json`. While their story, question and act-out play, the 3D world turns to night (see [3d-mode.md](3d-mode.md)): a deep blue sky with the moon and stars, street lamps with warm pools of light, a lit shop, a market stall with its bulb and car headlights. A soft light always stays on the play area, so the people are easy to see. The day cards always play in daylight, even if the child chose night with the moon button; their choice comes back after the lesson. In camera mode the room stays as it is, but the lamps, the lit shop and the headlights still come.
+Cards S14, S15, S16 and S18 have `"night": true` in `scenarios.json`. While their story, question and act-out play, the 3D world turns to night (see [3d-mode.md](3d-mode.md)): a deep blue sky with the moon and stars, street lamps with warm pools of light, a lit shop, a market stall with its bulb and car headlights. A soft light always stays on the play area, so the people are easy to see. The day cards always play in daylight, even if the child chose night with the moon button; their choice comes back after the lesson.
 
 ## Code and content
 
 - [ScenarioStories.cs](../Assets/SafeTouch/Scripts/Lessons/ScenarioStories.cs) holds the stories and the act-outs.
   - The props are built from simple shapes, like the playground: a car (with headlights at night), a road, a bench, a fence, a school board, a health-centre sign, phones, sweets, a gift, and for the night stories street lamps, a school gate, a market stall and a lit shop.
   - The people are the same figures as in the other lessons. Other children are children: the friend uses the lifelike classmate model (the older girl for 9 to 11) in her own colours, so she never looks like Keza, and the cousins and the classmate are boys like the boy helper.
-  - Everything is placed in metres from Keza, in front of the phone's view, so it works in the 3D world and in camera mode.
+  - Everything is placed in metres from Keza, in front of the camera's view of the 3D world.
 - [ScenarioLesson.cs](../Assets/SafeTouch/Scripts/Lessons/ScenarioLesson.cs) runs a card: story, question, feedback, act-out.
 - The words are `story.*` keys.
     - The English is in the code.

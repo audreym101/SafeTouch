@@ -58,7 +58,7 @@ namespace SafeTouch.Core
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             Application.targetFrameRate = 60;
-            Screen.sleepTimeout = SleepTimeout.NeverSleep;   // the screen stays on during AR lessons
+            Screen.sleepTimeout = SleepTimeout.NeverSleep;   // the screen stays on during the lessons
 
             if (uiManager == null) uiManager = GetComponentInChildren<UIManager>();
             if (audioManager == null) audioManager = GetComponentInChildren<AudioManager>();
@@ -162,7 +162,7 @@ namespace SafeTouch.Core
         bool started;
 
         /// <summary>Screens that belong to a lesson: the back key leaves the lesson for the lesson map.</summary>
-        static readonly string[] LessonScreens = { "lesson", "scan", "memory", "certificate", "places", "adults" };
+        static readonly string[] LessonScreens = { "lesson", "memory", "certificate", "places", "adults" };
 
         /// <summary>A quick look at another app (email, the phone app, the lock screen) is not opening SafeTouch again.</summary>
         const double LoginGraceMinutes = 5;
@@ -227,18 +227,13 @@ namespace SafeTouch.Core
             arManager.SetAgeGroup(age);
         }
 
-        /// <summary>Opens a lesson. Places Keza first if she is not in the room yet.</summary>
+        /// <summary>Opens a lesson. Keza appears on the playground first if she is not there yet.</summary>
         public void StartLesson(int level)
         {
             if (!progressManager.IsUnlocked(level)) return;
             EndActiveLesson();
             currentLevel = level;
-            if (!arManager.HasCharacter)
-            {
-                uiManager.ShowMenu("scan");
-                arManager.BeginPlacement();
-                return;
-            }
+            if (!arManager.HasCharacter) arManager.PlaceGuide();
             BeginCurrentLesson();
         }
 
@@ -276,7 +271,6 @@ namespace SafeTouch.Core
         public void ReturnToMenu()
         {
             EndActiveLesson();
-            arManager.CancelPlacement();
             audioManager.StopAll();
             if (voiceCoach != null) voiceCoach.Stop();
             if (readAloud != null) readAloud.Stop();
@@ -285,15 +279,6 @@ namespace SafeTouch.Core
         }
 
         // ---- Other actions used by the screens ----
-
-        public void MoveCharacter()
-        {
-            int level = currentLevel;
-            EndActiveLesson();
-            currentLevel = level;
-            uiManager.ShowMenu("scan");
-            arManager.BeginPlacement();
-        }
 
         public void SetLanguage(string language)
         {
@@ -429,7 +414,6 @@ namespace SafeTouch.Core
         void OnCharacterPlaced(ARCharacter character)
         {
             arManager.ApplySkinTone(SkinTones.Get(progress.skinTone), false);
-            if (currentLevel > 0 && activeLesson == null && uiManager.ActiveMenu == "scan") BeginCurrentLesson();   // only when a lesson was being opened
         }
 
         void BeginCurrentLesson()

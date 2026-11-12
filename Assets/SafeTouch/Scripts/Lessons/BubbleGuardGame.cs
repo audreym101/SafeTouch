@@ -10,7 +10,7 @@ using UnityEngine;
 namespace SafeTouch.Lessons
 {
     /// <summary>
-    /// Bubble Guard, a replayable AR game that opens after the STOP lesson.
+    /// Bubble Guard, a replayable 3D game that opens after the STOP lesson.
     /// Visitors walk towards Keza one at a time, each asking something in a
     /// speech bubble. If it is not okay, the child says NO before the visitor
     /// reaches Keza's red zone; if it is okay, the child taps OK. Visitors
@@ -224,7 +224,7 @@ namespace SafeTouch.Lessons
             float top = visitor.transform.position.y + 0.7f;   // over the head, whatever the model
             foreach (var r in visitor.GetComponentsInChildren<Renderer>())
                 if (r.GetComponent<TextMesh>() == null) top = Mathf.Max(top, r.bounds.max.y + 0.2f);
-            var label = ARFx.Label(trick.ToUpperInvariant(), new Vector3(visitor.transform.position.x, top, visitor.transform.position.z), Theme.Unsafe, game.AR.UsesAR ? 1f : 2.2f);
+            var label = ARFx.Label(trick.ToUpperInvariant(), new Vector3(visitor.transform.position.x, top, visitor.transform.position.z), Theme.Unsafe, 2.2f);
             FxAnimator.Pulse(label);
             ARFx.Burst(visitor.transform.position + Vector3.up * 0.4f, Theme.Unsafe);
             Destroy(label, 1.8f);

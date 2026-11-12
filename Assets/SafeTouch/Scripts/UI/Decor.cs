@@ -369,6 +369,29 @@ namespace SafeTouch.UI
             return Hop(f, size * (kind == AnimalKind.Frog || kind == AnimalKind.Bunny ? 0.12f : 0.06f), 0.75f + 0.11f * i, i * 0.17f);
         }
 
+        /// <summary>
+        /// For the Guardian path (ages 9 to 11), in place of the animals: a round emblem in the lesson's colour,
+        /// like a mission badge, with a white ring and a picture of what the lesson is about (a target for the
+        /// bubble, a magnifying glass for spotting red flags, a STOP sign, two people for the helpers, a star
+        /// for the Memory Quest, a shield for Bubble Guard). It floats slowly instead of hopping.
+        /// </summary>
+        public static RectTransform Emblem(RectTransform card, Sprite icon, Color color, float size)
+        {
+            var f = Frame(card, "Emblem", size, 1f);
+            f.GetComponent<LayoutElement>().ignoreLayout = true;
+            f.anchorMin = f.anchorMax = new Vector2(1f, 0.5f);
+            f.pivot = new Vector2(1f, 0.5f);
+            f.sizeDelta = new Vector2(size, size);
+            f.anchoredPosition = new Vector2(-136f, 0f);
+            Oval(f, "Glow", Theme.WithAlpha(color, 0.22f), 0.5f, 0.5f, 1f, 1f);
+            Oval(f, "Disc", color, 0.5f, 0.5f, 0.84f, 0.84f);
+            Oval(f, "Ring", new Color(1f, 1f, 1f, 0.55f), 0.5f, 0.5f, 0.72f, 0.72f);
+            Oval(f, "Inner", Color.Lerp(color, Color.black, 0.12f), 0.5f, 0.5f, 0.64f, 0.64f);
+            Part(f, "Picture", icon, Color.white, 0.5f, 0.5f, 0.4f, 0.4f, 0f);
+            Hop(f, size * 0.035f, 1.8f, 0f).GetComponent<Bob>().sway = 0f;
+            return f;
+        }
+
         static void Eyes(RectTransform f, float y, float apart, float size)
         {
             Oval(f, "Eye L", Pupil, 0.5f - apart, y, size, size * 1.15f);

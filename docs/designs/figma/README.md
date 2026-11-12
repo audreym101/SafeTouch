@@ -2,6 +2,8 @@
 
 This folder turns the SafeTouch prototype into a real, clickable Figma prototype. You can do it the fast way with the included plugin, or by hand.
 
+> **Design stage.** These screens were drawn when SafeTouch was planned as an AR app. The app now shows Keza in her own 3D world (no camera, no "Find the floor" step), and the Memory Quest no longer has the "Build STOP" round. Frame names below are kept as they are in the Figma file. See [3d-mode.md](../../3d-mode.md).
+
 | File | What it is |
 |---|---|
 | `plugin/manifest.json`, `plugin/code.js` | A one-click Figma plugin that builds the whole prototype |

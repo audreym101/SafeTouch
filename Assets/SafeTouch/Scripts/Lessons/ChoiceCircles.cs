@@ -156,7 +156,7 @@ namespace SafeTouch.Lessons
         /// </summary>
         Transform SignPost(Transform parent, Vector3 spot, string letter, string text, Color color, int index, float maxWidth)
         {
-            float s = (game.AR.UsesAR ? 1f : 1.7f) * UI.TextSize.WorldScale;
+            float s = 1.7f * UI.TextSize.WorldScale;
             string wrapped = ARFx.Wrap(text, 12);
             var lines = wrapped.Split('\n');
             int longest = 0;

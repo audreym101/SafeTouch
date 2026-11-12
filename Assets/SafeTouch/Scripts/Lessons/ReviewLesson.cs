@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using SafeTouch.AR;
@@ -10,20 +9,18 @@ namespace SafeTouch.Lessons
 {
     /// <summary>
     /// Lesson 5, the Memory Quest: an end game that unlocks after the four
-    /// lessons and brings back what the child learned, in four rounds.
+    /// lessons and brings back what the child learned, in three rounds.
     /// 1. Match the pairs (a card memory game: zones, secrets, and for ages
     ///    9-11 surprises and online strangers).
-    /// 2. Grab STOP in AR: the letters hide around the room; the child walks
-    ///    up to each one in order and taps it. It flies above Keza with its
-    ///    meaning hanging under it.
-    /// 3. My helping hand: the child's own trusted adults return and Keza
+    /// 2. My helping hand: the child's own trusted adults return and Keza
     ///    walks to the one the child taps.
-    /// 4. Safe places chase: the child picks home, school or playground;
+    /// 3. Safe places chase: the child picks home, school or playground;
     ///    someone walks towards Keza three times, a little faster each time.
     ///    The child wins by saying NO out loud, tapping NO!, tapping the person, or dragging Keza
     ///    to a helper. Faster answers earn more stars
     ///    and the fastest time unlocks the "Quick and Safe" badge.
     /// It ends with an "I remember!" certificate.
+    /// (A "build STOP" letter hunt used to be round 2; it repeated lesson 3, so it was taken out.)
     /// </summary>
     public class ReviewLesson : LessonBase
     {
@@ -41,7 +38,6 @@ namespace SafeTouch.Lessons
         bool chasing;
         List<TrustedAdult> helpers = new List<TrustedAdult>();
         int score, max;
-        bool firstTry;
         string helperName = "";
 
         public override int Level { get { return 5; } }
@@ -50,99 +46,27 @@ namespace SafeTouch.Lessons
         {
             score = 0;
             var pairs = ContentLibrary.ReviewPairs.Where(p => p.level <= (Older ? 2 : 1)).ToList();
-            max = pairs.Count + LetterHunt.Letters.Length + 1 + 3 * ChaseSpeeds.Length;
+            max = pairs.Count + 1 + 3 * ChaseSpeeds.Length;
             chaseTimes.Clear();
             game.UI.ShowMenu("memory");
             game.UI.Memory.StartGame(pairs, (matched, turns) =>
             {
                 score += matched;
-                BuildStop();
+                HelpingHand();
             });
         }
 
         protected override void OnEnd()
         {
             chasing = false;
-            if (hunt != null) hunt.Clear();
             foreach (var b in sceneProps) if (b != null) Destroy(b);
             sceneProps.Clear();
             if (chaser != null) Destroy(chaser.gameObject);
             chaser = null;
         }
 
-        // ---- Round 2: grab STOP ----
-
-        static readonly string[] StepWhy =
-        {
-            "Say NO in a clear, firm voice.",
-            "Tell a grown-up you trust.",
-            "Say what happened and how you felt.",
-            "Go somewhere safe, near people you trust.",
-        };
-        LetterHunt hunt;
-        float nextHintTime;
-
-        /// <summary>
-        /// The letters hide around the room (LetterHunt). The child moves to
-        /// them, or moves the guide there: by dragging, tapping a letter, the
-        /// arrow buttons, or the "Go to S" button.
-        /// </summary>
-        void BuildStop()
-        {
-            game.UI.ShowMenu("lesson");
-            Header(T("review.round2", "Round 2 of 4: build STOP"));
-            Narrate("review_stop");
-            if (hunt == null) hunt = gameObject.AddComponent<LetterHunt>();
-            hunt.Begin(game, keza, Grabbed, WrongLetter);
-            firstTry = true;
-            TouchHint(T("review.grab.touch", "Walk to the letter, or move {0} to it."));
-            AskForNext(T("review.grab.title", "Find S-T-O-P!"), T("review.grab.body", "Go to S first."));
-        }
-
-        /// <summary>A card with a "Go to S" button, and the arrow buttons, for the next letter.</summary>
-        void AskForNext(string title, string body)
-        {
-            string letter = LetterHunt.Letters[hunt.Next];
-            Prompt(title, body, new PromptOption(string.Format(T("hunt.go", "Go to {0}"), letter), Theme.Card, hunt.TakeGuideToNext));
-            MovePad(true);
-        }
-
-        void WrongLetter(int touched)
-        {
-            firstTry = false;
-            AskForNext(T("review.grab.notyet.title", "Not yet!"),
-                string.Format(T("review.grab.notyet.short", "First {0}. It's {1}."), LetterHunt.Letters[hunt.Next], hunt.Direction(hunt.Next)));
-        }
-
-        void Grabbed(int index)
-        {
-            if (firstTry) score++;
-            firstTry = true;
-            string title = string.Format(T("review.stop.got", "{0} is for {1}!"), LetterHunt.Letters[index], LetterHunt.Meaning(index));
-            string why = T("review.why." + LetterHunt.Letters[index].ToLowerInvariant(), StepWhy[index]);
-            if (!hunt.Done)
-            {
-                hunt.Hunting = true;
-                AskForNext(title, why + "\n" + string.Format(T("review.grab.next.short", "Next: {0}."), LetterHunt.Letters[hunt.Next]));
-                return;
-            }
-            MovePad(false);
-            TouchHint("");
-            Prompt(title, why);
-            hunt.GuideHome(null);   // back under the finished word
-            StartCoroutine(AfterSeconds(1.6f, () =>
-                Feedback(true, T("review.stop.done", "S-T-O-P is above Keza: Say no, Tell, Open up, Protect. Say it together!"), HelpingHand)));
-        }
-
-        IEnumerator AfterSeconds(float seconds, System.Action then)
-        {
-            yield return new WaitForSeconds(seconds);
-            if (Running) then();
-        }
-
         protected override bool OnTap(ARTap tap)
         {
-            if (hunt != null && hunt.HandleTap(tap)) return true;
             var tapped = tap.Find<ARFigure>();
             System.Action choose;
             if (tapped != null && handChoices.TryGetValue(tapped, out choose)) { choose(); return true; }
@@ -155,11 +79,12 @@ namespace SafeTouch.Lessons
             return false;
         }
 
-        // ---- Round 3: my helping hand ----
+        // ---- Round 2: my helping hand ----
 
         void HelpingHand()
         {
-            Header(T("review.round3", "Round 3 of 4: my helping hand"));
+            game.UI.ShowMenu("lesson");
+            Header(T("review.round.hand", "Round 2 of 3: my helping hand"));
             var ids = game.Progress.GetData().trustedAdults;
             helpers = ContentLibrary.TrustedAdults.Where(a => ids.Contains(a.adultId)).ToList();
             if (helpers.Count == 0) helpers = ContentLibrary.TrustedAdults.Take(2).ToList();
@@ -195,14 +120,14 @@ namespace SafeTouch.Lessons
                 if (i < 4) options.Add(new PromptOption(name, Theme.Card, () => choose()));
             }
             // The helpers stand in the room: the child can tap one, or use the buttons.
-            TouchHint(T("review.hand.touch", "Tap a helper in the room."));
+            TouchHint(T("review.hand.touch", "Tap a helper."));
             Prompt(T("review.hand.title", "Your helpers are back!"),
                 T("review.hand.body", "Keza is worried. Who can Keza go to?"), options.ToArray());
         }
 
         readonly Dictionary<ARFigure, System.Action> handChoices = new Dictionary<ARFigure, System.Action>();
 
-        // ---- Round 4: safe places chase ----
+        // ---- Round 3: safe places chase ----
 
         void PickPlace()
         {
@@ -211,10 +136,9 @@ namespace SafeTouch.Lessons
             game.UI.Places.Ask(StartChase);
         }
 
-        /// <summary>Clears round 2 and 3 objects so the chase starts with an empty room.</summary>
+        /// <summary>Clears the helpers of round 2 so the chase starts with an empty playground.</summary>
         void End3DRound()
         {
-            if (hunt != null) hunt.Clear();
             ClearFigures();
         }
 
@@ -348,12 +272,6 @@ namespace SafeTouch.Lessons
 
         void Update()
         {
-            if (Running && hunt != null && hunt.Hunting && !hunt.Done && Time.time >= nextHintTime)
-            {
-                // The step line keeps pointing to the next letter as the child walks and turns.
-                nextHintTime = Time.time + 0.5f;
-                Header(string.Format(T("review.grab.step", "Round 2 of 4: find {0} ({1})"), LetterHunt.Letters[hunt.Next], hunt.Direction(hunt.Next)));
-            }
             if (!Running || !chasing || chaser == null || keza == null) return;
             float elapsed = Time.time - chaseStart;
             Header(string.Format(T("review.chase.timer", "Chase {0} of 3  -  {1:0.0} s"), chaseIndex + 1, elapsed));

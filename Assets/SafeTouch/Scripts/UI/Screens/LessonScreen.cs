@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace SafeTouch.UI.Screens
 {
     /// <summary>
-    /// The AR lesson HUD, split so the people in the middle of the screen have room:
+    /// The lesson HUD over Keza's 3D world, split so the people in the middle of the screen have room:
     ///   top     - exit, lesson title and step, and a line of small round tools (read aloud, day or night,
     ///             move, closer and further);
     ///             under them the question, in a speech bubble with a "?" in the lesson's colour;
@@ -26,7 +26,7 @@ namespace SafeTouch.UI.Screens
         Text title, step, heading, body, hint;
         Image badge, hintPill, dayNightIcon;
         RectTransform answers;
-        Button movePlace, dayNight;
+        Button dayNight;
         readonly List<Button> optionButtons = new List<Button>();
         readonly List<string> optionLabels = new List<string>();
         GameObject question;
@@ -64,7 +64,7 @@ namespace SafeTouch.UI.Screens
             UIFactory.FitInside(step);
 
             // Round picture buttons, like a game's, that small children know without reading: read aloud,
-            // day or night, the move pad, closer and further, and (in the camera picture) place again.
+            // day or night, the move pad, closer and further.
             var tools = UIFactory.Row(col, "Tools", 22f, 112f);
             tools.childForceExpandWidth = false;
             tools.childAlignment = TextAnchor.MiddleRight;
@@ -76,7 +76,6 @@ namespace SafeTouch.UI.Screens
             Hold(closer, () => game.AR.ChangeSize(1.15f), 0.18f);
             var further = Tool(tools.transform, Icons.ZoomOut, Theme.Hex("#2B8FB8"), null, out unused);
             Hold(further, () => game.AR.ChangeSize(1f / 1.15f), 0.18f);
-            movePlace = Tool(tools.transform, Icons.Target, Theme.Hex("#C77A1E"), () => game.MoveCharacter(), out unused);
 
             BuildQuestion(col);
 
@@ -104,7 +103,7 @@ namespace SafeTouch.UI.Screens
                 guide.SayFor(Localization.T("voice.heard.keza", "I heard your NO!"), game.AR.OpaqueMaterial, 2.5f);
             };
 
-            // (The screenshot tool builds the screens without starting AR: no touch there.)
+            // (The screenshot tool builds the screens without the 3D world: no touch there.)
             if (game.AR.Touch != null)
             {
                 game.AR.Touch.DragMoved += ShowZone;
@@ -358,7 +357,6 @@ namespace SafeTouch.UI.Screens
 
         public override void OnShow()
         {
-            movePlace.gameObject.SetActive(game.AR.UsesAR);   // in the 3D world the helper never leaves the playground
             badge.color = LessonInfo.For(Mathf.Max(1, game.CurrentLevel)).color;
             padForChild = false;
             ShowPad();

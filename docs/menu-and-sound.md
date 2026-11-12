@@ -7,9 +7,10 @@ After **Start**, and the login if one is needed, the app opens the **menu** ([Me
 | Button | Opens | Grown-up check first? |
 |---|---|---|
 | Play the lessons | the lesson map | no |
-| My badges | badges | no |
+| My badges | the child's progress as a trophy room: rank, journey, badge shelf, records | no |
+| My NO | the voice coach: practise a firm NO, hear it back, see the goals reached | no |
 | Keza's look | Keza's skin tone | no |
-| Settings | music on/off, tap sounds on/off, Keza in the 3D world or in the room (camera), letter size, English / Kinyarwanda | no |
+| Settings | music on/off, tap sounds on/off, letter size, English / Kinyarwanda | no |
 | How to play | five steps with big numbers | no |
 | About us | what SafeTouch is for, privacy, version | no (its Contact button: yes) |
 | Contact us | email the team, open the parent area, call a free helpline | **yes** |
@@ -39,6 +40,8 @@ All cartoons are drawn in code from circles ([Decor.cs](../Assets/SafeTouch/Scri
 
 - `Decor.Gang` shows five friends with different skin tones, hair and clothes. They hop one after the other at the top of the menu.
 - Keza and her dog hop gently wherever they appear (`Decor.Friends`).
+- **Lesson map pictures by age:** on the Explorer path (6 to 8) each lesson card has a cartoon animal that hops (bunny, cat, lion, elephant, owl; a frog for Bubble Guard, `Decor.Animal`). On the Guardian path (9 to 11) the animals give way to mission-badge emblems that float slowly (`Decor.Emblem`): a target for the bubble, a magnifying glass for the red flags, a STOP sign, two people for the safety network, a star for the Memory Quest and a shield for Bubble Guard. Older children find the animals babyish; the emblems match the "Guardian" name.
+- **My badges** is a trophy room (`BadgesScreen`): Keza cheers beside the child's rank (a new one for each lesson finished, with Guardian ranks for 9 to 11), the lessons are stops on a journey path with up to three stars each, the badges are gold medals on a shelf (grey with a padlock until won; tap one to see how to win it), and the records are big numbers. Everything pops in one after the other.
 - Every button squashes a little under the finger and springs back (`Squish`, in [Motion.cs](../Assets/SafeTouch/Scripts/UI/Motion.cs)).
 
 ## Sound

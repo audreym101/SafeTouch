@@ -23,6 +23,90 @@ namespace SafeTouch.UI
         public static Sprite Mic { get { return Get("mic", MicShape); } }
         public static Sprite Check { get { return Get("check", CheckShape); } }
         public static Sprite Play { get { return Get("play", PlayShape); } }
+        // Emblems for the Guardian (9 to 11) lesson cards and the badge shelf.
+        public static Sprite Star { get { return Get("star", StarShape); } }
+        public static Sprite Shield { get { return Get("shield", ShieldShape); } }
+        public static Sprite StopSign { get { return Get("stop sign", StopShape); } }
+        public static Sprite People { get { return Get("people", PeopleShape); } }
+        public static Sprite Search { get { return Get("search", SearchShape); } }
+        public static Sprite Lock { get { return Get("lock", LockShape); } }
+
+        /// <summary>A five-pointed star.</summary>
+        static readonly Vector2[] StarPoints = MakeStar(0.95f, 0.4f);
+
+        static Vector2[] MakeStar(float outer, float inner)
+        {
+            var points = new Vector2[10];
+            for (int i = 0; i < 10; i++)
+            {
+                float a = Mathf.PI * 2f * i / 10f;   // 0 is straight up, at a tip
+                float r = i % 2 == 0 ? outer : inner;
+                points[i] = new Vector2(Mathf.Sin(a) * r, Mathf.Cos(a) * r - 0.05f);
+            }
+            return points;
+        }
+
+        static bool StarShape(float x, float y)
+        {
+            // Even-odd rule: a point is inside when a ray from it crosses the outline an odd number of times.
+            bool inside = false;
+            for (int i = 0, j = StarPoints.Length - 1; i < StarPoints.Length; j = i++)
+            {
+                var a = StarPoints[i];
+                var b = StarPoints[j];
+                if ((a.y > y) != (b.y > y) && x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+            }
+            return inside;
+        }
+
+        /// <summary>A shield with a check mark cut out of it.</summary>
+        static bool ShieldShape(float x, float y)
+        {
+            // Straight sides from the flat top down to the middle, then curving in to a point at the bottom.
+            float half = y > 0.05f ? 0.68f : 0.68f * Mathf.Sqrt(Mathf.Clamp01((y + 0.92f) / 0.97f));
+            bool shield = y < 0.82f && y > -0.92f && Mathf.Abs(x) < half;
+            if (!shield) return false;
+            bool tick = Segment(x, y, -0.32f, 0.02f, -0.08f, -0.24f, 0.17f) || Segment(x, y, -0.08f, -0.24f, 0.36f, 0.3f, 0.17f);
+            return !tick;
+        }
+
+        /// <summary>An octagon, like a STOP sign, with a bar across it.</summary>
+        static bool StopShape(float x, float y)
+        {
+            float ax = Mathf.Abs(x), ay = Mathf.Abs(y);
+            bool octagon = ax < 0.86f && ay < 0.86f && ax + ay < 1.22f;
+            bool bar = ax < 0.52f && ay < 0.13f;
+            return octagon && !bar;
+        }
+
+        /// <summary>Two people side by side: heads and shoulders.</summary>
+        static bool PeopleShape(float x, float y)
+        {
+            foreach (float cx in new[] { -0.36f, 0.36f })
+            {
+                float hx = x - cx, hy = y - 0.36f;
+                if (hx * hx + hy * hy < 0.24f * 0.24f) return true;   // head
+                float bx = (x - cx) / 0.4f, by = (y + 0.5f) / 0.55f;
+                if (y < 0.05f && y > -0.8f && bx * bx + by * by < 1f) return true;   // shoulders
+            }
+            return false;
+        }
+
+        /// <summary>A magnifying glass: looking closely for the red flags.</summary>
+        static bool SearchShape(float x, float y)
+        {
+            float cx = x + 0.16f, cy = y - 0.16f, r = Mathf.Sqrt(cx * cx + cy * cy);
+            if (Mathf.Abs(r - 0.46f) < 0.11f) return true;
+            return Segment(x, y, 0.22f, -0.22f, 0.7f, -0.7f, 0.24f);
+        }
+
+        /// <summary>A padlock: a badge or lesson not won yet.</summary>
+        static bool LockShape(float x, float y)
+        {
+            if (Mathf.Abs(x) < 0.55f && y < 0.1f && y > -0.75f) return !(x * x + (y + 0.3f) * (y + 0.3f) < 0.12f * 0.12f);   // body with a keyhole
+            float r = Mathf.Sqrt(x * x + (y - 0.15f) * (y - 0.15f));
+            return y >= 0.1f && Mathf.Abs(r - 0.36f) < 0.1f;   // shackle
+        }
         public static Sprite ZoomIn { get { return Get("zoom in", (x, y) => Magnifier(x, y, true)); } }
         public static Sprite ZoomOut { get { return Get("zoom out", (x, y) => Magnifier(x, y, false)); } }
 

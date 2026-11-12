@@ -9,7 +9,7 @@ using UnityEngine;
 namespace SafeTouch.Lessons
 {
     /// <summary>
-    /// Shared behaviour for the AR lessons: header, prompt card,
+    /// Shared behaviour for the 3D lessons: header, prompt card,
     /// narration, spawned figures and clean-up when the child exits.
     /// </summary>
     public abstract class LessonBase : MonoBehaviour

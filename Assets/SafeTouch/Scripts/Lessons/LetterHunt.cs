@@ -10,12 +10,11 @@ using UnityEngine;
 namespace SafeTouch.Lessons
 {
     /// <summary>
-    /// The S-T-O-P letters hidden around the room, collected by moving to
-    /// them: the guide reaches one (dragged, sent with a tap, or walked with
-    /// the arrow buttons), or the child walks up to it holding the phone.
-    /// The right letter flies up into a row above where the guide started,
-    /// with its meaning hanging under it; the wrong one wobbles. Used by the
-    /// STOP lesson (each letter starts its step) and the Memory Quest.
+    /// The S-T-O-P letters hidden around the guide in the 3D world, collected
+    /// by moving to them: the guide reaches one (dragged, sent with a tap, or
+    /// walked with the arrow buttons). The right letter flies up into a row
+    /// above where the guide started, with its meaning hanging under it; the
+    /// wrong one wobbles. Used by the STOP lesson (each letter starts its step).
     /// </summary>
     public class LetterHunt : MonoBehaviour
     {
@@ -23,7 +22,6 @@ namespace SafeTouch.Lessons
         static readonly string[] MeaningKeys = { "stop.s.meaning", "stop.t.meaning", "stop.o.meaning", "stop.p.meaning" };
         static readonly string[] MeaningEnglish = { "Say no", "Tell a trusted adult", "Open up and explain", "Protect yourself" };
         static readonly float[] Angles = { 45f, 135f, 225f, 315f };   // around the guide, some behind the child
-        const float PhoneReach = 0.8f;   // metres from the phone: the child has walked up to the letter
         const float GuideReach = 0.22f;  // metres across the floor: the guide stands under the letter
 
         readonly List<GameObject> blocks = new List<GameObject>();
@@ -108,9 +106,7 @@ namespace SafeTouch.Lessons
                 var block = blocks[i];
                 if (block == null) continue;
                 var floorGap = Vector3.ProjectOnPlane(guide.transform.position - block.transform.position, Vector3.up).magnitude;
-                bool guideThere = floorGap <= GuideReach;
-                bool phoneThere = game.AR.CanWalkAround && Vector3.Distance(game.AR.CameraTransform.position, block.transform.position) <= PhoneReach;
-                if (!guideThere && !phoneThere) continue;
+                if (floorGap > GuideReach) continue;
 
                 if (i == Next) { guide.Stop(); Collect(i); return; }
 
@@ -161,7 +157,7 @@ namespace SafeTouch.Lessons
             if (landed != null) landed();
         }
 
-        /// <summary>"S is behind you": where a letter is, from the phone's point of view.</summary>
+        /// <summary>"S is behind you": where a letter is, from the camera's point of view.</summary>
         public string Direction(int index)
         {
             if (index < 0 || index >= blocks.Count || blocks[index] == null) return "";

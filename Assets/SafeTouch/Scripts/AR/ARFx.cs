@@ -4,7 +4,7 @@ using UnityEngine;
 namespace SafeTouch.AR
 {
     /// <summary>
-    /// Small effects that make the AR scene feel real and answer every touch:
+    /// Small effects that make the 3D scene feel real and answer every touch:
     /// soft contact shadows that sit characters on the real floor, a ripple
     /// where the child taps, a sparkle burst, and floating label cards that
     /// face the phone. All are generated at runtime (no texture assets) and

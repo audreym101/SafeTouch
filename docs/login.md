@@ -9,7 +9,7 @@ Once a parent has confirmed their consent ([consent.md](consent.md)), the app as
 | 3 | The API checks the email against the one on record. If it matches, it emails (and texts) a new code. |
 | 4 | The parent types the code. Correct: the app opens. The login lasts until the app is closed. |
 
-- **Not saved, and ended when the app is left:** the login lasts only while the app is in use. When the parent leaves the app (the home button, another app) and comes back, the Log in screen shows again. Android's camera and microphone questions also pause the app, and those do not log the parent out.
+- **Not saved, and ended when the app is left:** the login lasts only while the app is in use. When the parent leaves the app (the home button, another app) and comes back, the Log in screen shows again. Android's microphone question also pauses the app, and those do not log the parent out.
 - **The consent panel stays until the email is confirmed.** A parent who agreed to the terms but has not typed the emailed code sees the code screen every time the app opens, with a reminder once a day or more has passed. There is no "verify later" and no grace period: SafeTouch stays closed until the code is typed. Typing the code there also counts as a login.
 - **Needs internet,** because the code comes from the API. Without it, the screen says so and waits. There is no bypass, so check the phone has internet before a session.
 - **After withdrawing** consent, the next start goes to the consent page.

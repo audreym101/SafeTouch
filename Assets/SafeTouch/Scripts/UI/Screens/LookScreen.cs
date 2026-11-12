@@ -7,8 +7,8 @@ namespace SafeTouch.UI.Screens
 {
     /// <summary>
     /// "Keza's look": the child picks a girl (Keza) or a boy (Ganza) helper, and their skin tone. When Keza is already
-    /// in the room the camera shows through and the change plays on her in
-    /// AR (a colour blend and a sparkle); otherwise a drawn face previews it.
+    /// in her 3D world it shows through and the change plays on her (a colour blend and a sparkle); otherwise a
+    /// drawn face previews it.
     /// Seeing a guide who looks like them helps children feel the lessons
     /// are about them.
     /// </summary>
@@ -115,7 +115,7 @@ namespace SafeTouch.UI.Screens
             preview.gameObject.SetActive(!inRoom);
             Root.GetComponent<Image>().color = inRoom ? Theme.Clear : Theme.Sky;   // no camera picture yet: not a black screen
             hint.text = inRoom
-                ? Localization.T("look.hint.room", "Keza can look like you, or like a friend. Watch the change in your room!")
+                ? Localization.T("look.hint.room", "Keza can look like you, or like a friend. Watch the change in the 3D world!")
                 : Localization.T("look.hint", "Keza can look like you, or like a friend. Pick any colour.");
             Show(SkinTones.Get(game.Progress.GetData().skinTone));
         }

@@ -1,6 +1,6 @@
 # Bubble Guard (game)
 
-A replayable AR game that opens after **Lesson 3, STOP!**. It sits on the lesson map below the Memory Quest. It is outside the lesson order, so it never affects the "finished every lesson" badge.
+A replayable 3D game that opens after **Lesson 3, STOP!**. It sits on the lesson map below the Memory Quest. It is outside the lesson order, so it never affects the "finished every lesson" badge.
 
 ## How it plays
 
