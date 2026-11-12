@@ -246,6 +246,12 @@ namespace SafeTouch.Managers
             Save();
         }
 
+        public void SetKeepNoRecordings(bool on)
+        {
+            progress.keepNoRecordings = on;
+            Save();
+        }
+
         public void SetTrustedAdults(IEnumerable<string> adultIds)
         {
             progress.trustedAdults = new List<string>(adultIds);

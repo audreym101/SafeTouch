@@ -33,7 +33,7 @@ namespace SafeTouch.UI.Screens
             for (int i = 0; i < Tabs.Length; i++)
             {
                 string t = Tabs[i];
-                tabButtons[i] = UIFactory.Button(row.transform, t, Theme.Card, Theme.Ink, () => { tab = t; confirmReset = false; confirmWithdraw = false; OnShow(); });
+                tabButtons[i] = UIFactory.Button(row.transform, t, Theme.Card, Theme.Ink, () => { tab = t; confirmReset = false; confirmWithdraw = false; confirmDeleteNos = false; OnShow(); });
                 UIFactory.FixedHeight(tabButtons[i], 120f);
                 // Five tabs share the row: smaller words, less padding.
                 var label = tabButtons[i].GetComponentInChildren<Text>();
@@ -75,14 +75,57 @@ namespace SafeTouch.UI.Screens
             BuildVoice(progress);
         }
 
-        /// <summary>Saying NO out loud: the child's loudest NO (their record, 0 to 100) and how many strong NOs they said.</summary>
+        bool confirmDeleteNos;
+
+        /// <summary>
+        /// Saying NO out loud: the child's record (0 to 100), their strong NOs, how many NOs they have said
+        /// and what they achieved, and their first, best and latest NO to listen to. The recordings can be
+        /// deleted here; they never leave the phone.
+        /// </summary>
         void BuildVoice(Progress progress)
         {
+            var journal = game.NoVoices.Journal ?? new SafeTouch.Voice.NoJournal();
             UIFactory.Label(list, T("parent.child.voice.title", "Saying NO"), Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
-            string text = progress.loudestNo > 0
-                ? string.Format(T("parent.child.voice.body", "Loudest NO: {0} out of 100. Strong NOs said: {1}. Only these numbers are kept, never your child's voice."), progress.loudestNo, progress.strongNoCount)
-                : T("parent.child.voice.none", "Your child hasn't said NO out loud yet. They practise it in the lessons and in Bubble Guard.");
-            UIFactory.Label(list, text, Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
+            if (progress.loudestNo <= 0 && journal.total == 0)
+            {
+                UIFactory.Label(list, T("parent.child.voice.none2", "Your child hasn't said NO out loud yet. They practise it in the lessons, in Bubble Guard and on the My NO screen."),
+                    Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
+                return;
+            }
+
+            int done = 0;
+            var milestones = SafeTouch.Voice.NoMilestones.For(journal, progress.loudestNo, progress.strongNoCount);
+            foreach (var m in milestones) if (m.Done) done++;
+            UIFactory.Label(list, string.Format(T("parent.child.voice.numbers",
+                    "Loudest NO: {0} out of 100. Three-star NOs: {1}. NOs said: {2}. Goals reached on the My NO screen: {3} of {4}."),
+                    progress.loudestNo, Mathf.Max(progress.strongNoCount, journal.threeStars), journal.total, done, milestones.Count),
+                Theme.Label, Theme.Ink, TextAnchor.UpperLeft, false);
+
+            // The first, the best and the latest NO, to hear how your child's voice has grown.
+            var shown = new List<SafeTouch.Voice.NoEntry>();
+            foreach (var e in new[] { journal.First, journal.Best, journal.Latest })
+                if (e != null && e.HasAudio && !shown.Contains(e)) shown.Add(e);
+            if (shown.Count == 0)
+            {
+                UIFactory.Label(list, progress.keepNoRecordings
+                        ? T("parent.child.voice.norec", "No recordings yet. The next NO your child says out loud is kept here for you to hear.")
+                        : T("parent.child.voice.recoff", "Keeping NO recordings is switched off in Settings, so only the numbers are kept."),
+                    Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
+                return;
+            }
+            UIFactory.Label(list, T("parent.child.voice.hear",
+                    "Listen to your child saying NO. Only the NO itself is kept, a second or two each time, on this phone. It is never sent."),
+                Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
+            foreach (var e in shown) NoClipRow.Build(list, e, journal, game);
+            UIFactory.Button(list, T(confirmDeleteNos ? "parent.child.voice.delete.confirm" : "parent.child.voice.delete",
+                    confirmDeleteNos ? "Tap again to delete every NO recording" : "Delete the NO recordings"),
+                confirmDeleteNos ? Theme.Unsafe : Theme.Card, confirmDeleteNos ? Color.white : Theme.Ink, () =>
+                {
+                    if (!confirmDeleteNos) { confirmDeleteNos = true; OnShow(); return; }
+                    confirmDeleteNos = false;
+                    game.NoVoices.DeleteRecordings();
+                    OnShow();
+                });
         }
 
         /// <summary>
@@ -248,15 +291,30 @@ namespace SafeTouch.UI.Screens
 
             UIFactory.Label(list, Localization.T("parent.voice.title", "Saying NO out loud"), Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
             UIFactory.Label(list, Localization.T("parent.voice.body",
-                "In the lessons your child practises saying NO out loud, and Keza coaches how it sounded: loud, steady and short. " +
-                "The microphone opens only while Keza is listening and closes straight after. SafeTouch measures loudness, pitch and length, " +
-                "then forgets them. No sound is recorded, saved or sent. Switched off, the lessons use a NO button instead."),
+                "In the lessons and on the My NO screen your child practises saying NO out loud, and Keza coaches how it sounded: loud, steady and short. " +
+                "Before the first time, Keza explains why she wants the microphone, then the phone asks you to allow it. " +
+                "The microphone opens only while Keza is listening and closes straight after. Switched off, the lessons use a NO button instead."),
                 Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
             UIFactory.Button(list, Localization.T(progress.voiceEnabled ? "parent.voice.on" : "parent.voice.off",
                     progress.voiceEnabled ? "Voice practice is on" : "Voice practice is off"),
                 progress.voiceEnabled ? Theme.Safe : Theme.Card, progress.voiceEnabled ? Color.white : Theme.Ink, () =>
                 {
                     game.SetVoiceEnabled(!progress.voiceEnabled);
+                    OnShow();
+                });
+
+            UIFactory.Label(list, Localization.T("parent.rec.title", "Keeping NO recordings"), Theme.Body, Theme.Ink, TextAnchor.MiddleLeft, true);
+            UIFactory.Label(list, Localization.T("parent.rec.body",
+                "SafeTouch keeps the sound of a few of your child's spoken NOs on this phone: their first, their best and the 8 newest, " +
+                "a second or two each. Your child hears them on the My NO screen, and you in My child, to see how their voice has grown. " +
+                "Nothing else they say is kept, and the recordings are never sent, not even with sync. Switched off, the recordings are deleted " +
+                "and only the numbers are kept."),
+                Theme.Label, Theme.Muted, TextAnchor.UpperLeft, false);
+            UIFactory.Button(list, Localization.T(progress.keepNoRecordings ? "parent.rec.on" : "parent.rec.off",
+                    progress.keepNoRecordings ? "Keep NO recordings: ON - tap to switch off" : "Keep NO recordings: OFF - tap to switch on"),
+                progress.keepNoRecordings ? Theme.Safe : Theme.Card, progress.keepNoRecordings ? Color.white : Theme.Ink, () =>
+                {
+                    game.SetKeepNoRecordings(!progress.keepNoRecordings);
                     OnShow();
                 });
 

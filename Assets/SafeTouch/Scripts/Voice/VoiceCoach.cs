@@ -4,10 +4,18 @@ using UnityEngine;
 namespace SafeTouch.Voice
 {
     /// <summary>
-    /// Listens for the child's spoken "NO" during a lesson and rates it with
-    /// NoCoach. The microphone is open only between ListenForNo and the
-    /// result. Only numbers (level, pitch, length) are kept, and only until
-    /// the result is shown.
+    /// Listens for the child's spoken "NO" during a lesson (or on the My NO
+    /// practice screen) and rates it with NoCoach. The microphone is open only
+    /// between ListenForNo and the result.
+    ///
+    /// The last few seconds of sound sit in a ring that is overwritten as it
+    /// goes. When a spoken NO is heard, that one word is cut from the ring and
+    /// handed on (NoCaptured), so it can be kept on this phone for the child
+    /// and their grown-up to hear (consent terms 1.6). Talking before or after
+    /// the NO, whispers, and the "Hello Keza!" warm-up are never kept.
+    ///
+    /// Before Android's own microphone question, the app says in plain words
+    /// why it wants the microphone and what it keeps (ExplainMicrophone).
     /// </summary>
     public class VoiceCoach : MonoBehaviour
     {
@@ -23,6 +31,14 @@ namespace SafeTouch.Voice
         Action<bool> onTalk;
         bool permitted;
         bool continuous;
+        bool declined;     // "Not now" on the microphone card: NO buttons for the rest of this visit
+        int attempt;       // changes on every Begin and Stop, so a late answer to a question is ignored
+        SampleRing ring;
+
+        /// <summary>Seconds of sound the ring holds: the longest NO (2.5 s) and the quiet after it.</summary>
+        const float RingSeconds = 4f;
+        /// <summary>A breath kept before and after the word, so the recording doesn't clip its start or end.</summary>
+        const float ClipPadSeconds = 0.3f;
 
         public NoCoachSettings Settings { get { return settings; } }
         public bool Listening { get; private set; }
@@ -30,8 +46,30 @@ namespace SafeTouch.Voice
         /// <summary>Set from the parent section; off means every lesson uses tap buttons.</summary>
         public bool Enabled { get; set; } = true;
 
-        /// <summary>True when a lesson can ask the child to speak (switched on, and the phone has a mic).</summary>
-        public bool Available { get { return Enabled && MicrophoneInput.HasDevice; } }
+        /// <summary>True when a lesson can ask the child to speak (switched on, not turned down this visit, and the phone has a mic).</summary>
+        public bool Available { get { return Enabled && !declined && MicrophoneInput.HasDevice; } }
+
+        /// <summary>The microphone card's "Not now" (or Android's "Don't allow"): NO buttons until the app is opened again.</summary>
+        public bool Declined { get { return declined; } }
+
+        /// <summary>Lets the app ask about the microphone again (the My NO screen's "Use my voice" button).</summary>
+        public void AllowAskingAgain()
+        {
+            declined = false;
+        }
+
+        /// <summary>
+        /// Raised for every spoken NO (not a whisper, not the warm-up): its rating, the samples of just that
+        /// word and their rate. GameManager keeps it on this phone with NoRecorder.
+        /// </summary>
+        public event Action<NoRating, float[], int> NoCaptured;
+
+        /// <summary>
+        /// Shows the child (and their grown-up) why Keza wants the microphone, before Android asks.
+        /// The first argument is true when Android will not ask again (the phone's settings must be used);
+        /// call the answer with true to go ahead. Set by GameManager. Without it, Android asks straight away.
+        /// </summary>
+        public Action<bool, Action<bool>> ExplainMicrophone;
 
         /// <summary>Loudness for the on-screen meter: 0 at the room's level, 1 at a full-marks voice and beyond.</summary>
         public float Level01 { get; private set; }
@@ -91,7 +129,7 @@ namespace SafeTouch.Voice
         /// <summary>
         /// Listens to the child talking normally ("Hello Keza!") to learn
         /// their everyday pitch, so a high voice is not mistaken for a squeak.
-        /// done gets true if a voiced answer was heard. Kept for this session only.
+        /// done gets true if a voiced answer was heard. Kept for this session only; never recorded.
         /// </summary>
         public void ListenToTalkingVoice(Action<bool> done)
         {
@@ -103,6 +141,7 @@ namespace SafeTouch.Voice
         /// <summary>Stops listening and closes the microphone. Safe to call at any time.</summary>
         public void Stop()
         {
+            attempt++;
             Listening = false;
             onNo = null;
             onTalk = null;
@@ -113,14 +152,20 @@ namespace SafeTouch.Voice
 
         void Begin()
         {
+            int ask = ++attempt;
             if (!Available) { Deliver(NoRating.NothingHeard()); return; }
+            if (!permitted && MicrophoneInput.Authorized) permitted = true;
             if (!permitted)
             {
-                MicrophoneInput.RequestPermission(granted =>
+                if (ExplainMicrophone == null) { AskAndroid(ask); return; }
+                // Our own card first, in the child's language: why, and what is kept. Then Android's question.
+                bool blocked = MicrophoneInput.Blocked;
+                ExplainMicrophone(blocked, yes =>
                 {
-                    permitted = granted;
-                    if (!granted) { Enabled = false; Deliver(NoRating.NothingHeard()); }
-                    else Begin();
+                    if (ask != attempt) return;   // the child left the lesson meanwhile
+                    if (!yes) { declined = true; Deliver(NoRating.NothingHeard()); return; }
+                    if (blocked) { MicrophoneInput.OpenAppSettings(); Deliver(NoRating.NothingHeard()); return; }
+                    AskAndroid(ask);
                 });
                 return;
             }
@@ -133,10 +178,24 @@ namespace SafeTouch.Voice
                 segmenter = new UtteranceSegmenter(analyzer.HopSeconds);
                 segmenter.UtteranceFinished += OnUtterance;
             }
+            int ringSize = Mathf.CeilToInt(microphone.SampleRate * RingSeconds);
+            if (ring == null || ring.Capacity != ringSize) ring = new SampleRing(ringSize);
+            ring.Clear();
             analyzer.Reset();
             segmenter.Reset();
             listenStart = Time.unscaledTime;
             Listening = true;
+        }
+
+        void AskAndroid(int ask)
+        {
+            MicrophoneInput.RequestPermission(granted =>
+            {
+                if (ask != attempt) return;
+                permitted = granted;
+                if (!granted) { declined = true; Deliver(NoRating.NothingHeard()); }
+                else Begin();
+            });
         }
 
         void Update()
@@ -150,7 +209,9 @@ namespace SafeTouch.Voice
 
         void OnSamples(float[] samples, int count)
         {
-            if (Listening) analyzer.Push(samples, 0, count);
+            if (!Listening) return;
+            ring.Push(samples, 0, count);
+            analyzer.Push(samples, 0, count);
         }
 
         void OnFrame(VoiceFrame frame)
@@ -188,10 +249,24 @@ namespace SafeTouch.Voice
             {
                 // A scrape, a rustle or a bump is not a word: with no voice in it, keep listening for the real NO.
                 if (utterance.VoicedFraction < settings.minVoicedFraction) return;
+                Capture(rating, utterance);
                 if (onNo != null) onNo(rating);   // stay open for the next word
                 return;
             }
+            Capture(rating, utterance);
             Deliver(rating);
+        }
+
+        /// <summary>Cuts the NO just heard out of the ring and hands it on. Whispers and noises are not kept.</summary>
+        void Capture(NoRating rating, Utterance utterance)
+        {
+            if (NoCaptured == null || !rating.Heard || rating.tip == NoTip.Whisper) return;
+            // The word ended HangoverSeconds of quiet ago, so the newest samples are that quiet.
+            float seconds = utterance.Duration + segmenter.HangoverSeconds + 2f * ClipPadSeconds;
+            var samples = ring.Last(Mathf.CeilToInt(seconds * microphone.SampleRate));
+            if (samples.Length == 0) return;
+            SampleRing.FadeEdges(samples, microphone.SampleRate / 100);   // 10 ms
+            NoCaptured(rating, samples, microphone.SampleRate);
         }
 
         void Deliver(NoRating rating)

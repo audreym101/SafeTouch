@@ -83,8 +83,56 @@ namespace SafeTouch.Core
             arManager.Touch.Tapped += tap => { if (activeLesson == null) arManager.DefaultTap(tap); };
             progressManager.BadgeUnlocked += b => uiManager.ShowToast(Localization.T("badge.unlocked") + " " + b.title);
             foreach (var lesson in lessons) lesson.Completed += OnLessonCompleted;
+            if (voiceCoach != null)
+            {
+                voiceCoach.ExplainMicrophone = ExplainMicrophone;
+                voiceCoach.NoCaptured += KeepNo;
+            }
             uiManager.ShowMenu(FirstScreen());
             started = true;
+        }
+
+        // ---- The child's spoken NOs ----
+
+        readonly NoRecorder noRecorder = new NoRecorder();
+
+        /// <summary>The child's spoken NOs and their recordings, kept on this phone only.</summary>
+        public NoRecorder NoVoices { get { return noRecorder; } }
+
+        /// <summary>
+        /// Before Android's microphone question, says why Keza wants to listen and what is kept, in the
+        /// child's language, with a picture of the microphone. When Android won't ask again, the button
+        /// opens the phone's settings instead.
+        /// </summary>
+        void ExplainMicrophone(bool blocked, System.Action<bool> answer)
+        {
+            bool keep = progress.keepNoRecordings;
+            string body = blocked
+                ? Localization.T("mic.ask.blocked", "The microphone is switched off for SafeTouch. A grown-up can switch it on in the phone's settings: Permissions, then Microphone, then Allow.")
+                : Localization.T("mic.ask.body", "Keza would like to listen while you say NO, so she can tell you how strong it is.") + " " +
+                  (keep ? Localization.T("mic.ask.keep", "Your NO is saved on this phone, so you and your grown-up can hear how strong you are getting. It is never sent anywhere.")
+                        : Localization.T("mic.ask.nokeep", "Nothing you say is saved or sent.")) + " " +
+                  Localization.T("mic.ask.grownup", "Ask your grown-up, then tap Yes. The phone will ask too.");
+            uiManager.Ask(Icons.Mic,
+                Localization.T("mic.ask.title", "Can Keza hear your NO?"),
+                body,
+                blocked ? Localization.T("mic.ask.settings", "Open the phone's settings") : Localization.T("mic.ask.yes", "Yes, use the microphone"),
+                Localization.T("mic.ask.no", "Not now"),
+                answer);
+        }
+
+        /// <summary>A spoken NO was heard: keep its numbers, and its sound unless a parent switched that off.</summary>
+        void KeepNo(NoRating rating, float[] samples, int sampleRate)
+        {
+            string source = uiManager.ActiveMenu == "myno" ? "practice" : "lesson:" + currentLevel;
+            noRecorder.Add(rating, progress.keepNoRecordings ? samples : null, sampleRate, source);
+        }
+
+        /// <summary>Parent switched keeping the NO recordings on or off. Off deletes the ones already kept.</summary>
+        public void SetKeepNoRecordings(bool on)
+        {
+            progressManager.SetKeepNoRecordings(on);
+            if (!on) noRecorder.DeleteRecordings();
         }
 
         /// <summary>
@@ -215,6 +263,7 @@ namespace SafeTouch.Core
                 voiceCoach.Enabled = progress.voiceEnabled;
                 voiceCoach.PrepareForAge(ageGroup);
             }
+            noRecorder.Load();
         }
 
         /// <summary>Opens the next lesson after the current one is completed.</summary>
@@ -347,6 +396,8 @@ namespace SafeTouch.Core
         {
             EndActiveLesson();
             arManager.ResetPlacement();
+            if (voiceCoach != null) voiceCoach.Stop();
+            noRecorder.DeleteAll();   // the NO recordings go with the rest of the child's progress
             progressManager.ResetAll();
             LoadProgress();
             uiManager.ShowMenu("splash");

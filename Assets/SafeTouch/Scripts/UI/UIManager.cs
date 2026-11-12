@@ -48,6 +48,12 @@ namespace SafeTouch.UI
         Text toastText;
         Coroutine toastRoutine;
 
+        GameObject questionPanel;
+        Image questionIcon;
+        Text questionTitle, questionBody;
+        Button questionYes, questionNo, questionRead;
+        Action<bool> questionAnswered;
+
         public string ActiveMenu { get { return active != null ? active.Name : ""; } }
         public LessonScreen Lesson { get; private set; }
         public AdultsScreen Adults { get; private set; }
@@ -100,6 +106,7 @@ namespace SafeTouch.UI
             screens.Add(Certificate);
             screens.Add(Places);
             screens.Add(new BadgesScreen());
+            screens.Add(new MyNoScreen());
             screens.Add(new LookScreen());
             screens.Add(new ParentGateScreen());
             screens.Add(new ParentScreen());
@@ -114,6 +121,7 @@ namespace SafeTouch.UI
 
             SizeButtons.Build(safeArea, game, this);   // + and - for Keza's size on the 3D playground
             BuildFeedbackPanel(safeArea);
+            BuildQuestionPanel(safeArea);
             BuildToast(safeArea);
             buttons = canvas.GetComponentsInChildren<Button>(true);
             // Every button pops when tapped: UIFactory.ButtonPressed, set by AudioManager, also covers buttons made later.
@@ -157,7 +165,11 @@ namespace SafeTouch.UI
         /// <summary>Shows one screen by name and hides the others.</summary>
         public void ShowMenu(string name)
         {
-            if (active != null && active.Name != name) previous = active.Name;
+            if (active != null && active.Name != name)
+            {
+                previous = active.Name;
+                active.OnHide();
+            }
             foreach (var s in screens)
             {
                 bool show = s.Name == name;
@@ -166,7 +178,44 @@ namespace SafeTouch.UI
             }
             UpdateBackdrop();
             HideFeedback();
+            HideQuestion();
             UpdateHUD();
+        }
+
+        /// <summary>
+        /// A card with a picture, words and two buttons, over whatever is showing: e.g. asking to use the
+        /// microphone before Android does. answered gets true for yes; it is not called if the card is
+        /// closed by going to another screen.
+        /// </summary>
+        public void Ask(Sprite icon, string title, string body, string yes, string no, Action<bool> answered)
+        {
+            questionPanel.SetActive(true);
+            questionPanel.transform.SetAsLastSibling();
+            questionIcon.sprite = icon;
+            questionIcon.transform.parent.gameObject.SetActive(icon != null);
+            questionTitle.text = title;
+            questionBody.text = body;
+            questionAnswered = answered;
+            UIFactory.SetButtonLabel(questionYes, yes);
+            UIFactory.SetButtonLabel(questionNo, no);
+            UIFactory.SetButtonLabel(questionRead, Localization.T("lesson.replay", "Read to me"));
+            if (game.Reader != null) game.Reader.SpeakIfAuto(title, body);
+        }
+
+        public bool Asking { get { return questionPanel != null && questionPanel.activeSelf; } }
+
+        void HideQuestion()
+        {
+            questionAnswered = null;
+            if (questionPanel != null) questionPanel.SetActive(false);
+        }
+
+        void Answer(bool yes)
+        {
+            if (game.Reader != null) game.Reader.Stop();
+            var answered = questionAnswered;
+            HideQuestion();
+            if (answered != null) answered(yes);
         }
 
         public void ShowFeedback(string msg)
@@ -257,6 +306,45 @@ namespace SafeTouch.UI
             });
             feedbackButton.GetComponent<LayoutElement>().flexibleWidth = 2f;   // Continue is the main action
             feedbackPanel.SetActive(false);
+        }
+
+        void BuildQuestionPanel(RectTransform parent)
+        {
+            var scrim = UIFactory.Panel(parent, "Question panel", Theme.Scrim, false);
+            UIFactory.Stretch((RectTransform)scrim.transform);
+            questionPanel = scrim.gameObject;
+
+            var card = UIFactory.Panel(scrim.transform, "Card", Theme.Card, true);
+            var rt = (RectTransform)card.transform;
+            rt.anchorMin = new Vector2(0f, 0.5f);
+            rt.anchorMax = new Vector2(1f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.offsetMin = new Vector2(Theme.Gutter * 0.5f, 0f);
+            rt.offsetMax = new Vector2(-Theme.Gutter * 0.5f, 0f);
+            var column = UIFactory.Column(rt, Theme.Gap, (int)Theme.Gutter);
+            column.childAlignment = TextAnchor.UpperCenter;
+            card.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            // A big round picture (the microphone) so a child who can't read yet knows what it is about.
+            var badgeRow = UIFactory.Row(card.transform, "Picture", 0f, 150f);
+            badgeRow.childAlignment = TextAnchor.MiddleCenter;
+            badgeRow.childForceExpandWidth = false;
+            var badge = UIFactory.Dot(badgeRow.transform, "Badge", Theme.Unsafe, 150f);
+            badge.raycastTarget = false;
+            questionIcon = UIFactory.Panel(badge.transform, "Icon", Color.white, false);
+            questionIcon.raycastTarget = false;
+            var irt = (RectTransform)questionIcon.transform;
+            irt.anchorMin = irt.anchorMax = new Vector2(0.5f, 0.5f);
+            irt.sizeDelta = new Vector2(96f, 96f);
+
+            questionTitle = UIFactory.Label(card.transform, "", Theme.Title, Theme.Ink, TextAnchor.UpperLeft, true);
+            questionBody = UIFactory.Label(card.transform, "", Theme.Body, Theme.Ink, TextAnchor.UpperLeft, false);
+            questionYes = UIFactory.Button(card.transform, "", Theme.Primary, Color.white, () => Answer(true));
+            var buttons = UIFactory.Row(card.transform, "Buttons", Theme.Gap, Theme.TouchTarget);
+            questionRead = UIFactory.Button(buttons.transform, "Read to me", Theme.Sky, Theme.Ink,
+                () => game.ReadToMe(questionTitle.text, questionBody.text));
+            questionNo = UIFactory.Button(buttons.transform, "", Theme.Card, Theme.Ink, () => Answer(false));
+            questionPanel.SetActive(false);
         }
 
         void BuildToast(RectTransform parent)

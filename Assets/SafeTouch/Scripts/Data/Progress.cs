@@ -9,6 +9,8 @@ namespace SafeTouch.Data
     /// Everything SafeTouch remembers about a learner (FR8). Stored on the
     /// phone as JSON in PlayerPrefs. userId is a random device id, never a
     /// name, photo, location or voice recording (NFR1, Law N° 058/2021).
+    /// The recordings of the child's spoken NOs are kept apart from this, on
+    /// this phone only, by Voice.NoRecorder, so cloud sync can never send them.
     /// </summary>
     [Serializable]
     public class Progress
@@ -36,6 +38,7 @@ namespace SafeTouch.Data
         public List<ScenarioResponse> scenarioResponses = new List<ScenarioResponse>();
         public float bestChaseSeconds;          // fastest "NO" in the Memory Quest chase; 0 = not played yet
         public bool voiceEnabled = true;        // spoken NO practice; a parent can switch it off
+        public bool keepNoRecordings = true;    // keep the sound of a few spoken NOs on this phone (terms 1.6); a parent can switch it off
         public int strongNoCount;               // three-star spoken NOs; a count only, never audio or pitch values
         public int loudestNo;                   // NO power (0-100) of the loudest spoken NO, the child's record; a number only, never the sound
         public string skinTone = SkinTones.DefaultId;   // how the child chose Keza to look (not the child's own data)

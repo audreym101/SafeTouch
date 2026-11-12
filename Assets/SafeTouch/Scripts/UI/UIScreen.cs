@@ -45,6 +45,9 @@ namespace SafeTouch.UI
         /// <summary>Refresh text and state each time the screen appears.</summary>
         public virtual void OnShow() { }
 
+        /// <summary>Called when another screen takes this one's place (e.g. to close the microphone).</summary>
+        public virtual void OnHide() { }
+
         /// <summary>
         /// A padded column filling the screen, with an exit / back button at
         /// the top so every screen has an easy way out (NFR6).

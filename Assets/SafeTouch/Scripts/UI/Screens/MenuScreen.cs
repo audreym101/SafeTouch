@@ -20,7 +20,7 @@ namespace SafeTouch.UI.Screens
         }
 
         Text hello;
-        Tile play, badges, look, settings, help, about, contact, grownUps;
+        Tile play, badges, look, settings, help, about, contact, grownUps, myNo;
 
         public override string Name { get { return "menu"; } }
 
@@ -43,7 +43,26 @@ namespace SafeTouch.UI.Screens
             var row3 = Row(list);
             about = MakeTile(row3, "About us", "Abo turi bo", "i", Theme.Hex("#2BB3C0"), 0f, () => ui.ShowMenu("about"));
             contact = MakeTile(row3, "Contact us", "Twandikire", "C", Theme.Caution, 0f, () => ParentGateScreen.Open(ui, "contact", "menu"));
-            grownUps = MakeTile(list, "Grown-ups", "Abantu bakuru", "G", Theme.Ink, 0f, () => ParentGateScreen.Open(ui, "parent", "menu"));
+            var row4 = Row(list);
+            // The voice coach: practise a firm NO, hear it back and see what you've achieved.
+            myNo = MakeTile(row4, "My NO", "OYA yanjye", "", Theme.Unsafe, 0f, () => ui.ShowMenu("myno"));
+            AddIcon(myNo, Icons.Mic, Theme.Unsafe);
+            grownUps = MakeTile(row4, "Grown-ups", "Abantu bakuru", "G", Theme.Ink, 0f, () => ParentGateScreen.Open(ui, "parent", "menu"));
+        }
+
+        /// <summary>Puts a picture in a tile's white circle instead of a letter.</summary>
+        static void AddIcon(Tile tile, Sprite sprite, Color colour)
+        {
+            var circle = tile.button.transform.Find("Icon");
+            if (circle == null) return;
+            var icon = UIFactory.Panel(circle, "Picture", colour, false);
+            icon.sprite = sprite;
+            icon.raycastTarget = false;
+            icon.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            var rt = (RectTransform)icon.transform;
+            rt.anchorMin = new Vector2(0.18f, 0.18f);
+            rt.anchorMax = new Vector2(0.82f, 0.82f);
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
         }
 
         static Transform Row(RectTransform list)
@@ -89,7 +108,7 @@ namespace SafeTouch.UI.Screens
         {
             TitleText.text = L("Menu", "Ibikubiyemo");
             hello.text = L("Hello, friend! What shall we do?", "Muraho, nshuti! Dukore iki?");
-            foreach (var t in new[] { play, badges, look, settings, help, about, contact, grownUps })
+            foreach (var t in new[] { play, badges, look, settings, help, about, contact, myNo, grownUps })
                 t.label.text = L(t.en, t.rw);
         }
 

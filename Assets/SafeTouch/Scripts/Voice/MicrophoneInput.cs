@@ -9,8 +9,10 @@ namespace SafeTouch.Voice
     /// <summary>
     /// Opens the phone's microphone only while a lesson is listening for the
     /// child's "NO" and hands the samples to the analyser. Audio lives in a
-    /// one-second loop that is overwritten as it goes: nothing is recorded,
-    /// saved or sent (NFR1, Law N° 058/2021).
+    /// one-second loop that is overwritten as it goes. Only a spoken NO is ever
+    /// kept, cut out by VoiceCoach and saved on this phone by NoRecorder when
+    /// the parent allows it (consent terms 1.6); nothing is ever sent (NFR1,
+    /// Law N° 058/2021).
     /// </summary>
     public class MicrophoneInput : MonoBehaviour
     {
@@ -19,6 +21,9 @@ namespace SafeTouch.Voice
 
         /// <summary>Samples handed on per read. GetData wraps around the end of the loop.</summary>
         const int Block = 512;
+
+        /// <summary>Remembers that Android was told "Don't ask again": only the phone's settings can allow it now.</summary>
+        const string BlockedKey = "safetouch.mic.blocked";
 
         AudioClip loop;
         string device;
@@ -49,6 +54,24 @@ namespace SafeTouch.Voice
             }
         }
 
+        /// <summary>True once the app may use the microphone (always in the Editor).</summary>
+        public static bool Authorized
+        {
+            get
+            {
+#if UNITY_ANDROID && !UNITY_EDITOR
+                bool allowed = Permission.HasUserAuthorizedPermission(Permission.Microphone);
+                if (allowed && Blocked) PlayerPrefs.DeleteKey(BlockedKey);   // allowed in the phone's settings since
+                return allowed;
+#else
+                return true;
+#endif
+            }
+        }
+
+        /// <summary>True when Android will no longer ask: the microphone must be allowed in the phone's settings.</summary>
+        public static bool Blocked { get { return PlayerPrefs.GetInt(BlockedKey, 0) == 1; } }
+
         /// <summary>
         /// Asks Android for the microphone the first time a lesson needs it.
         /// If the answer is no, the lessons keep their tap buttons instead.
@@ -58,13 +81,48 @@ namespace SafeTouch.Voice
 #if UNITY_ANDROID && !UNITY_EDITOR
             if (Permission.HasUserAuthorizedPermission(Permission.Microphone)) { answered(true); return; }
             var callbacks = new PermissionCallbacks();
-            callbacks.PermissionGranted += _ => { Core.AppSession.PermissionAnswered(); answered(true); };
+            callbacks.PermissionGranted += _ =>
+            {
+                Core.AppSession.PermissionAnswered();
+                PlayerPrefs.DeleteKey(BlockedKey);
+                answered(true);
+            };
             callbacks.PermissionDenied += _ => { Core.AppSession.PermissionAnswered(); answered(false); };
-            callbacks.PermissionDeniedAndDontAskAgain += _ => { Core.AppSession.PermissionAnswered(); answered(false); };
+            callbacks.PermissionDeniedAndDontAskAgain += _ =>
+            {
+                Core.AppSession.PermissionAnswered();
+                PlayerPrefs.SetInt(BlockedKey, 1);
+                PlayerPrefs.Save();
+                answered(false);
+            };
             Core.AppSession.PermissionAsked();   // the question pauses the app: that is not the parent leaving
             Permission.RequestUserPermission(Permission.Microphone, callbacks);
 #else
             answered(HasDevice);
+#endif
+        }
+
+        /// <summary>Opens this app's page in the phone's settings, where a grown-up can allow the microphone.</summary>
+        public static void OpenAppSettings()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            try
+            {
+                Core.AppSession.PermissionAsked();   // leaving for the settings is not the parent leaving SafeTouch
+                using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
+                using (var uriClass = new AndroidJavaClass("android.net.Uri"))
+                using (var uri = uriClass.CallStatic<AndroidJavaObject>("parse", "package:" + Application.identifier))
+                using (var intent = new AndroidJavaObject("android.content.Intent", "android.settings.APPLICATION_DETAILS_SETTINGS", uri))
+                {
+                    intent.Call<AndroidJavaObject>("addFlags", 0x10000000);   // FLAG_ACTIVITY_NEW_TASK
+                    activity.Call("startActivity", intent);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("SafeTouch: could not open the app's settings: " + e.Message);
+            }
 #endif
         }
 

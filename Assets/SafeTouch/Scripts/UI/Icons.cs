@@ -22,6 +22,7 @@ namespace SafeTouch.UI
         public static Sprite TurnRight { get { return Get("turn right", TurnShape); } }
         public static Sprite Mic { get { return Get("mic", MicShape); } }
         public static Sprite Check { get { return Get("check", CheckShape); } }
+        public static Sprite Play { get { return Get("play", PlayShape); } }
         public static Sprite ZoomIn { get { return Get("zoom in", (x, y) => Magnifier(x, y, true)); } }
         public static Sprite ZoomOut { get { return Get("zoom out", (x, y) => Magnifier(x, y, false)); } }
 
@@ -105,6 +106,13 @@ namespace SafeTouch.UI
         }
 
         /// <summary>A tick: heard!</summary>
+        /// <summary>A triangle pointing right: play the recording.</summary>
+        static bool PlayShape(float x, float y)
+        {
+            const float left = -0.42f, right = 0.62f, half = 0.6f;
+            return x > left && x < right && Mathf.Abs(y) < half * (right - x) / (right - left);
+        }
+
         static bool CheckShape(float x, float y)
         {
             return Segment(x, y, -0.55f, 0f, -0.15f, -0.42f, 0.13f) || Segment(x, y, -0.15f, -0.42f, 0.6f, 0.45f, 0.13f);
